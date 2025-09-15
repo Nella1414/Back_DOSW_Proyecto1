@@ -9,30 +9,29 @@ El sistema brinda a **profesores y decanaturas** las herramientas necesarias par
 ---
 
 ## Estructura del Proyecto
-
 SIRHA/
-│── dist/ # Archivos compilados de TypeScript a JavaScript
-│── node_modules/ # Dependencias del proyecto
-│── src/ # Código fuente principal
-│ ├── admin/ # Módulo de administración (gestión global del sistema)
-│ ├── auth/ # Módulo de autenticación y control de roles
-│ ├── common/ # Código compartido (enums, interfaces, roles)
-│ ├── groups/ # Gestión de grupos y cupos de materias
-│ ├── requests/ # Gestión de solicitudes de cambio (núcleo del sistema)
-│ ├── subjects/ # Gestión de materias y su información asociada
-│ ├── users/ # Gestión de usuarios (estudiantes, decanaturas, admins)
-│ ├── app.module.ts # Módulo raíz de la aplicación
-│ ├── main.ts # Punto de entrada de la aplicación
-│── test/ # Pruebas unitarias y de integración
-│── .env # Variables de entorno (configuración sensible)
-│── .gitignore # Exclusiones de Git
-│── .prettierrc # Configuración de Prettier (formato de código)
-│── eslint.config.mjs # Configuración de ESLint (estilo y calidad de código)
-│── nest-cli.json # Configuración de Nest CLI
-│── package.json # Dependencias, scripts y metadatos del proyecto
-│── tsconfig.json # Configuración de TypeScript
-│── tsconfig.build.json # Configuración de build en producción
-│── README.md # Documentación del proyecto (este es el genrado por Nest Js)
+├── dist/                  # Archivos compilados de TypeScript a JavaScript
+├── node_modules/          # Dependencias del proyecto
+├── src/                   # Código fuente principal
+│   ├── admin/             # Módulo de administración (gestión global del sistema)
+│   ├── auth/              # Módulo de autenticación y control de roles
+│   ├── common/            # Código compartido (enums, interfaces, roles)
+│   ├── groups/            # Gestión de grupos y cupos de materias
+│   ├── requests/          # Gestión de solicitudes de cambio (núcleo del sistema)
+│   ├── subjects/          # Gestión de materias y su información asociada
+│   ├── users/             # Gestión de usuarios (estudiantes, decanaturas, admins)
+│   ├── app.module.ts      # Módulo raíz de la aplicación
+│   └── main.ts            # Punto de entrada de la aplicación
+├── test/                  # Pruebas unitarias y de integración
+├── .env                   # Variables de entorno (configuración sensible)
+├── .gitignore             # Exclusiones de Git
+├── .prettierrc            # Configuración de Prettier (formato de código)
+├── eslint.config.mjs      # Configuración de ESLint (estilo y calidad de código)
+├── nest-cli.json          # Configuración de Nest CLI
+├── package.json           # Dependencias, scripts y metadatos del proyecto
+├── tsconfig.json          # Configuración de TypeScript
+├── tsconfig.build.json    # Configuración de build en producción
+└── README.md              # Documentación del proyecto (este archivo)
 
 
 ---
