@@ -5,6 +5,7 @@ import { GroupsModule } from './groups/groups.module';
 import { SubjectsModule } from './subjects/subjects.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AuthModule } from './auth/auth.module';
   GroupsModule,
   SubjectsModule,
   AuthModule,
+  AdminModule,
      MongooseModule.forRoot(
       'mongodb+srv://SIRHAAdmin:SIRHAAdmin@sirha.zbthjmo.mongodb.net/?retryWrites=true&w=majority&appName=SIRHA',
     ),
