@@ -15,9 +15,7 @@ import { AdminModule } from './admin/admin.module';
   SubjectsModule,
   AuthModule,
   AdminModule,
-     MongooseModule.forRoot(
-      'mongodb+srv://SIRHAAdmin:SIRHAAdmin@sirha.zbthjmo.mongodb.net/?retryWrites=true&w=majority&appName=SIRHA',
-    ),
+  MongooseModule.forRoot(process.env.MONGO_URI || ''),
   ],
 })
 export class AppModule {}
