@@ -3,13 +3,17 @@ import { GroupsService } from './groups.service';
 
 @Controller('groups')
 export class GroupsController {
-  constructor(private groupsService: GroupsService) {}
+  constructor(private readonly groupsService: GroupsService) {}
 
   @Post()
-  create(@Body() body: { subjectId: number; code: string; schedule: string; capacity: number }) {
+  async create(
+    @Body() body: { subjectId: string; code: string; schedule: string; capacity: number },
+  ) {
     return this.groupsService.create(body.subjectId, body.code, body.schedule, body.capacity);
   }
 
   @Get()
-  list() { return this.groupsService.findAll(); }
+  async list() {
+    return this.groupsService.findAll();
+  }
 }

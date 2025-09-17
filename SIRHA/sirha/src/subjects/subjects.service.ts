@@ -1,15 +1,20 @@
 import { Injectable } from '@nestjs/common';
-import { Subject } from '../common/interfaces';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Subject, SubjectDocument } from './schema/subjects.schema';
 
 @Injectable()
 export class SubjectsService {
-  private subjects: Subject[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectModel(Subject.name) private subjectModel: Model<SubjectDocument>,
+  ) {}
 
-  create(code: string, name: string) {
-    const s: Subject = { id: this.idCounter++, code, name };
-    this.subjects.push(s);
-    return s;
+  async create(code: string, name: string): Promise<Subject> {
+    const newSubject = new this.subjectModel({ code, name });
+    return newSubject.save();
   }
-  findAll() { return this.subjects; }
+
+  async findAll(): Promise<Subject[]> {
+    return this.subjectModel.find().exec();
+  }
 }

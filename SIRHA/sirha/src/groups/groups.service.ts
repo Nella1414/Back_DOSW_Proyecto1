@@ -1,22 +1,28 @@
 import { Injectable } from '@nestjs/common';
-import { Group } from '../common/interfaces';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Group, GroupDocument } from './schema/group.schema';
 
 @Injectable()
 export class GroupsService {
-  private groups: Group[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectModel(Group.name) private groupModel: Model<GroupDocument>,
+  ) {}
 
-  create(subjectId: number, code: string, schedule: string, capacity: number) {
-    const g: Group = { id: this.idCounter++, subjectId, code, schedule, capacity };
-    this.groups.push(g);
-    return g;
+  async create(subjectId: string, code: string, schedule: string, capacity: number): Promise<Group> {
+    const newGroup = new this.groupModel({ subjectId, code, schedule, capacity });
+    return newGroup.save();
   }
 
-  findAll() { return this.groups; }
+  async findAll(): Promise<Group[]> {
+    return this.groupModel.find().populate('subjectId').exec();
+  }
 
-  findById(id: number) { return this.groups.find(g => g.id === id); }
+  async findById(id: string): Promise<Group | null> {
+    return this.groupModel.findById(id).populate('subjectId').exec();
+  }
 
-  findMany(ids: number[]) {
-    return this.groups.filter(g => ids.includes(g.id));
+  async findMany(ids: string[]): Promise<Group[]> {
+    return this.groupModel.find({ _id: { $in: ids } }).populate('subjectId').exec();
   }
 }

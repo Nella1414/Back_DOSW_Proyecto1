@@ -1,38 +1,42 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { GroupsService } from '../groups/groups.service';
-import { UserRole } from '../common/interfaces';
+import { UserRole } from './schema/user.schema';
 
 @Controller('users')
 export class UsersController {
   constructor(
-    private usersService: UsersService,
-    private groupsService: GroupsService,
+    private readonly usersService: UsersService,
+    private readonly groupsService: GroupsService,
   ) {}
 
   @Post('register')
-  register(@Body() body: { username: string; password: string; role?: UserRole }) {
+  async register(
+    @Body() body: { username: string; password: string; role?: UserRole },
+  ) {
     return this.usersService.create(body.username, body.password, body.role);
   }
 
   @Get()
-  list() { return this.usersService.findAll(); }
+  async list() {
+    return this.usersService.findAll();
+  }
 
-  // Inscribir estudiante en un grupo
   @Post(':id/join/:groupId')
-  joinGroup(
-    @Param('id', ParseIntPipe) id: number,
-    @Param('groupId', ParseIntPipe) groupId: number,
+  async joinGroup(
+    @Param('id') id: string,
+    @Param('groupId') groupId: string,
   ) {
     return this.usersService.addGroup(id, groupId);
   }
-
-  // Consultar horario del estudiante
+// el id que usamos aqui literalmente lo borré entonces... o agregar uno autogenerado o, ver que otras opciones hay
   @Get(':id/schedule')
-  getSchedule(@Param('id', ParseIntPipe) id: number) {
-    const user = this.usersService.findById(id);
+  async getSchedule(@Param('id') id: string) {
+    const user = await this.usersService.findById(id);
     if (!user) return { error: 'Usuario no encontrado' };
-    const groups = this.groupsService.findMany(user.groupIds);
+
+    const groups = await this.groupsService.findMany(user.groupIds);
+
     return { user: user.username, schedule: groups };
   }
 }

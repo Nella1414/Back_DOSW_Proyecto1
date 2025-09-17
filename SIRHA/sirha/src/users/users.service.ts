@@ -1,30 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import { User, UserRole } from '../common/interfaces';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { User, UserDocument } from './schema/user.schema';
+import { UserRole } from './schema/user.schema';
 
 @Injectable()
 export class UsersService {
-  private users: User[] = [];
-  private idCounter = 1;
+  constructor(
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
+  ) {}
 
-  create(username: string, password: string, role: UserRole = UserRole.STUDENT): User {
-    const user: User = { id: this.idCounter++, username, password, role, groupIds: [] };
-    this.users.push(user);
-    return user;
+  async create(username: string, password: string, role: UserRole = UserRole.STUDENT): Promise<User> {
+    const newUser = new this.userModel({ username, password, role, groupIds: [] });
+    return newUser.save(); 
   }
 
-  findAll() { return this.users; }
+  async findAll(): Promise<User[]> {
+    return this.userModel.find().exec();
+  }
 
-  findById(id: number) { return this.users.find(u => u.id === id); }
+  async findById(id: string): Promise<User | null> {
+    return this.userModel.findById(id).exec();
+  }
 
-  findByUsername(username: string) { return this.users.find(u => u.username === username); }
+  async findByUsername(username: string): Promise<User | null> {
+    return this.userModel.findOne({ username }).exec();
+  }
 
-  // Añade un grupo al estudiante
-  addGroup(userId: number, groupId: number) {
-    const user = this.findById(userId);
-    if (user && !user.groupIds.includes(groupId)) {
-      user.groupIds.push(groupId);
-      return user;
-    }
-    return null;
+  async addGroup(userId: string, groupId: string): Promise<User | null> {
+    return this.userModel.findByIdAndUpdate(
+      userId,
+      { $addToSet: { groupIds: groupId } }, 
+      { new: true }
+    ).exec();
   }
 }

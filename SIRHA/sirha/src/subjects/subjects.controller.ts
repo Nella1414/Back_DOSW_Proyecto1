@@ -1,15 +1,22 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Delete, Param, UseGuards } from '@nestjs/common';
+import { Roles } from '../common/roles/roles.decorator';
+import { RolesGuard } from '../common/roles/roles.guard';
+import { UserRole } from '../users/schema/user.schema';
 import { SubjectsService } from './subjects.service';
 
+@UseGuards(RolesGuard)
 @Controller('subjects')
 export class SubjectsController {
-  constructor(private s: SubjectsService) {}
+  constructor(private readonly s: SubjectsService) {}
 
+  @Roles(UserRole.ADMIN)
   @Post()
-  create(@Body() body: { code: string; name: string }) {
+  async create(@Body() body: { code: string; name: string }) {
     return this.s.create(body.code, body.name);
   }
 
   @Get()
-  list() { return this.s.findAll(); }
+  async list() {
+    return this.s.findAll();
+  }
 }

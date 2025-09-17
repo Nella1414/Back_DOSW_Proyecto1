@@ -1,11 +1,13 @@
 import { Module } from '@nestjs/common';
 import { SubjectsService } from './subjects.service';
 import { SubjectsController } from './subjects.controller';
+import { MongooseModule } from '@nestjs/mongoose';
+import { Subject, SubjectSchema } from './schema/subjects.schema';
 
 @Module({
-  // imports: [TypeOrmModule.forFeature([Subject])], // <-- ELIMINADO
+  imports: [MongooseModule.forFeature([{ name: Subject.name, schema: SubjectSchema }])],
   providers: [SubjectsService],
   controllers: [SubjectsController],
   exports: [SubjectsService],
 })
-export class SubjectModule {}
+export class SubjectsModule {}
