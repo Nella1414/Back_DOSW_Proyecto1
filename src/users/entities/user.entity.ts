@@ -18,7 +18,7 @@ export class User {
   @Prop({ default: true })
   active: boolean;
 
-  @Prop({ type: [String], default: ["Student"] })
+  @Prop({ type: [String], default: ["STUDENT"] })
   roles: string[];
 
   @Prop({ required: false })

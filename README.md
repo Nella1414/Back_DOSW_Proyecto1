@@ -1,98 +1,469 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# SIRHA - Student Information and Registration Hub API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
+[![MongoDB](https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white)](https://mongodb.com/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![JWT](https://img.shields.io/badge/JWT-000000?style=for-the-badge&logo=JSON%20web%20tokens&logoColor=white)](https://jwt.io/)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A comprehensive REST API for academic student information management and course registration system built with NestJS, MongoDB, and TypeScript.
 
-## Description
+## **Project Overview**
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+SIRHA is a modern academic management system designed to handle:
 
-## Project setup
+- **Student Information Management** - Complete student profiles and academic records
+- **Course Registration** - Enrollment processes and waitlist management
+- **Academic Programs** - Program definitions and curriculum management
+- **User Authentication** - JWT-based auth with Google OAuth integration
+- **Role-Based Access Control** - Granular permissions for different user types
+- **Academic Progress Tracking** - Monitoring student advancement
+- **Reporting System** - Comprehensive academic analytics
 
-```bash
-$ npm install
+## **Architecture Overview**
+
+### **Technology Stack**
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| **Framework** | NestJS 11.x | Modern Node.js framework with TypeScript |
+| **Database** | MongoDB | NoSQL document database |
+| **ODM** | Mongoose | MongoDB object modeling |
+| **Authentication** | JWT + Google OAuth | Secure token-based authentication |
+| **Validation** | class-validator | Input validation and sanitization |
+| **Documentation** | Swagger/OpenAPI | Automatic API documentation |
+| **Testing** | Jest | Unit and integration testing |
+| **Security** | Rate Limiting + RBAC | API protection and access control |
+
+### **Modular Architecture**
+
+```
+src/
+├── auth/                 # Authentication & Authorization
+├── users/               # User Management
+├── roles/               # Role & Permission System
+├── students/            # Student Information Management
+├── courses/             # Course Catalog
+├── enrollments/         # Course Registration
+├── faculty/             # Faculty/Department Management
+├── programs/            # Academic Programs
+├── reports/             # Analytics & Reporting
+└── main.ts             # Application Bootstrap
 ```
 
-## Compile and run the project
+## **Quick Start**
 
-```bash
-# development
-$ npm run start
+### **Prerequisites**
 
-# watch mode
-$ npm run start:dev
+- Node.js 18+ and npm
+- MongoDB instance (local or cloud)
+- Git
 
-# production mode
-$ npm run start:prod
+### **Installation**
+
+1. **Clone the repository**
+   ```bash
+   git clone [your-repository-url]
+   cd sirha-api
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Environment setup**
+   ```bash
+   cp .env.example .env
+   ```
+
+4. **Configure environment variables**
+   ```env
+   # Database Configuration
+   MONGODB_URI=mongodb://localhost:27017/sirha
+
+   # JWT Configuration
+   JWT_SECRET=your-super-secret-jwt-key-here
+   JWT_EXPIRES_IN=2h
+
+   # Application Configuration
+   FRONTEND_URL=http://localhost:3001
+   PORT=3000
+
+   # Google OAuth (optional)
+   GOOGLE_CLIENT_ID=your-google-client-id
+   GOOGLE_CLIENT_SECRET=your-google-client-secret
+   ```
+
+5. **Start the application**
+   ```bash
+   # Development mode
+   npm run start:dev
+
+   # Production mode
+   npm run build
+   npm run start:prod
+   ```
+
+6. **Access the API**
+   - **API Base URL**: `http://localhost:3000`
+   - **Swagger Documentation**: `http://localhost:3000/doc`
+
+## **Authentication & Authorization**
+
+### **Authentication Methods**
+
+1. **Email/Password Authentication**
+   - Traditional login with email and password
+   - Password hashing with bcrypt (10 salt rounds)
+   - JWT token generation for session management
+
+2. **Google OAuth Integration**
+   - Single Sign-On with Google accounts
+   - Automatic user creation for new Google users
+   - Seamless integration with existing accounts
+
+### **Authorization System**
+
+The API uses a sophisticated **Role-Based Access Control (RBAC)** system with granular permissions:
+
+#### **Default Roles**
+
+| Role | Description | Default Permissions |
+|------|-------------|-------------------|
+| **ADMIN** | System Administrator | All permissions |
+| **DEAN** | Academic Administrator | User/Course/Grade management, Reports |
+| **STUDENT** | Student User | Read-only access to own data |
+
+#### **Permission Categories**
+
+- **User Management**: `CREATE_USER`, `READ_USER`, `UPDATE_USER`, `DELETE_USER`
+- **Course Management**: `CREATE_COURSE`, `READ_COURSE`, `UPDATE_COURSE`, `DELETE_COURSE`
+- **Enrollment Management**: `CREATE_ENROLLMENT`, `READ_ENROLLMENT`, etc.
+- **Grade Management**: `CREATE_GRADE`, `READ_GRADE`, `UPDATE_GRADE`, `DELETE_GRADE`
+- **System Administration**: `MANAGE_SYSTEM`, `VIEW_LOGS`, `VIEW_REPORTS`
+
+#### **Authorization Decorators**
+
+```typescript
+// Require specific roles
+@Roles(RoleName.ADMIN, RoleName.DEAN)
+
+// Require specific permissions
+@RequirePermissions(Permission.CREATE_USER, Permission.DELETE_USER)
+
+// Public endpoint (no authentication)
+@Public()
+
+// Convenience decorators
+@AdminOnly()
+@AdminOrDean()
 ```
 
-## Run tests
+## **API Endpoints**
+
+### **Authentication Endpoints**
+
+| Method | Endpoint | Description | Access |
+|--------|----------|-------------|--------|
+| `POST` | `/auth/register` | Register new user | Public |
+| `POST` | `/auth/login` | User login | Public |
+| `GET` | `/auth/google` | Google OAuth login | Public |
+| `PUT` | `/auth/user/:id/roles` | Update user roles | Admin Only |
+
+### **Student Management** *Fully Implemented*
+
+| Method | Endpoint | Description | Required Permission |
+|--------|----------|-------------|-------------------|
+| `POST` | `/students` | Create student | `CREATE_USER` |
+| `GET` | `/students` | List all students | `READ_USER` |
+| `GET` | `/students/:id` | Get student by ID | `READ_USER` |
+| `PATCH` | `/students/:id` | Update student | `UPDATE_USER` |
+| `DELETE` | `/students/:id` | Delete student | `DELETE_USER` |
+
+### **User Management**
+
+| Method | Endpoint | Description | Required Permission |
+|--------|----------|-------------|-------------------|
+| `POST` | `/users` | Create user | `CREATE_USER` |
+| `GET` | `/users` | List users | Admin Only |
+| `GET` | `/users/:id` | Get user details | `READ_USER` |
+| `PATCH` | `/users/:id` | Update user | `UPDATE_USER` |
+| `DELETE` | `/users/:id` | Delete user | `DELETE_USER` |
+
+### **Other Modules** *Template Structure*
+
+The following endpoints exist but need implementation:
+- `/courses` - Course catalog management
+- `/enrollments` - Student enrollment processes
+- `/faculty` - Faculty and department management
+- `/programs` - Academic program definitions
+- `/reports` - Academic reporting and analytics
+
+## **Security Features**
+
+### **API Protection**
+
+1. **Rate Limiting**
+   - 100 requests per minute per IP address
+   - Prevents API abuse and DDoS attacks
+   - Configurable thresholds
+
+2. **JWT Security**
+   - Secure token-based authentication
+   - Configurable expiration times
+   - Automatic token validation on protected routes
+
+3. **Input Validation**
+   - Automatic request validation with class-validator
+   - Type checking and sanitization
+   - Custom validation rules with meaningful error messages
+
+4. **Error Handling**
+   - Secure error responses (no sensitive data exposure)
+   - Structured logging for debugging
+   - Graceful error recovery
+
+### **Data Protection**
+
+- **Password Security**: Bcrypt hashing with salt rounds
+- **JWT Secrets**: Environment-based configuration
+- **Database Security**: Parameterized queries prevent injection
+- **CORS Configuration**: Controlled cross-origin access
+
+## **Testing**
+
+### **Running Tests**
 
 ```bash
-# unit tests
-$ npm run test
+# Unit tests
+npm test
 
-# e2e tests
-$ npm run test:e2e
+# Watch mode for development
+npm run test:watch
 
-# test coverage
-$ npm run test:cov
+# Test coverage report
+npm run test:cov
+
+# End-to-end tests
+npm run test:e2e
 ```
 
-## Deployment
+### **Test Structure**
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+```
+src/
+├── auth/
+│   ├── auth.service.spec.ts     # Authentication service tests
+│   └── auth.controller.spec.ts  # Authentication controller tests
+├── students/
+│   ├── students.service.spec.ts
+│   └── students.controller.spec.ts
+└── ...
+```
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### **Testing Features**
+
+- **Unit Tests**: Service and controller testing with mocks
+- **Integration Tests**: End-to-end API testing
+- **Coverage Reports**: Code coverage analysis
+- **Automated Testing**: CI/CD integration ready
+
+## **Development Guide**
+
+### **Project Structure Explained**
+
+```
+src/
+├── auth/                        # Authentication Module
+│   ├── decorators/             # Custom authorization decorators
+│   ├── guards/                 # Security guards (JWT, Roles)
+│   ├── dto/                    # Data transfer objects
+│   ├── auth.service.ts         # Authentication business logic
+│   ├── auth.controller.ts      # Authentication endpoints
+│   └── auth.module.ts          # Module configuration
+│
+├── students/                    # Student Management Module
+│   ├── dto/                    # Request/response DTOs
+│   ├── entities/               # Database entities
+│   ├── students.service.ts     # Business logic
+│   ├── students.controller.ts  # API endpoints
+│   └── students.module.ts      # Module configuration
+│
+├── roles/                       # Role & Permission System
+│   ├── entities/               # Role and permission definitions
+│   ├── roles.service.ts        # Permission validation logic
+│   └── roles.module.ts         # Module configuration
+│
+└── main.ts                     # Application bootstrap
+```
+
+### **Adding New Features**
+
+1. **Generate Module**
+   ```bash
+   nest generate module feature-name
+   nest generate service feature-name
+   nest generate controller feature-name
+   ```
+
+2. **Create Entity**
+   ```typescript
+   // src/feature-name/entities/feature.entity.ts
+   @Schema({ timestamps: true })
+   export class Feature {
+     @Prop({ required: true })
+     name: string;
+   }
+   ```
+
+3. **Create DTOs**
+   ```typescript
+   // src/feature-name/dto/create-feature.dto.ts
+   export class CreateFeatureDto {
+     @ApiProperty()
+     @IsString()
+     @IsNotEmpty()
+     name: string;
+   }
+   ```
+
+4. **Implement Service**
+   ```typescript
+   @Injectable()
+   export class FeatureService {
+     constructor(
+       @InjectModel(Feature.name)
+       private featureModel: Model<FeatureDocument>
+     ) {}
+   }
+   ```
+
+5. **Add Authorization**
+   ```typescript
+   @Controller('features')
+   export class FeatureController {
+     @RequirePermissions(Permission.CREATE_FEATURE)
+     @Post()
+     create(@Body() dto: CreateFeatureDto) {
+       return this.featureService.create(dto);
+     }
+   }
+   ```
+
+### **Code Style Guidelines**
+
+- **TypeScript**: Strict typing enabled
+- **ESLint**: Automated linting with Prettier
+- **Comments**: JSDoc for public methods and classes
+- **Naming**: Descriptive variable and function names
+- **Error Handling**: Comprehensive try-catch blocks
+- **Validation**: Input validation on all endpoints
+
+## **API Documentation**
+
+### **Interactive Documentation**
+
+Access the interactive Swagger documentation at `http://localhost:3000/doc` when the server is running.
+
+Features:
+- **Complete API Reference**: All endpoints with examples
+- **Authentication Testing**: Built-in JWT token management
+- **Request/Response Examples**: Real data examples
+- **Schema Definitions**: Complete data models
+
+### **Using the API**
+
+1. **Register a User**
+   ```bash
+   curl -X POST http://localhost:3000/auth/register \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "admin@example.com",
+       "password": "SecurePassword123",
+       "displayName": "System Administrator"
+     }'
+   ```
+
+2. **Login and Get Token**
+   ```bash
+   curl -X POST http://localhost:3000/auth/login \
+     -H "Content-Type: application/json" \
+     -d '{
+       "email": "admin@example.com",
+       "password": "SecurePassword123"
+     }'
+   ```
+
+3. **Use Protected Endpoints**
+   ```bash
+   curl -X GET http://localhost:3000/students \
+     -H "Authorization: Bearer YOUR_JWT_TOKEN_HERE"
+   ```
+
+## **Deployment**
+
+### **Production Build**
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Build the application
+npm run build
+
+# Start production server
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### **Environment Configuration**
 
-## Resources
+Production environment variables:
+```env
+NODE_ENV=production
+MONGODB_URI=mongodb://your-production-db/sirha
+JWT_SECRET=your-production-jwt-secret
+FRONTEND_URL=https://your-frontend-domain.com
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+## **Contributing**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### **Development Workflow**
 
-## Support
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes with proper documentation
+4. Add tests for new functionality
+5. Ensure all tests pass: `npm test`
+6. Commit changes: `git commit -m 'Add amazing feature'`
+7. Push to branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### **Code Review Guidelines**
 
-## Stay in touch
+- All tests must pass
+- Code coverage should not decrease
+- Documentation must be updated
+- Follow existing code style
+- Add meaningful commit messages
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## **Roadmap**
 
-## License
+### **Phase 1: Core Features** *Completed*
+- [x] Authentication system (JWT + Google OAuth)
+- [x] Role-based authorization
+- [x] Student management (full CRUD)
+- [x] Rate limiting and security
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+
+## **Team**
+
+- **Backend Developer**: LogDev
+- **Project Type**: Academic Management System
+- **Built With**: Love and lots of coffee (Marianella,Alejandra, Carlos, Sebastian, Daniel) =)
+
+## **Support**
+
+- **Issues**: hold on =)
+- **Documentation**: [API Docs](http://localhost:3000/doc)
+- **Email**: hold on =)
+
+---
+
+**SIRHA** - Simplifying academic management, one API call at a time.

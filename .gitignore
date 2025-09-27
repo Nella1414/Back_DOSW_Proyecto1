@@ -54,4 +54,12 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
-.vscode 
+
+.claude/
+
+# Coverage reports (already included above but being explicit)
+/coverage
+*.lcov
+
+# Additional IDE and editor files
+.vscode
