@@ -797,4 +797,38 @@ export class StudentsController {
   remove(@Param('id') id: string) {
     return this.studentsService.remove(id);
   }
+
+  @ApiOperation({
+    summary: 'Get student schedule',
+    description: 'Retrieves the current schedule for a specific student'
+  })
+  @ApiParam({
+    name: 'studentCode',
+    description: 'Student identification code',
+    example: 'CS2024001'
+  })
+  @ApiResponse({ status: 200, description: 'Student schedule retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiBearerAuth()
+  @Get(':studentCode/schedule')
+  getSchedule(@Param('studentCode') studentCode: string) {
+    return this.studentsService.getStudentSchedule(studentCode);
+  }
+
+  @ApiOperation({
+    summary: 'Get student academic history',
+    description: 'Retrieves the academic history with traffic light system for a student'
+  })
+  @ApiParam({
+    name: 'studentCode',
+    description: 'Student identification code',
+    example: 'CS2024001'
+  })
+  @ApiResponse({ status: 200, description: 'Academic history retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiBearerAuth()
+  @Get(':studentCode/academic-history')
+  getAcademicHistory(@Param('studentCode') studentCode: string) {
+    return this.studentsService.getStudentAcademicHistory(studentCode);
+  }
 }

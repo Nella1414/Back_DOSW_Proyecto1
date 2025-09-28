@@ -1,21 +1,25 @@
 import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsNumber, Min } from 'class-validator';
 
-export class CreateProgramDto {
+export class CreateCourseGroupDto {
   @IsString()
   @IsNotEmpty()
-  code: string;
+  courseId: string;
 
   @IsString()
   @IsNotEmpty()
-  name: string;
+  groupNumber: string;
 
   @IsString()
   @IsNotEmpty()
-  facultyId: string;
+  periodId: string;
 
   @IsNumber()
   @Min(1)
-  totalSemesters: number;
+  maxStudents: number;
+
+  @IsString()
+  @IsOptional()
+  professorId?: string;
 
   @IsBoolean()
   @IsOptional()
@@ -23,14 +27,9 @@ export class CreateProgramDto {
 
   @IsString()
   @IsOptional()
-  description?: string;
+  classroom?: string;
 
   @IsString()
   @IsOptional()
-  degree?: string;
-
-  @IsNumber()
-  @IsOptional()
-  @Min(0)
-  totalCredits?: number;
+  observations?: string;
 }

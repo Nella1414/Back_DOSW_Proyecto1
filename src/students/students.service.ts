@@ -9,6 +9,7 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 
 // Import Student entity and document type for database operations
 import { Student, StudentDocument } from './entities/student.entity';
+import { StudentScheduleService } from './services/student-schedule.service';
 
 /**
  * StudentsService handles all business logic for student management
@@ -36,7 +37,8 @@ export class StudentsService {
    */
   constructor(
     @InjectModel(Student.name)
-    private readonly studentModel: Model<StudentDocument>
+    private readonly studentModel: Model<StudentDocument>,
+    private readonly studentScheduleService: StudentScheduleService
   ) {}
 
   /**
@@ -141,5 +143,13 @@ export class StudentsService {
     if (!result) {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
+  }
+
+  async getStudentSchedule(studentCode: string) {
+    return await this.studentScheduleService.getStudentSchedule(studentCode);
+  }
+
+  async getStudentAcademicHistory(studentCode: string) {
+    return await this.studentScheduleService.getStudentAcademicHistory(studentCode);
   }
 }
