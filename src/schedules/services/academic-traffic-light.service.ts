@@ -7,30 +7,67 @@ import { CourseGroup, CourseGroupDocument } from '../../course-groups/entities/c
 import { Course, CourseDocument } from '../../courses/entities/course.entity';
 import { AcademicPeriod, AcademicPeriodDocument } from '../../academic-periods/entities/academic-period.entity';
 
+/**
+ * Traffic Light Color Types
+ *
+ * ! NOTA: Los colores del semáforo académico representan el estado del estudiante
+ * * green: Rendimiento excelente o bueno
+ * ? yellow: Rendimiento regular que requiere atención
+ * ! red: Rendimiento deficiente que requiere intervención inmediata
+ */
 export type TrafficLightColor = 'green' | 'yellow' | 'red';
 
+/**
+ * Student Academic Status Interface
+ *
+ * Represents the comprehensive academic status of a student
+ * including performance metrics and risk assessment
+ */
 export interface StudentAcademicStatus {
-  studentId: string;
-  studentName: string;
-  currentSemester: number;
-  overallColor: TrafficLightColor;
-  passedCredits: number;
-  totalCredits: number;
-  gpa: number;
-  riskLevel: 'low' | 'medium' | 'high';
-  recommendations: string[];
+  studentId: string; // * Código único del estudiante
+  studentName: string; // * Nombre completo del estudiante
+  currentSemester: number; // * Semestre académico actual
+  overallColor: TrafficLightColor; // ! Color general del semáforo académico
+  passedCredits: number; // * Créditos aprobados
+  totalCredits: number; // * Total de créditos cursados
+  gpa: number; // * Promedio ponderado acumulado
+  riskLevel: 'low' | 'medium' | 'high'; // ! Nivel de riesgo académico
+  recommendations: string[]; // ? Recomendaciones para el estudiante
 }
 
+/**
+ * Course Status Interface
+ *
+ * Represents the status of a specific course for a student
+ * including enrollment status and performance metrics
+ */
 export interface CourseStatus {
-  courseCode: string;
-  courseName: string;
-  credits: number;
-  grade?: number;
-  status: EnrollmentStatus;
-  color: TrafficLightColor;
-  periodCode: string;
+  courseCode: string; // * Código del curso
+  courseName: string; // * Nombre del curso
+  credits: number; // * Número de créditos del curso
+  grade?: number; // ? Calificación obtenida (si está disponible)
+  status: EnrollmentStatus; // * Estado de la matrícula
+  color: TrafficLightColor; // ! Color del semáforo para este curso
+  periodCode: string; // * Código del periodo académico
 }
 
+/**
+ * Academic Traffic Light Service
+ *
+ * Core service that implements the academic traffic light system logic.
+ * This service calculates and provides academic performance indicators
+ * for students based on their enrollment history and grades.
+ *
+ * Features:
+ * - Student academic status calculation with traffic light colors
+ * - Course-level performance tracking
+ * - Risk assessment and recommendations
+ * - Academic statistics aggregation
+ *
+ * ! IMPORTANTE: Este servicio contiene la lógica principal del sistema
+ * ! de semáforo académico y debe ser la única fuente de verdad para
+ * ! los cálculos de rendimiento académico
+ */
 @Injectable()
 export class AcademicTrafficLightService {
   constructor(

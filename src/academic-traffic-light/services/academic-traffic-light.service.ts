@@ -1,19 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAcademicTrafficLightDto } from '../dto/create-academic-traffic-light.dto';
-import { UpdateAcademicTrafficLightDto } from '../dto/update-academic-traffic-light.dto';
 import { AcademicTrafficLightService as SchedulesTrafficLightService } from '../../schedules/services/academic-traffic-light.service';
 import { StudentAcademicStatusDto, AcademicStatisticsDto, StudentTrafficLightReportDto } from '../../schedules/dto/academic-traffic-light.dto';
 
 /**
- * * Academic Traffic Light Controller Service
+ * Academic Traffic Light Controller Service
  *
- * This service acts as a controller-level service that delegates
+ * This service acts as a controller-level facade that delegates
  * the actual traffic light logic to the specialized service in schedules module.
  * Provides REST API endpoints for academic traffic light functionality.
+ *
+ * ! IMPORTANTE: Este servicio es una fachada que delega la lógica real
+ * ! al servicio especializado en el módulo de horarios
  */
 @Injectable()
 export class AcademicTrafficLightService {
   constructor(
+    // TODO: Inyectar el servicio de semáforo académico del módulo de horarios
     private readonly schedulesTrafficLightService: SchedulesTrafficLightService,
   ) {}
   /**
@@ -54,9 +56,14 @@ export class AcademicTrafficLightService {
 
   /**
    * Legacy create method - now redirects to get student status
+   *
+   * ! DEPRECADO: El sistema de semáforo se calcula automáticamente
    */
-  create(createAcademicTrafficLightDto: CreateAcademicTrafficLightDto) {
-    return 'Use /students/{studentId}/academic-status endpoint to get student traffic light status';
+  create() {
+    return {
+      message: 'Traffic light status is automatically calculated based on student performance',
+      recommendation: 'Use /academic-traffic-light/student/{studentId}/status endpoint to get student traffic light status'
+    };
   }
 
   /**
@@ -75,15 +82,25 @@ export class AcademicTrafficLightService {
 
   /**
    * Update is not applicable for automatically calculated traffic light status
+   *
+   * ! DEPRECADO: El sistema de semáforo se calcula automáticamente
    */
-  update(id: number, updateAcademicTrafficLightDto: UpdateAcademicTrafficLightDto) {
-    return 'Traffic light status is automatically calculated based on student performance';
+  update(id: number) {
+    return {
+      message: 'Traffic light status is automatically calculated based on student performance',
+      recommendation: 'Academic status updates when student enrollments and grades change'
+    };
   }
 
   /**
    * Remove is not applicable for automatically calculated traffic light status
+   *
+   * ! DEPRECADO: El sistema de semáforo se calcula automáticamente
    */
   remove(id: number) {
-    return 'Traffic light status cannot be deleted as it is automatically calculated';
+    return {
+      message: 'Traffic light status cannot be deleted as it is automatically calculated',
+      recommendation: 'Academic status is dynamically calculated based on student performance data'
+    };
   }
 }
