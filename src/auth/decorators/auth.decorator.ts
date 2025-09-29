@@ -94,8 +94,8 @@ export const AuthenticatedOnly = () => SetMetadata('authenticated', true);
 /**
  * @Auth - Requires user to have specific roles (simplified version)
  *
- * Usage: @Auth('ADMIN', 'FACULTY')
- * Effect: Only users with ADMIN OR FACULTY roles can access the route
+ * Usage: @Auth('ADMIN', 'DEAN')
+ * Effect: Only users with ADMIN OR DEAN roles can access the route
  *
  * @param roles - One or more role names as strings
  * @returns Decorator function that sets role metadata

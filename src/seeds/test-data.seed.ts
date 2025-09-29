@@ -266,7 +266,7 @@ export async function seedTestData() {
       firstName: 'Carlos',
       lastName: 'Rodriguez',
       externalId: 'FAC001',
-      roles: ['FACULTY'],
+      roles: ['DEAN'],
       active: true,
       isGoogleUser: false,
       password: '$2b$10$ekh5F33YuNEQ46udXcb/QOTgkGDUWIBcahaQALXhKu3p0RpobIZdq',
@@ -438,7 +438,8 @@ export async function seedTestData() {
     // Get current period groups for detailed scheduling
     const currentPeriodGroups = courseGroups.filter(
       (group) =>
-        group.periodId.toString() === (periods.currentPeriod._id as any).toString(),
+        group.periodId.toString() ===
+        (periods.currentPeriod._id as any).toString(),
     );
 
     // Schedule for current semester courses (Student 1 - Semester 5)

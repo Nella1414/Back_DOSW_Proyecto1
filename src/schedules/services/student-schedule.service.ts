@@ -49,7 +49,7 @@ export class StudentScheduleService {
   ) {}
 
   async getCurrentSchedule(studentId: string): Promise<StudentScheduleDto> {
-    const student = await this.studentModel.findOne({ code: studentId }).exec();
+    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
       throw new Error('Student not found');
     }
@@ -179,7 +179,7 @@ export class StudentScheduleService {
   async getStudentAcademicHistory(
     studentId: string,
   ): Promise<AcademicHistoryDto> {
-    const student = await this.studentModel.findOne({ code: studentId }).exec();
+    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
       throw new Error('Student not found');
     }
@@ -249,7 +249,7 @@ export class StudentScheduleService {
     fromDate?: string,
     toDate?: string,
   ): Promise<any> {
-    const student = await this.studentModel.findOne({ code: studentId }).exec();
+    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
       throw new Error('Student not found');
     }
@@ -307,7 +307,7 @@ export class StudentScheduleService {
     studentId: string,
     periodId: string,
   ): Promise<any> {
-    const student = await this.studentModel.findOne({ code: studentId }).exec();
+    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
       throw new Error('Student not found');
     }

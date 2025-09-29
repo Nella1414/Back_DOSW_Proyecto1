@@ -96,7 +96,7 @@ export class AcademicPeriodsController {
    * Get all academic periods with pagination and filters
    */
   @Get()
-  @Auth('ADMIN', 'FACULTY', 'STUDENT')
+  @Auth('ADMIN', 'DEAN', 'STUDENT')
   @ApiOperation({
     summary: 'Get academic periods',
     description:

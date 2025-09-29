@@ -21,24 +21,6 @@ import {
 } from '@nestjs/swagger';
 import { Auth } from '../../auth/decorators/auth.decorator';
 
-// * ═══════════════════════════════════════════════════════════════
-// *                    SCHEDULES CONTROLLER - SPRINT 2
-// * ═══════════════════════════════════════════════════════════════
-
-/**
- * ! SPRINT 2 IMPLEMENTATION: Complete schedules management system
- *
- * * FEATURES IMPLEMENTED:
- * - ✅ Current schedule with conflict detection (US-0006 to US-0010)
- * - ✅ Historical schedules with academic records (US-0011 to US-0015)
- * - ✅ Academic traffic light performance indicator (US-0016 to US-0020)
- *
- * ? AUTHORIZATION PATTERNS:
- * - Students can only access their own data
- * - ADMIN/FACULTY can access any student's data
- * - All unauthorized access attempts are logged
- */
-
 @ApiTags('Student Schedules')
 @ApiBearerAuth()
 @Controller('schedules')
@@ -52,28 +34,8 @@ export class SchedulesController {
     private readonly academicTrafficLightService: AcademicTrafficLightService,
   ) {}
 
-  // * ═══════════════════════════════════════════════════════════════
-  // *                    CURRENT SCHEDULE ENDPOINT
-  // * ═══════════════════════════════════════════════════════════════
-
-  /**
-   * ! US-0006 to US-0010: Current Schedule Feature Implementation
-   *
-   * * ENDPOINT: GET /schedules/current
-   * * PURPOSE: Get current semester schedule with conflict detection
-   *
-   * ? PARAMETERS:
-   * - userId (optional): Access other student's schedule (ADMIN/FACULTY only)
-   *
-   * * FEATURES:
-   * - ✅ Ordered by days and hours (US-0006)
-   * - ✅ Authorization validation (US-0007)
-   * - ✅ Room information included (US-0008)
-   * - ✅ Conflict detection (US-0009)
-   * - ✅ Empty schedule handling (US-0010)
-   */
   @Get('current')
-  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({ summary: 'Get current schedule for authenticated student' })
   @ApiResponse({
     status: 200,
@@ -92,11 +54,11 @@ export class SchedulesController {
 
     let targetUserId = authenticatedUserId;
 
-    // ! AUTHORIZATION: Validate cross-student access (US-0007)
+    // ! AUTHORIZATION: Validate cross-student access
     if (queryUserId) {
       if (
         !userRoles.includes('ADMIN') &&
-        !userRoles.includes('FACULTY') &&
+        !userRoles.includes('DEAN') &&
         queryUserId !== authenticatedUserId
       ) {
         // ! SECURITY: Log unauthorized access attempts for audit trail
@@ -155,7 +117,7 @@ export class SchedulesController {
   }
 
   @Get('historical')
-  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({ summary: 'Get historical schedules for closed periods' })
   @ApiResponse({
     status: 200,
@@ -179,7 +141,7 @@ export class SchedulesController {
     if (queryUserId) {
       if (
         !userRoles.includes('ADMIN') &&
-        !userRoles.includes('FACULTY') &&
+        !userRoles.includes('DEAN') &&
         queryUserId !== authenticatedUserId
       ) {
         this.logger.warn(
@@ -236,7 +198,7 @@ export class SchedulesController {
   }
 
   @Get('historical/:periodId')
-  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({
     summary: 'Get specific historical schedule for a closed period',
   })
@@ -258,7 +220,7 @@ export class SchedulesController {
     if (queryUserId) {
       if (
         !userRoles.includes('ADMIN') &&
-        !userRoles.includes('FACULTY') &&
+        !userRoles.includes('DEAN') &&
         queryUserId !== authenticatedUserId
       ) {
         this.logger.warn(
@@ -315,7 +277,7 @@ export class SchedulesController {
   }
 
   @Get('traffic-light')
-  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({ summary: 'Get academic traffic light status' })
   @ApiResponse({
     status: 200,
@@ -334,7 +296,7 @@ export class SchedulesController {
     if (queryUserId) {
       if (
         !userRoles.includes('ADMIN') &&
-        !userRoles.includes('FACULTY') &&
+        !userRoles.includes('DEAN') &&
         queryUserId !== authenticatedUserId
       ) {
         this.logger.warn(
