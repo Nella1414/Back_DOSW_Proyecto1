@@ -13,6 +13,7 @@ import { GroupSchedule, GroupScheduleDocument } from '../group-schedules/entitie
 import { Student, StudentDocument } from '../students/entities/student.entity';
 import { User, UserDocument } from '../users/entities/user.entity';
 import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../enrollments/entities/enrollment.entity';
+import { Role, RoleDocument, RoleName, Permission } from '../roles/entities/role.entity';
 
 export async function seedTestData() {
   console.log('Starting test data seeding...');
@@ -29,6 +30,7 @@ export async function seedTestData() {
   const studentModel = app.get<Model<StudentDocument>>(getModelToken(Student.name));
   const userModel = app.get<Model<UserDocument>>(getModelToken(User.name));
   const enrollmentModel = app.get<Model<EnrollmentDocument>>(getModelToken(Enrollment.name));
+  const roleModel = app.get<Model<RoleDocument>>(getModelToken(Role.name));
 
   try {
     // Clear existing data
@@ -42,8 +44,35 @@ export async function seedTestData() {
       groupScheduleModel.deleteMany({}),
       studentModel.deleteMany({}),
       userModel.deleteMany({}),
-      enrollmentModel.deleteMany({})
+      enrollmentModel.deleteMany({}),
+      roleModel.deleteMany({})
     ]);
+
+    // 0. Create Roles first
+    console.log('Creating Roles...');
+    const studentRole = await roleModel.create({
+      name: RoleName.STUDENT,
+      displayName: 'Student',
+      description: 'Student role with basic permissions',
+      permissions: [
+        Permission.READ_USER,
+        Permission.READ_COURSE,
+        Permission.READ_ENROLLMENT,
+        Permission.CREATE_ENROLLMENT,
+        Permission.READ_GRADE
+      ],
+      isActive: true,
+      priority: 3
+    });
+
+    const adminRole = await roleModel.create({
+      name: RoleName.ADMIN,
+      displayName: 'Administrator',
+      description: 'Administrator with full permissions',
+      permissions: Object.values(Permission),
+      isActive: true,
+      priority: 1
+    });
 
     // 1. Create Faculty
     console.log('Creating Faculty...');
@@ -82,7 +111,31 @@ export async function seedTestData() {
       isActive: true
     });
 
-    // 4. Create Test User (Student)
+    // 4. Create Admin Users
+    console.log('Creating Admin Users...');
+    const adminUser1 = await userModel.create({
+      email: 'daniel.useche-p@mail.com',
+      displayName: 'Daniel Useche',
+      firstName: 'Daniel',
+      lastName: 'Useche',
+      roles: ['ADMIN'],
+      active: true,
+      isGoogleUser: false,
+      password: '$2b$10$2unRvDeHXQV6CNhTf/G1J.DRQRv0TAuBYgSqpRhgelv7HSuC6sD3W' // 123456789
+    });
+
+    const adminUser2 = await userModel.create({
+      email: 'laura.venegas-p@mail.com',
+      displayName: 'Laura Venegas',
+      firstName: 'Laura',
+      lastName: 'Venegas',
+      roles: ['ADMIN'],
+      active: true,
+      isGoogleUser: false,
+      password: '$2b$10$2unRvDeHXQV6CNhTf/G1J.DRQRv0TAuBYgSqpRhgelv7HSuC6sD3W' // 123456789
+    });
+
+    // 5. Create Test User (Student)
     console.log('Creating Test User...');
     const testUser = await userModel.create({
       email: 'juan.perez@estudiante.edu',
@@ -92,10 +145,10 @@ export async function seedTestData() {
       roles: ['STUDENT'],
       active: true,
       isGoogleUser: false,
-      password: '$2b$10$example.hashed.password'
+      password: '$2b$10$ekh5F33YuNEQ46udXcb/QOTgkGDUWIBcahaQALXhKu3p0RpobIZdq'
     });
 
-    // 5. Create Student
+    // 6. Create Student
     console.log('Creating Student...');
     const student = await studentModel.create({
       code: 'SIS2024001',
@@ -105,7 +158,7 @@ export async function seedTestData() {
       currentSemester: 3
     });
 
-    // 6. Create Courses
+    // 7. Create Courses
     console.log('Creating Courses...');
     const courses = await courseModel.insertMany([
       {
@@ -165,7 +218,7 @@ export async function seedTestData() {
       courseGroups.push(groupA, groupB);
     }
 
-    // 7. Create Group Schedules
+    // 8. Create Group Schedules
     console.log('Creating Group Schedules...');
     const schedules = [
       // Differential Calculus - Group A
@@ -195,7 +248,7 @@ export async function seedTestData() {
 
     await groupScheduleModel.insertMany(schedules);
 
-    // 8. Create Student Enrollments (Current Semester)
+    // 9. Create Student Enrollments (Current Semester)
     console.log('Creating Student Enrollments...');
     const enrollments = [
       {
@@ -224,7 +277,7 @@ export async function seedTestData() {
       { $inc: { currentEnrollments: 1 } }
     );
 
-    // 9. Create Historical Enrollments (Previous Semesters)
+    // 10. Create Historical Enrollments (Previous Semesters)
     console.log('Creating Historical Enrollments...');
     const historicalEnrollments = [
       {
@@ -247,8 +300,13 @@ export async function seedTestData() {
 
     console.log('Test data seeded successfully!');
     console.log('\nTEST DATA SUMMARY:');
+    console.log('\nADMIN USERS:');
+    console.log('Admin 1: daniel.useche-p@mail.com (password: 123456789)');
+    console.log('Admin 2: laura.venegas-p@mail.com (password: 123456789)');
+    console.log('\nSTUDENT USER:');
     console.log('Test User: juan.perez@estudiante.edu');
     console.log('Student Code: SIS2024001');
+    console.log('\nACADEMIC DATA:');
     console.log('Faculty: Faculty of Engineering');
     console.log('Program: Systems Engineering');
     console.log('Period: 2024-1 (Active)');
@@ -265,6 +323,8 @@ export async function seedTestData() {
       courseGroups,
       student,
       testUser,
+      adminUser1,
+      adminUser2,
       enrollments
     };
 

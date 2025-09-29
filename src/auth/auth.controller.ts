@@ -12,7 +12,7 @@ import {
   ApiProduces
 } from '@nestjs/swagger';
 
-import { AuthService } from './auth.service';
+import { AuthService } from './services/auth.service';
 import { LoginAuthDto } from './dto/login-auth.dto';
 import { RegisterAuthDto } from './dto/register-auth.dto';
 import { AdminOnly, Public } from './decorators/auth.decorator';

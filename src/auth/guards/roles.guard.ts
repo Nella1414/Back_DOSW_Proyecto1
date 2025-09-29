@@ -3,7 +3,7 @@ import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@
 import { Reflector } from '@nestjs/core';
 
 // Import services and types for role/permission management
-import { RolesService } from '../../roles/roles.service';
+import { RolesService } from '../../roles/services/roles.service';
 import { ROLES_KEY, PERMISSIONS_KEY, IS_PUBLIC_KEY } from '../decorators/auth.decorator';
 import { RoleName, Permission } from '../../roles/entities/role.entity';
 

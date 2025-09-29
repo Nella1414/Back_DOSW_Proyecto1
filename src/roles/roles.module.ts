@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { RolesService } from './roles.service';
+import { RolesService } from './services/roles.service';
 import { RolesController } from './roles.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Role, RoleSchema } from './entities/role.entity';

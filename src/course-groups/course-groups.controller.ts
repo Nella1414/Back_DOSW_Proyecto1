@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { CourseGroupsService } from './course-groups.service';
+import { CourseGroupsService } from './services/course-groups.service';
 import { CreateCourseGroupDto } from './dto/create-course-group.dto';
 import { UpdateCourseGroupDto } from './dto/update-course-group.dto';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';

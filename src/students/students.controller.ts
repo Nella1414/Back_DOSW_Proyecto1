@@ -9,7 +9,7 @@ import {
   ApiConsumes,
   ApiProduces
 } from '@nestjs/swagger';
-import { StudentsService } from './students.service';
+import { StudentsService } from './services/students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';
@@ -813,6 +813,24 @@ export class StudentsController {
   @Get(':studentCode/schedule')
   getSchedule(@Param('studentCode') studentCode: string) {
     return this.studentsService.getStudentSchedule(studentCode);
+  }
+
+  @ApiOperation({
+    summary: 'Get student by code',
+    description: 'Retrieves student information using their student code'
+  })
+  @ApiParam({
+    name: 'studentCode',
+    description: 'Student identification code',
+    example: 'SIS2024001'
+  })
+  @ApiResponse({ status: 200, description: 'Student found successfully' })
+  @ApiResponse({ status: 404, description: 'Student not found' })
+  @ApiBearerAuth()
+  @RequirePermissions(Permission.READ_USER)
+  @Get('code/:studentCode')
+  findByCode(@Param('studentCode') studentCode: string) {
+    return this.studentsService.findByCode(studentCode);
   }
 
   @ApiOperation({

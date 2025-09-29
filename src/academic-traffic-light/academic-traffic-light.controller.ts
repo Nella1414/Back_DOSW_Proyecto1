@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { AcademicTrafficLightService } from './academic-traffic-light.service';
+import { AcademicTrafficLightService } from './services/academic-traffic-light.service';
 import { CreateAcademicTrafficLightDto } from './dto/create-academic-traffic-light.dto';
 import { UpdateAcademicTrafficLightDto } from './dto/update-academic-traffic-light.dto';
 
@@ -19,7 +19,7 @@ export class AcademicTrafficLightController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.academicTrafficLightService.findOne(+id);
+    return this.academicTrafficLightService.findOne(id);
   }
 
   @Patch(':id')

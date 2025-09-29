@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { GroupSchedulesService } from './group-schedules.service';
+import { GroupSchedulesService } from './services/group-schedules.service';
 import { CreateGroupScheduleDto } from './dto/create-group-schedule.dto';
 import { UpdateGroupScheduleDto } from './dto/update-group-schedule.dto';
 

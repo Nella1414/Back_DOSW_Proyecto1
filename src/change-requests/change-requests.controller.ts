@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Req, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam, ApiQuery } from '@nestjs/swagger';
-import { ChangeRequestsService } from './change-requests.service';
+import { ChangeRequestsService } from './services/change-requests.service';
 import { CreateChangeRequestDto, ApproveChangeRequestDto, RejectChangeRequestDto } from './dto/change-request-response.dto';
 import { RequestState } from './entities/change-request.entity';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';

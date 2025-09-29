@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { WaitlistsService } from './waitlists.service';
+import { WaitlistsService } from './services/waitlists.service';
 import { WaitlistsController } from './waitlists.controller';
 
 @Module({

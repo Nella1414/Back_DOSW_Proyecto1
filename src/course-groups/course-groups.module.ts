@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CourseGroup, CourseGroupSchema } from './entities/course-group.entity';
-import { CourseGroupsService } from './course-groups.service';
+import { CourseGroupsService } from './services/course-groups.service';
 import { CourseGroupsController } from './course-groups.controller';
 import { Course, CourseSchema } from '../courses/entities/course.entity';
 import { AcademicPeriod, AcademicPeriodSchema } from '../academic-periods/entities/academic-period.entity';
