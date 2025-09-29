@@ -116,13 +116,13 @@ export class StudentScheduleService {
     }
 
     const daysOfWeek = [
-      'Domingo',
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
     ];
     const schedule: DailyScheduleDto[] = [];
 
@@ -369,13 +369,13 @@ export class StudentScheduleService {
     }
 
     const daysOfWeek = [
-      'Domingo',
-      'Lunes',
-      'Martes',
-      'Miércoles',
-      'Jueves',
-      'Viernes',
-      'Sábado',
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
     ];
     const schedule: any[] = [];
 

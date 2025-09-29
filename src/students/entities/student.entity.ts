@@ -19,6 +19,9 @@ export class Student {
 
   @Prop()
   currentSemester?: number;
+
+  @Prop({ required: true, unique: true })
+  externalId: string;
 }
 
 export const StudentSchema = SchemaFactory.createForClass(Student);
