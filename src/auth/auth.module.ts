@@ -12,18 +12,16 @@ import { GoogleStrategy } from './strategies/google.strategy';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema }
-    ]),
+    MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     PassportModule,
-    ConfigModule, 
+    ConfigModule,
     RolesModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { 
-          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h') 
+        signOptions: {
+          expiresIn: configService.get<string>('JWT_EXPIRES_IN', '24h'),
         },
       }),
       inject: [ConfigService],

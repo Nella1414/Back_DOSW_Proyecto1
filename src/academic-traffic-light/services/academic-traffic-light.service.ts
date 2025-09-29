@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { AcademicTrafficLightService as SchedulesTrafficLightService } from '../../schedules/services/academic-traffic-light.service';
-import { StudentAcademicStatusDto, AcademicStatisticsDto, StudentTrafficLightReportDto } from '../../schedules/dto/academic-traffic-light.dto';
+import {
+  StudentAcademicStatusDto,
+  AcademicStatisticsDto,
+  StudentTrafficLightReportDto,
+} from '../../schedules/dto/academic-traffic-light.dto';
 
 /**
  * Academic Traffic Light Controller Service
@@ -22,35 +26,51 @@ export class AcademicTrafficLightService {
    * Get comprehensive academic statistics for all students
    */
   async getAcademicStatistics(): Promise<AcademicStatisticsDto> {
-    const stats = await this.schedulesTrafficLightService.getAcademicStatistics();
+    const stats =
+      await this.schedulesTrafficLightService.getAcademicStatistics();
 
     return {
       ...stats,
-      greenPercentage: stats.totalStudents > 0 ? Math.round((stats.greenStudents / stats.totalStudents) * 100) : 0,
-      yellowPercentage: stats.totalStudents > 0 ? Math.round((stats.yellowStudents / stats.totalStudents) * 100) : 0,
-      redPercentage: stats.totalStudents > 0 ? Math.round((stats.redStudents / stats.totalStudents) * 100) : 0,
+      greenPercentage:
+        stats.totalStudents > 0
+          ? Math.round((stats.greenStudents / stats.totalStudents) * 100)
+          : 0,
+      yellowPercentage:
+        stats.totalStudents > 0
+          ? Math.round((stats.yellowStudents / stats.totalStudents) * 100)
+          : 0,
+      redPercentage:
+        stats.totalStudents > 0
+          ? Math.round((stats.redStudents / stats.totalStudents) * 100)
+          : 0,
     };
   }
 
   /**
    * Get academic status for a specific student
    */
-  async getStudentAcademicStatus(studentId: string): Promise<StudentAcademicStatusDto> {
-    return await this.schedulesTrafficLightService.getStudentAcademicStatus(studentId);
+  async getStudentAcademicStatus(
+    studentId: string,
+  ): Promise<StudentAcademicStatusDto> {
+    return await this.schedulesTrafficLightService.getStudentAcademicStatus(
+      studentId,
+    );
   }
 
   /**
    * Get complete traffic light report for a student
    */
-  async getStudentTrafficLightReport(studentId: string): Promise<StudentTrafficLightReportDto> {
+  async getStudentTrafficLightReport(
+    studentId: string,
+  ): Promise<StudentTrafficLightReportDto> {
     const [studentInfo, courseStatuses] = await Promise.all([
       this.schedulesTrafficLightService.getStudentAcademicStatus(studentId),
-      this.schedulesTrafficLightService.getStudentCourseStatuses(studentId)
+      this.schedulesTrafficLightService.getStudentCourseStatuses(studentId),
     ]);
 
     return {
       studentInfo,
-      courseStatuses
+      courseStatuses,
     };
   }
 
@@ -61,8 +81,10 @@ export class AcademicTrafficLightService {
    */
   create() {
     return {
-      message: 'Traffic light status is automatically calculated based on student performance',
-      recommendation: 'Use /academic-traffic-light/student/{studentId}/status endpoint to get student traffic light status'
+      message:
+        'Traffic light status is automatically calculated based on student performance',
+      recommendation:
+        'Use /academic-traffic-light/student/{studentId}/status endpoint to get student traffic light status',
     };
   }
 
@@ -87,8 +109,10 @@ export class AcademicTrafficLightService {
    */
   update(id: number) {
     return {
-      message: 'Traffic light status is automatically calculated based on student performance',
-      recommendation: 'Academic status updates when student enrollments and grades change'
+      message:
+        'Traffic light status is automatically calculated based on student performance',
+      recommendation:
+        'Academic status updates when student enrollments and grades change',
     };
   }
 
@@ -99,8 +123,10 @@ export class AcademicTrafficLightService {
    */
   remove(id: number) {
     return {
-      message: 'Traffic light status cannot be deleted as it is automatically calculated',
-      recommendation: 'Academic status is dynamically calculated based on student performance data'
+      message:
+        'Traffic light status cannot be deleted as it is automatically calculated',
+      recommendation:
+        'Academic status is dynamically calculated based on student performance data',
     };
   }
 }

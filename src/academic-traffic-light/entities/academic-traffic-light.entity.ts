@@ -8,13 +8,13 @@ export enum AcademicStanding {
   GOOD = 'good',
   WARNING = 'warning',
   PROBATION = 'probation',
-  CRITICAL = 'critical'
+  CRITICAL = 'critical',
 }
 
 export enum TrafficLightColor {
   GREEN = 'green',
   YELLOW = 'yellow',
-  RED = 'red'
+  RED = 'red',
 }
 
 @Schema({ timestamps: true })
@@ -59,4 +59,5 @@ export class AcademicTrafficLight {
   enrolledCourses: number;
 }
 
-export const AcademicTrafficLightSchema = SchemaFactory.createForClass(AcademicTrafficLight);
+export const AcademicTrafficLightSchema =
+  SchemaFactory.createForClass(AcademicTrafficLight);

@@ -1,4 +1,12 @@
-import { IsOptional, IsNumber, Min, Max, IsBoolean, IsString, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsBoolean,
+  IsString,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { SearchSortDto } from '../../common/dto/pagination.dto';
@@ -22,7 +30,7 @@ export class QueryCoursesDto extends SearchSortDto {
   @ApiProperty({
     description: 'Filter by active status (true for active courses only)',
     example: true,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Boolean)
@@ -39,7 +47,7 @@ export class QueryCoursesDto extends SearchSortDto {
     example: 2,
     minimum: 1,
     maximum: 10,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -58,7 +66,7 @@ export class QueryCoursesDto extends SearchSortDto {
     example: 4,
     minimum: 1,
     maximum: 10,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -73,11 +81,12 @@ export class QueryCoursesDto extends SearchSortDto {
    * ? Filtro por nivel académico del curso
    */
   @ApiProperty({
-    description: 'Filter by academic level (1-4 for undergraduate, 5+ for graduate)',
+    description:
+      'Filter by academic level (1-4 for undergraduate, 5+ for graduate)',
     example: 1,
     minimum: 1,
     maximum: 8,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -95,7 +104,7 @@ export class QueryCoursesDto extends SearchSortDto {
     description: 'Filter by course category',
     example: 'Core',
     enum: ['Core', 'Elective', 'Laboratory', 'Seminar', 'Workshop', 'Thesis'],
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -110,7 +119,7 @@ export class QueryCoursesDto extends SearchSortDto {
   @ApiProperty({
     description: 'Filter to include only courses that have prerequisites',
     example: false,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Boolean)
@@ -126,7 +135,7 @@ export class QueryCoursesDto extends SearchSortDto {
     description: 'Filter by course code prefix (e.g., CS, MATH, ENG)',
     example: 'CS',
     maxLength: 10,
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -140,8 +149,15 @@ export class QueryCoursesDto extends SearchSortDto {
   @ApiProperty({
     description: 'Field to sort courses by',
     example: 'code',
-    enum: ['code', 'name', 'credits', 'academicLevel', 'createdAt', 'updatedAt'],
-    required: false
+    enum: [
+      'code',
+      'name',
+      'credits',
+      'academicLevel',
+      'createdAt',
+      'updatedAt',
+    ],
+    required: false,
   })
   @IsOptional()
   @IsString()

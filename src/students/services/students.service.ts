@@ -1,5 +1,9 @@
 // Import NestJS decorators and exception classes for service implementation
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 
@@ -38,7 +42,7 @@ export class StudentsService {
   constructor(
     @InjectModel(Student.name)
     private readonly studentModel: Model<StudentDocument>,
-    private readonly studentScheduleService: StudentScheduleService
+    private readonly studentScheduleService: StudentScheduleService,
   ) {}
 
   /**
@@ -58,7 +62,7 @@ export class StudentsService {
     try {
       // Step 1: Check for existing student with same code
       const existingStudent = await this.studentModel.findOne({
-        code: createStudentDto.code
+        code: createStudentDto.code,
       });
 
       if (existingStudent) {
@@ -125,7 +129,10 @@ export class StudentsService {
    * @returns Promise<Student> - The updated student
    * @throws NotFoundException - If student with given ID doesn't exist
    */
-  async update(id: string, updateStudentDto: UpdateStudentDto): Promise<Student> {
+  async update(
+    id: string,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<Student> {
     const updatedStudent = await this.studentModel
       .findByIdAndUpdate(id, updateStudentDto, { new: true })
       .exec();
@@ -156,10 +163,12 @@ export class StudentsService {
   }
 
   async getStudentSchedule(studentCode: string) {
-    return await this.studentScheduleService.getStudentSchedule(studentCode);
+    return await this.studentScheduleService.getCurrentSchedule(studentCode);
   }
 
   async getStudentAcademicHistory(studentCode: string) {
-    return await this.studentScheduleService.getStudentAcademicHistory(studentCode);
+    return await this.studentScheduleService.getStudentAcademicHistory(
+      studentCode,
+    );
   }
 }

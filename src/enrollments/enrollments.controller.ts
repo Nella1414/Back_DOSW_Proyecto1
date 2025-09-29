@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { EnrollmentsService } from './services/enrollments.service';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
@@ -13,7 +21,10 @@ export class EnrollmentsController {
   }
 
   @Post(':studentCode/enroll/:groupId')
-  enrollStudent(@Param('studentCode') studentCode: string, @Param('groupId') groupId: string) {
+  enrollStudent(
+    @Param('studentCode') studentCode: string,
+    @Param('groupId') groupId: string,
+  ) {
     return this.enrollmentsService.enrollStudentInCourse(studentCode, groupId);
   }
 
@@ -33,7 +44,10 @@ export class EnrollmentsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateEnrollmentDto: UpdateEnrollmentDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateEnrollmentDto: UpdateEnrollmentDto,
+  ) {
     return this.enrollmentsService.update(id, updateEnrollmentDto);
   }
 

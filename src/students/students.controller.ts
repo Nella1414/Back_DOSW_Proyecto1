@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,7 +15,7 @@ import {
   ApiBody,
   ApiParam,
   ApiConsumes,
-  ApiProduces
+  ApiProduces,
 } from '@nestjs/swagger';
 import { StudentsService } from './services/students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
@@ -61,7 +69,7 @@ export class StudentsController {
     - Program change documentation
     - Academic record initialization
     `,
-    operationId: 'createStudent'
+    operationId: 'createStudent',
   })
   @ApiBody({
     type: CreateStudentDto,
@@ -75,8 +83,8 @@ export class StudentsController {
           firstName: 'Maria',
           lastName: 'Rodriguez',
           programId: '60d5ecb8b0a7c4b4b8b9b1a1',
-          currentSemester: 1
-        }
+          currentSemester: 1,
+        },
       },
       engineering: {
         summary: 'Engineering Student',
@@ -86,21 +94,22 @@ export class StudentsController {
           firstName: 'Carlos',
           lastName: 'Martinez',
           programId: '60d5ecb8b0a7c4b4b8b9b1a2',
-          currentSemester: 3
-        }
+          currentSemester: 3,
+        },
       },
       transferStudent: {
         summary: 'Transfer Student',
-        description: 'Example registration for transfer student with advanced standing',
+        description:
+          'Example registration for transfer student with advanced standing',
         value: {
           code: 'BUS2024007',
           firstName: 'Ana',
           lastName: 'Garcia',
           programId: '60d5ecb8b0a7c4b4b8b9b1a3',
-          currentSemester: 5
-        }
-      }
-    }
+          currentSemester: 5,
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 201,
@@ -111,52 +120,52 @@ export class StudentsController {
         _id: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a4',
-          description: 'Unique student database identifier'
+          description: 'Unique student database identifier',
         },
         code: {
           type: 'string',
           example: 'CS2024001',
-          description: 'Unique student identification code'
+          description: 'Unique student identification code',
         },
         firstName: {
           type: 'string',
           example: 'Maria',
-          description: 'Student first name'
+          description: 'Student first name',
         },
         lastName: {
           type: 'string',
           example: 'Rodriguez',
-          description: 'Student last name'
+          description: 'Student last name',
         },
         fullName: {
           type: 'string',
           example: 'Maria Rodriguez',
-          description: 'Computed full name for display'
+          description: 'Computed full name for display',
         },
         programId: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a1',
-          description: 'Associated academic program identifier'
+          description: 'Associated academic program identifier',
         },
         currentSemester: {
           type: 'number',
           example: 1,
-          description: 'Current academic semester'
+          description: 'Current academic semester',
         },
         createdAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-15T10:30:00.000Z',
-          description: 'Registration timestamp'
+          description: 'Registration timestamp',
         },
         updatedAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-15T10:30:00.000Z',
-          description: 'Last update timestamp'
-        }
-      }
-    }
+          description: 'Last update timestamp',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 409,
@@ -166,9 +175,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 409 },
         message: { type: 'string', example: 'STUDENT_CODE_EXISTS' },
-        error: { type: 'string', example: 'Conflict' }
-      }
-    }
+        error: { type: 'string', example: 'Conflict' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -180,11 +189,14 @@ export class StudentsController {
         message: {
           type: 'array',
           items: { type: 'string' },
-          example: ['Student code is required', 'First name must be between 2 and 50 characters']
+          example: [
+            'Student code is required',
+            'First name must be between 2 and 50 characters',
+          ],
         },
-        error: { type: 'string', example: 'Bad Request' }
-      }
-    }
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -194,9 +206,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: 'PROGRAM_NOT_FOUND' },
-        error: { type: 'string', example: 'Not Found' }
-      }
-    }
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
   })
   @ApiBearerAuth()
   @RequirePermissions(Permission.CREATE_USER)
@@ -233,7 +245,7 @@ export class StudentsController {
     - Enrollment reporting
     - Student directory generation
     `,
-    operationId: 'getAllStudents'
+    operationId: 'getAllStudents',
   })
   @ApiResponse({
     status: 200,
@@ -246,49 +258,49 @@ export class StudentsController {
           _id: {
             type: 'string',
             example: '60d5ecb8b0a7c4b4b8b9b1a4',
-            description: 'Student database identifier'
+            description: 'Student database identifier',
           },
           code: {
             type: 'string',
             example: 'CS2024001',
-            description: 'Student identification code'
+            description: 'Student identification code',
           },
           firstName: {
             type: 'string',
             example: 'Maria',
-            description: 'Student first name'
+            description: 'Student first name',
           },
           lastName: {
             type: 'string',
             example: 'Rodriguez',
-            description: 'Student last name'
+            description: 'Student last name',
           },
           fullName: {
             type: 'string',
             example: 'Maria Rodriguez',
-            description: 'Full name for display'
+            description: 'Full name for display',
           },
           programId: {
             type: 'string',
             example: '60d5ecb8b0a7c4b4b8b9b1a1',
-            description: 'Academic program identifier'
+            description: 'Academic program identifier',
           },
           currentSemester: {
             type: 'number',
             example: 3,
-            description: 'Current semester number'
+            description: 'Current semester number',
           },
           createdAt: {
             type: 'string',
             format: 'date-time',
-            description: 'Registration date'
+            description: 'Registration date',
           },
           updatedAt: {
             type: 'string',
             format: 'date-time',
-            description: 'Last update date'
-          }
-        }
+            description: 'Last update date',
+          },
+        },
       },
       example: [
         {
@@ -300,7 +312,7 @@ export class StudentsController {
           programId: '60d5ecb8b0a7c4b4b8b9b1a1',
           currentSemester: 3,
           createdAt: '2024-01-15T10:30:00.000Z',
-          updatedAt: '2024-01-20T14:45:00.000Z'
+          updatedAt: '2024-01-20T14:45:00.000Z',
         },
         {
           _id: '60d5ecb8b0a7c4b4b8b9b1a5',
@@ -311,10 +323,10 @@ export class StudentsController {
           programId: '60d5ecb8b0a7c4b4b8b9b1a2',
           currentSemester: 5,
           createdAt: '2024-01-12T09:15:00.000Z',
-          updatedAt: '2024-01-12T09:15:00.000Z'
-        }
-      ]
-    }
+          updatedAt: '2024-01-12T09:15:00.000Z',
+        },
+      ],
+    },
   })
   @ApiResponse({
     status: 401,
@@ -324,9 +336,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 401 },
         message: { type: 'string', example: 'Unauthorized' },
-        error: { type: 'string', example: 'Unauthorized' }
-      }
-    }
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
   })
   @ApiResponse({
     status: 403,
@@ -337,11 +349,11 @@ export class StudentsController {
         statusCode: { type: 'number', example: 403 },
         message: {
           type: 'string',
-          example: 'Access denied. Required permission: READ_USER'
+          example: 'Access denied. Required permission: READ_USER',
         },
-        error: { type: 'string', example: 'Forbidden' }
-      }
-    }
+        error: { type: 'string', example: 'Forbidden' },
+      },
+    },
   })
   @ApiBearerAuth()
   @RequirePermissions(Permission.READ_USER)
@@ -378,13 +390,13 @@ export class StudentsController {
     - Enrollment verification
     - Administrative record access
     `,
-    operationId: 'getStudentById'
+    operationId: 'getStudentById',
   })
   @ApiParam({
     name: 'id',
     description: 'Student database identifier (MongoDB ObjectId)',
     example: '60d5ecb8b0a7c4b4b8b9b1a4',
-    type: 'string'
+    type: 'string',
   })
   @ApiResponse({
     status: 200,
@@ -395,52 +407,52 @@ export class StudentsController {
         _id: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a4',
-          description: 'Student database identifier'
+          description: 'Student database identifier',
         },
         code: {
           type: 'string',
           example: 'CS2024001',
-          description: 'Unique student identification code'
+          description: 'Unique student identification code',
         },
         firstName: {
           type: 'string',
           example: 'Maria',
-          description: 'Student first name'
+          description: 'Student first name',
         },
         lastName: {
           type: 'string',
           example: 'Rodriguez',
-          description: 'Student last name'
+          description: 'Student last name',
         },
         fullName: {
           type: 'string',
           example: 'Maria Rodriguez',
-          description: 'Computed full name for display purposes'
+          description: 'Computed full name for display purposes',
         },
         programId: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a1',
-          description: 'Associated academic program identifier'
+          description: 'Associated academic program identifier',
         },
         currentSemester: {
           type: 'number',
           example: 3,
-          description: 'Current academic semester (1-12)'
+          description: 'Current academic semester (1-12)',
         },
         createdAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-15T10:30:00.000Z',
-          description: 'Student registration timestamp'
+          description: 'Student registration timestamp',
         },
         updatedAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-20T14:45:00.000Z',
-          description: 'Last profile update timestamp'
-        }
-      }
-    }
+          description: 'Last profile update timestamp',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -450,9 +462,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: 'STUDENT_NOT_FOUND' },
-        error: { type: 'string', example: 'Not Found' }
-      }
-    }
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -462,9 +474,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 400 },
         message: { type: 'string', example: 'Invalid ObjectId format' },
-        error: { type: 'string', example: 'Bad Request' }
-      }
-    }
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
   })
   @ApiBearerAuth()
   @RequirePermissions(Permission.READ_USER)
@@ -509,13 +521,13 @@ export class StudentsController {
     - Program transfer processing
     - Student identification updates
     `,
-    operationId: 'updateStudent'
+    operationId: 'updateStudent',
   })
   @ApiParam({
     name: 'id',
     description: 'Student database identifier (MongoDB ObjectId)',
     example: '60d5ecb8b0a7c4b4b8b9b1a4',
-    type: 'string'
+    type: 'string',
   })
   @ApiBody({
     type: UpdateStudentDto,
@@ -525,24 +537,24 @@ export class StudentsController {
         summary: 'Semester Progression',
         description: 'Update student to next semester',
         value: {
-          currentSemester: 4
-        }
+          currentSemester: 4,
+        },
       },
       nameCorrection: {
         summary: 'Name Correction',
         description: 'Update student name information',
         value: {
           firstName: 'María',
-          lastName: 'Rodríguez'
-        }
+          lastName: 'Rodríguez',
+        },
       },
       programTransfer: {
         summary: 'Program Transfer',
         description: 'Transfer student to different academic program',
         value: {
           programId: '60d5ecb8b0a7c4b4b8b9b1a2',
-          currentSemester: 1
-        }
+          currentSemester: 1,
+        },
       },
       fullUpdate: {
         summary: 'Complete Profile Update',
@@ -551,10 +563,10 @@ export class StudentsController {
           code: 'CS2024001-NEW',
           firstName: 'Maria Elena',
           lastName: 'Rodriguez Martinez',
-          currentSemester: 5
-        }
-      }
-    }
+          currentSemester: 5,
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -565,52 +577,52 @@ export class StudentsController {
         _id: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a4',
-          description: 'Student database identifier'
+          description: 'Student database identifier',
         },
         code: {
           type: 'string',
           example: 'CS2024001',
-          description: 'Student identification code'
+          description: 'Student identification code',
         },
         firstName: {
           type: 'string',
           example: 'Maria Elena',
-          description: 'Updated first name'
+          description: 'Updated first name',
         },
         lastName: {
           type: 'string',
           example: 'Rodriguez Martinez',
-          description: 'Updated last name'
+          description: 'Updated last name',
         },
         fullName: {
           type: 'string',
           example: 'Maria Elena Rodriguez Martinez',
-          description: 'Updated computed full name'
+          description: 'Updated computed full name',
         },
         programId: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a1',
-          description: 'Academic program identifier'
+          description: 'Academic program identifier',
         },
         currentSemester: {
           type: 'number',
           example: 5,
-          description: 'Updated current semester'
+          description: 'Updated current semester',
         },
         createdAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-15T10:30:00.000Z',
-          description: 'Original registration timestamp'
+          description: 'Original registration timestamp',
         },
         updatedAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-25T16:20:00.000Z',
-          description: 'Latest update timestamp'
-        }
-      }
-    }
+          description: 'Latest update timestamp',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -620,9 +632,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: 'STUDENT_NOT_FOUND' },
-        error: { type: 'string', example: 'Not Found' }
-      }
-    }
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
   })
   @ApiResponse({
     status: 409,
@@ -632,9 +644,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 409 },
         message: { type: 'string', example: 'STUDENT_CODE_EXISTS' },
-        error: { type: 'string', example: 'Conflict' }
-      }
-    }
+        error: { type: 'string', example: 'Conflict' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -646,11 +658,14 @@ export class StudentsController {
         message: {
           type: 'array',
           items: { type: 'string' },
-          example: ['Semester must be between 1 and 12', 'Invalid ObjectId format']
+          example: [
+            'Semester must be between 1 and 12',
+            'Invalid ObjectId format',
+          ],
         },
-        error: { type: 'string', example: 'Bad Request' }
-      }
-    }
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
   })
   @ApiBearerAuth()
   @RequirePermissions(Permission.UPDATE_USER)
@@ -695,13 +710,13 @@ export class StudentsController {
     - Student withdrawal processing
     - Data privacy compliance (GDPR/FERPA)
     `,
-    operationId: 'deleteStudent'
+    operationId: 'deleteStudent',
   })
   @ApiParam({
     name: 'id',
     description: 'Student database identifier (MongoDB ObjectId)',
     example: '60d5ecb8b0a7c4b4b8b9b1a4',
-    type: 'string'
+    type: 'string',
   })
   @ApiResponse({
     status: 200,
@@ -712,7 +727,7 @@ export class StudentsController {
         message: {
           type: 'string',
           example: 'STUDENT_DELETED_SUCCESSFULLY',
-          description: 'Deletion confirmation message'
+          description: 'Deletion confirmation message',
         },
         deletedStudent: {
           type: 'object',
@@ -720,29 +735,29 @@ export class StudentsController {
             _id: {
               type: 'string',
               example: '60d5ecb8b0a7c4b4b8b9b1a4',
-              description: 'Deleted student identifier'
+              description: 'Deleted student identifier',
             },
             code: {
               type: 'string',
               example: 'CS2024001',
-              description: 'Deleted student code'
+              description: 'Deleted student code',
             },
             fullName: {
               type: 'string',
               example: 'Maria Rodriguez',
-              description: 'Deleted student name'
-            }
+              description: 'Deleted student name',
+            },
           },
-          description: 'Basic information of deleted student for confirmation'
+          description: 'Basic information of deleted student for confirmation',
         },
         deletedAt: {
           type: 'string',
           format: 'date-time',
           example: '2024-01-25T18:30:00.000Z',
-          description: 'Deletion timestamp'
-        }
-      }
-    }
+          description: 'Deletion timestamp',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -752,9 +767,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: 'STUDENT_NOT_FOUND' },
-        error: { type: 'string', example: 'Not Found' }
-      }
-    }
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
   })
   @ApiResponse({
     status: 409,
@@ -765,19 +780,20 @@ export class StudentsController {
         statusCode: { type: 'number', example: 409 },
         message: {
           type: 'string',
-          example: 'Cannot delete student with active enrollments. Please handle enrollments first.'
+          example:
+            'Cannot delete student with active enrollments. Please handle enrollments first.',
         },
         error: { type: 'string', example: 'Conflict' },
         details: {
           type: 'object',
           properties: {
             activeEnrollments: { type: 'number', example: 3 },
-            waitlistEntries: { type: 'number', example: 1 }
+            waitlistEntries: { type: 'number', example: 1 },
           },
-          description: 'Details about preventing dependencies'
-        }
-      }
-    }
+          description: 'Details about preventing dependencies',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -787,9 +803,9 @@ export class StudentsController {
       properties: {
         statusCode: { type: 'number', example: 400 },
         message: { type: 'string', example: 'Invalid ObjectId format' },
-        error: { type: 'string', example: 'Bad Request' }
-      }
-    }
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
   })
   @ApiBearerAuth()
   @RequirePermissions(Permission.DELETE_USER)
@@ -800,14 +816,17 @@ export class StudentsController {
 
   @ApiOperation({
     summary: 'Get student schedule',
-    description: 'Retrieves the current schedule for a specific student'
+    description: 'Retrieves the current schedule for a specific student',
   })
   @ApiParam({
     name: 'studentCode',
     description: 'Student identification code',
-    example: 'CS2024001'
+    example: 'CS2024001',
   })
-  @ApiResponse({ status: 200, description: 'Student schedule retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Student schedule retrieved successfully',
+  })
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiBearerAuth()
   @Get(':studentCode/schedule')
@@ -817,12 +836,12 @@ export class StudentsController {
 
   @ApiOperation({
     summary: 'Get student by code',
-    description: 'Retrieves student information using their student code'
+    description: 'Retrieves student information using their student code',
   })
   @ApiParam({
     name: 'studentCode',
     description: 'Student identification code',
-    example: 'SIS2024001'
+    example: 'SIS2024001',
   })
   @ApiResponse({ status: 200, description: 'Student found successfully' })
   @ApiResponse({ status: 404, description: 'Student not found' })
@@ -835,14 +854,18 @@ export class StudentsController {
 
   @ApiOperation({
     summary: 'Get student academic history',
-    description: 'Retrieves the academic history with traffic light system for a student'
+    description:
+      'Retrieves the academic history with traffic light system for a student',
   })
   @ApiParam({
     name: 'studentCode',
     description: 'Student identification code',
-    example: 'CS2024001'
+    example: 'CS2024001',
   })
-  @ApiResponse({ status: 200, description: 'Academic history retrieved successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Academic history retrieved successfully',
+  })
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiBearerAuth()
   @Get(':studentCode/academic-history')

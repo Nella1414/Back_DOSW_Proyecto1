@@ -1,4 +1,15 @@
-import { IsString, IsNotEmpty, IsNumber, IsBoolean, IsOptional, IsArray, Min, Max, Length, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  Min,
+  Max,
+  Length,
+  Matches,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -23,13 +34,14 @@ export class CreateCourseDto {
     example: 'CS101',
     minLength: 3,
     maxLength: 15,
-    pattern: '^[A-Z]{2,4}[0-9]{3,4}$'
+    pattern: '^[A-Z]{2,4}[0-9]{3,4}$',
   })
   @IsString()
   @IsNotEmpty()
   @Length(3, 15)
   @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, {
-    message: 'Course code must follow format: 2-4 letters + 3-4 numbers (e.g., CS101, MATH1001)'
+    message:
+      'Course code must follow format: 2-4 letters + 3-4 numbers (e.g., CS101, MATH1001)',
   })
   code: string;
 
@@ -42,7 +54,7 @@ export class CreateCourseDto {
     description: 'Complete course name',
     example: 'Introduction to Computer Science',
     minLength: 5,
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -55,10 +67,12 @@ export class CreateCourseDto {
    * * Descripción completa del contenido y objetivos del curso
    */
   @ApiProperty({
-    description: 'Detailed course description including objectives and content overview',
-    example: 'Fundamental concepts of computer science including programming principles, data structures, and problem-solving techniques.',
+    description:
+      'Detailed course description including objectives and content overview',
+    example:
+      'Fundamental concepts of computer science including programming principles, data structures, and problem-solving techniques.',
     minLength: 20,
-    maxLength: 1000
+    maxLength: 1000,
   })
   @IsString()
   @IsNotEmpty()
@@ -75,7 +89,7 @@ export class CreateCourseDto {
     description: 'Number of academic credits for this course',
     example: 3,
     minimum: 1,
-    maximum: 10
+    maximum: 10,
   })
   @IsNumber()
   @Min(1)
@@ -89,10 +103,11 @@ export class CreateCourseDto {
    * * Opcional - algunos cursos no tienen prerrequisitos
    */
   @ApiProperty({
-    description: 'List of prerequisite course codes that must be completed before taking this course',
+    description:
+      'List of prerequisite course codes that must be completed before taking this course',
     example: ['MATH101', 'CS100'],
     type: [String],
-    required: false
+    required: false,
   })
   @IsArray()
   @IsString({ each: true })
@@ -106,10 +121,11 @@ export class CreateCourseDto {
    * * Por defecto: true
    */
   @ApiProperty({
-    description: 'Whether the course is currently active and available for enrollment',
+    description:
+      'Whether the course is currently active and available for enrollment',
     example: true,
     default: true,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()
@@ -121,11 +137,12 @@ export class CreateCourseDto {
    * ? Nivel académico del curso (1-4 para pregrado, 5+ para posgrado)
    */
   @ApiProperty({
-    description: 'Academic level or year of the course (1-4 for undergraduate, 5+ for graduate)',
+    description:
+      'Academic level or year of the course (1-4 for undergraduate, 5+ for graduate)',
     example: 1,
     minimum: 1,
     maximum: 8,
-    required: false
+    required: false,
   })
   @IsNumber()
   @IsOptional()
@@ -139,10 +156,11 @@ export class CreateCourseDto {
    * ? Categoría o área académica del curso
    */
   @ApiProperty({
-    description: 'Course category or academic area (e.g., "Core", "Elective", "Laboratory")',
+    description:
+      'Course category or academic area (e.g., "Core", "Elective", "Laboratory")',
     example: 'Core',
     maxLength: 50,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -156,9 +174,13 @@ export class CreateCourseDto {
    */
   @ApiProperty({
     description: 'Specific learning objectives for the course',
-    example: ['Understand basic programming concepts', 'Apply problem-solving techniques', 'Develop algorithmic thinking'],
+    example: [
+      'Understand basic programming concepts',
+      'Apply problem-solving techniques',
+      'Develop algorithmic thinking',
+    ],
     type: [String],
-    required: false
+    required: false,
   })
   @IsArray()
   @IsString({ each: true })

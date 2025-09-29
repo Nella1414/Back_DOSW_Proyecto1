@@ -1,15 +1,44 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ChangeRequest, ChangeRequestDocument, RequestState } from '../entities/change-request.entity';
-import { Student, StudentDocument } from '../../students/entities/student.entity';
-import { CourseGroup, CourseGroupDocument } from '../../course-groups/entities/course-group.entity';
+import {
+  ChangeRequest,
+  ChangeRequestDocument,
+  RequestState,
+} from '../entities/change-request.entity';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
+import {
+  CourseGroup,
+  CourseGroupDocument,
+} from '../../course-groups/entities/course-group.entity';
 import { Course, CourseDocument } from '../../courses/entities/course.entity';
-import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../../enrollments/entities/enrollment.entity';
-import { AcademicPeriod, AcademicPeriodDocument } from '../../academic-periods/entities/academic-period.entity';
-import { Program, ProgramDocument } from '../../programs/entities/program.entity';
+import {
+  Enrollment,
+  EnrollmentDocument,
+  EnrollmentStatus,
+} from '../../enrollments/entities/enrollment.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodDocument,
+} from '../../academic-periods/entities/academic-period.entity';
+import {
+  Program,
+  ProgramDocument,
+} from '../../programs/entities/program.entity';
 import { ScheduleValidationService } from '../../schedules/services/schedule-validation.service';
-import { CreateChangeRequestDto, ChangeRequestResponseDto, ApproveChangeRequestDto, RejectChangeRequestDto } from '../dto/change-request-response.dto';
+import {
+  CreateChangeRequestDto,
+  ChangeRequestResponseDto,
+  ApproveChangeRequestDto,
+  RejectChangeRequestDto,
+} from '../dto/change-request-response.dto';
 
 /**
  * * Change Requests Management Service
@@ -36,12 +65,16 @@ export class ChangeRequestsService {
    * @param scheduleValidationService - Service for schedule conflict validation
    */
   constructor(
-    @InjectModel(ChangeRequest.name) private changeRequestModel: Model<ChangeRequestDocument>,
+    @InjectModel(ChangeRequest.name)
+    private changeRequestModel: Model<ChangeRequestDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
-    @InjectModel(CourseGroup.name) private courseGroupModel: Model<CourseGroupDocument>,
+    @InjectModel(CourseGroup.name)
+    private courseGroupModel: Model<CourseGroupDocument>,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
-    @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
-    @InjectModel(AcademicPeriod.name) private academicPeriodModel: Model<AcademicPeriodDocument>,
+    @InjectModel(Enrollment.name)
+    private enrollmentModel: Model<EnrollmentDocument>,
+    @InjectModel(AcademicPeriod.name)
+    private academicPeriodModel: Model<AcademicPeriodDocument>,
     @InjectModel(Program.name) private programModel: Model<ProgramDocument>,
     private scheduleValidationService: ScheduleValidationService,
   ) {}
@@ -55,26 +88,29 @@ export class ChangeRequestsService {
    */
   async createChangeRequest(
     studentCode: string,
-    createChangeRequestDto: CreateChangeRequestDto
+    createChangeRequestDto: CreateChangeRequestDto,
   ): Promise<ChangeRequestResponseDto> {
     // 1. Buscar estudiante
-    const student = await this.studentModel.findOne({ code: studentCode }).exec();
+    const student = await this.studentModel
+      .findOne({ code: studentCode })
+      .exec();
     if (!student) {
       throw new NotFoundException('Student not found');
     }
 
     // 2. Validar solicitud
-    const validation = await this.scheduleValidationService.validateChangeRequest(
-      student._id as string,
-      createChangeRequestDto.sourceGroupId,
-      createChangeRequestDto.targetGroupId
-    );
+    const validation =
+      await this.scheduleValidationService.validateChangeRequest(
+        student._id as string,
+        createChangeRequestDto.sourceGroupId,
+        createChangeRequestDto.targetGroupId,
+      );
 
     if (!validation.isValid) {
       throw new BadRequestException({
         message: 'Invalid change request',
         errors: validation.errors,
-        warnings: validation.warnings
+        warnings: validation.warnings,
       });
     }
 
@@ -119,12 +155,18 @@ export class ChangeRequestsService {
       observations: createChangeRequestDto.observations,
       exceptional: false,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
     });
 
     const savedRequest = await changeRequest.save();
 
-    return this.mapToResponseDto(savedRequest, student, program, sourceGroup, targetGroup);
+    return this.mapToResponseDto(
+      savedRequest,
+      student,
+      program,
+      sourceGroup,
+      targetGroup,
+    );
   }
 
   /**
@@ -135,14 +177,17 @@ export class ChangeRequestsService {
    * TODO: Implementar ordenamiento por prioridad y fecha
    * TODO: Agregar estadisticas resumidas por facultad
    */
-  async getRequestsByFaculty(facultyId: string, filters?: {
-    status?: RequestState;
-    periodId?: string;
-    studentId?: string;
-  }): Promise<ChangeRequestResponseDto[]> {
+  async getRequestsByFaculty(
+    facultyId: string,
+    filters?: {
+      status?: RequestState;
+      periodId?: string;
+      studentId?: string;
+    },
+  ): Promise<ChangeRequestResponseDto[]> {
     // Obtener estudiantes de programas de la facultad
     const programs = await this.programModel.find({ facultyId }).exec();
-    const programIds = programs.map(p => p._id);
+    const programIds = programs.map((p) => p._id);
 
     const query: any = { programId: { $in: programIds } };
 
@@ -153,7 +198,9 @@ export class ChangeRequestsService {
       query.periodId = filters.periodId;
     }
     if (filters?.studentId) {
-      const student = await this.studentModel.findOne({ code: filters.studentId }).exec();
+      const student = await this.studentModel
+        .findOne({ code: filters.studentId })
+        .exec();
       if (student) {
         query.studentId = student._id;
       }
@@ -187,36 +234,42 @@ export class ChangeRequestsService {
           request.studentId as any,
           request.programId as any,
           sourceGroup,
-          targetGroup
+          targetGroup,
         );
-      })
+      }),
     );
   }
 
   async approveChangeRequest(
     requestId: string,
-    approveDto: ApproveChangeRequestDto
+    approveDto: ApproveChangeRequestDto,
   ): Promise<ChangeRequestResponseDto> {
     const request = await this.changeRequestModel.findById(requestId).exec();
     if (!request) {
       throw new NotFoundException('Request not found');
     }
 
-    if (request.state !== RequestState.PENDING && request.state !== RequestState.IN_REVIEW) {
-      throw new BadRequestException('Request cannot be approved in its current state');
+    if (
+      request.state !== RequestState.PENDING &&
+      request.state !== RequestState.IN_REVIEW
+    ) {
+      throw new BadRequestException(
+        'Request cannot be approved in its current state',
+      );
     }
 
     // Re-validar antes de aprobar
-    const validation = await this.scheduleValidationService.validateChangeRequest(
-      request.studentId as string,
-      request.sourceGroupId as string,
-      request.targetGroupId as string
-    );
+    const validation =
+      await this.scheduleValidationService.validateChangeRequest(
+        request.studentId,
+        request.sourceGroupId,
+        request.targetGroupId as string,
+      );
 
     if (!validation.isValid) {
       throw new BadRequestException({
         message: 'Request is no longer valid',
-        errors: validation.errors
+        errors: validation.errors,
       });
     }
 
@@ -226,9 +279,11 @@ export class ChangeRequestsService {
     // Actualizar solicitud
     request.state = RequestState.APPROVED;
     request.resolvedAt = new Date();
-    request.resolutionReason = approveDto.resolutionReason || 'Request approved';
+    request.resolutionReason =
+      approveDto.resolutionReason || 'Request approved';
     if (approveDto.observations) {
-      request.observations = (request.observations || '') + '\n' + approveDto.observations;
+      request.observations =
+        (request.observations || '') + '\n' + approveDto.observations;
     }
     request.updatedAt = new Date();
 
@@ -239,22 +294,28 @@ export class ChangeRequestsService {
 
   async rejectChangeRequest(
     requestId: string,
-    rejectDto: RejectChangeRequestDto
+    rejectDto: RejectChangeRequestDto,
   ): Promise<ChangeRequestResponseDto> {
     const request = await this.changeRequestModel.findById(requestId).exec();
     if (!request) {
       throw new NotFoundException('Request not found');
     }
 
-    if (request.state !== RequestState.PENDING && request.state !== RequestState.IN_REVIEW) {
-      throw new BadRequestException('Request cannot be rejected in its current state');
+    if (
+      request.state !== RequestState.PENDING &&
+      request.state !== RequestState.IN_REVIEW
+    ) {
+      throw new BadRequestException(
+        'Request cannot be rejected in its current state',
+      );
     }
 
     request.state = RequestState.REJECTED;
     request.resolvedAt = new Date();
     request.resolutionReason = rejectDto.resolutionReason;
     if (rejectDto.observations) {
-      request.observations = (request.observations || '') + '\n' + rejectDto.observations;
+      request.observations =
+        (request.observations || '') + '\n' + rejectDto.observations;
     }
     request.updatedAt = new Date();
 
@@ -263,7 +324,9 @@ export class ChangeRequestsService {
     return this.getRequestDetails(requestId);
   }
 
-  async getRequestDetails(requestId: string): Promise<ChangeRequestResponseDto> {
+  async getRequestDetails(
+    requestId: string,
+  ): Promise<ChangeRequestResponseDto> {
     const request = await this.changeRequestModel
       .findById(requestId)
       .populate('studentId')
@@ -288,34 +351,42 @@ export class ChangeRequestsService {
       request.studentId as any,
       request.programId as any,
       sourceGroup,
-      targetGroup
+      targetGroup,
     );
   }
 
-  private async executeChangeRequest(request: ChangeRequestDocument): Promise<void> {
+  private async executeChangeRequest(
+    request: ChangeRequestDocument,
+  ): Promise<void> {
     // Actualizar enrollment
-    await this.enrollmentModel.updateOne(
-      {
-        studentId: request.studentId,
-        groupId: request.sourceGroupId,
-        status: EnrollmentStatus.ENROLLED
-      },
-      {
-        groupId: request.targetGroupId,
-        updatedAt: new Date()
-      }
-    ).exec();
+    await this.enrollmentModel
+      .updateOne(
+        {
+          studentId: request.studentId,
+          groupId: request.sourceGroupId,
+          status: EnrollmentStatus.ENROLLED,
+        },
+        {
+          groupId: request.targetGroupId,
+          updatedAt: new Date(),
+        },
+      )
+      .exec();
 
     // Actualizar contadores de cupos
-    await this.courseGroupModel.updateOne(
-      { _id: request.sourceGroupId },
-      { $inc: { currentEnrollments: -1 } }
-    ).exec();
+    await this.courseGroupModel
+      .updateOne(
+        { _id: request.sourceGroupId },
+        { $inc: { currentEnrollments: -1 } },
+      )
+      .exec();
 
-    await this.courseGroupModel.updateOne(
-      { _id: request.targetGroupId },
-      { $inc: { currentEnrollments: 1 } }
-    ).exec();
+    await this.courseGroupModel
+      .updateOne(
+        { _id: request.targetGroupId },
+        { $inc: { currentEnrollments: 1 } },
+      )
+      .exec();
   }
 
   private async generateUniqueRadicado(): Promise<string> {
@@ -340,10 +411,12 @@ export class ChangeRequestsService {
     student: any,
     program: any,
     sourceGroup: any,
-    targetGroup: any
+    targetGroup: any,
   ): Promise<ChangeRequestResponseDto> {
-    const sourceSchedules = await this.scheduleValidationService.getGroupSchedule(sourceGroup._id);
-    const targetSchedules = await this.scheduleValidationService.getGroupSchedule(targetGroup._id);
+    const sourceSchedules =
+      await this.scheduleValidationService.getGroupSchedule(sourceGroup._id);
+    const targetSchedules =
+      await this.scheduleValidationService.getGroupSchedule(targetGroup._id);
 
     return {
       id: request._id as string,
@@ -351,28 +424,28 @@ export class ChangeRequestsService {
       studentId: student.code,
       studentName: `${student.firstName} ${student.lastName}`,
       programName: program.name,
-      periodCode: request.periodId as string,
+      periodCode: request.periodId,
       sourceCourse: {
         courseId: sourceGroup.courseId._id,
         courseCode: sourceGroup.courseId.code,
         courseName: sourceGroup.courseId.name,
         groupNumber: sourceGroup.groupNumber,
-        schedule: sourceSchedules.map(s => ({
+        schedule: sourceSchedules.map((s) => ({
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
-          endTime: s.endTime
-        }))
+          endTime: s.endTime,
+        })),
       },
       targetCourse: {
         courseId: targetGroup.courseId._id,
         courseCode: targetGroup.courseId.code,
         courseName: targetGroup.courseId.name,
         groupNumber: targetGroup.groupNumber,
-        schedule: targetSchedules.map(s => ({
+        schedule: targetSchedules.map((s) => ({
           dayOfWeek: s.dayOfWeek,
           startTime: s.startTime,
-          endTime: s.endTime
-        }))
+          endTime: s.endTime,
+        })),
       },
       state: request.state,
       priority: request.priority,
@@ -380,7 +453,7 @@ export class ChangeRequestsService {
       exceptional: request.exceptional,
       createdAt: request.createdAt,
       resolvedAt: request.resolvedAt,
-      resolutionReason: request.resolutionReason
+      resolutionReason: request.resolutionReason,
     };
   }
 }

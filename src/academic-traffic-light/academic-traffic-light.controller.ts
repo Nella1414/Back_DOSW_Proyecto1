@@ -12,7 +12,9 @@ import { AcademicTrafficLightService } from './services/academic-traffic-light.s
 @ApiTags('Academic Traffic Light')
 @Controller('academic-traffic-light')
 export class AcademicTrafficLightController {
-  constructor(private readonly academicTrafficLightService: AcademicTrafficLightService) {}
+  constructor(
+    private readonly academicTrafficLightService: AcademicTrafficLightService,
+  ) {}
 
   /**
    * Get comprehensive academic statistics
@@ -20,11 +22,12 @@ export class AcademicTrafficLightController {
   @Get('statistics')
   @ApiOperation({
     summary: 'Get academic statistics',
-    description: 'Retrieves comprehensive statistics about student academic performance including traffic light distribution and average GPA'
+    description:
+      'Retrieves comprehensive statistics about student academic performance including traffic light distribution and average GPA',
   })
   @ApiResponse({
     status: 200,
-    description: 'Academic statistics retrieved successfully'
+    description: 'Academic statistics retrieved successfully',
   })
   getAcademicStatistics() {
     return this.academicTrafficLightService.getAcademicStatistics();
@@ -36,16 +39,17 @@ export class AcademicTrafficLightController {
   @Get('student/:studentId/status')
   @ApiOperation({
     summary: 'Get student academic status',
-    description: 'Retrieves detailed academic status for a specific student including overall performance, GPA, and risk assessment'
+    description:
+      'Retrieves detailed academic status for a specific student including overall performance, GPA, and risk assessment',
   })
   @ApiParam({ name: 'studentId', description: 'Student identification code' })
   @ApiResponse({
     status: 200,
-    description: 'Student academic status retrieved successfully'
+    description: 'Student academic status retrieved successfully',
   })
   @ApiResponse({
     status: 404,
-    description: 'Student not found'
+    description: 'Student not found',
   })
   getStudentAcademicStatus(@Param('studentId') studentId: string) {
     return this.academicTrafficLightService.getStudentAcademicStatus(studentId);
@@ -57,19 +61,22 @@ export class AcademicTrafficLightController {
   @Get('student/:studentId/report')
   @ApiOperation({
     summary: 'Get student traffic light report',
-    description: 'Retrieves a comprehensive traffic light report including student status and detailed course performance breakdown'
+    description:
+      'Retrieves a comprehensive traffic light report including student status and detailed course performance breakdown',
   })
   @ApiParam({ name: 'studentId', description: 'Student identification code' })
   @ApiResponse({
     status: 200,
-    description: 'Student traffic light report retrieved successfully'
+    description: 'Student traffic light report retrieved successfully',
   })
   @ApiResponse({
     status: 404,
-    description: 'Student not found'
+    description: 'Student not found',
   })
   getStudentTrafficLightReport(@Param('studentId') studentId: string) {
-    return this.academicTrafficLightService.getStudentTrafficLightReport(studentId);
+    return this.academicTrafficLightService.getStudentTrafficLightReport(
+      studentId,
+    );
   }
 
   /**
@@ -78,11 +85,12 @@ export class AcademicTrafficLightController {
   @Get()
   @ApiOperation({
     summary: 'Get all traffic light data',
-    description: 'Legacy endpoint that returns academic statistics. Use /statistics endpoint instead.'
+    description:
+      'Legacy endpoint that returns academic statistics. Use /statistics endpoint instead.',
   })
   @ApiResponse({
     status: 200,
-    description: 'Academic statistics retrieved successfully'
+    description: 'Academic statistics retrieved successfully',
   })
   findAll() {
     return this.academicTrafficLightService.findAll();
@@ -94,16 +102,17 @@ export class AcademicTrafficLightController {
   @Get(':studentId')
   @ApiOperation({
     summary: 'Get student traffic light data',
-    description: 'Legacy endpoint that returns student traffic light report. Use /student/{studentId}/report endpoint instead.'
+    description:
+      'Legacy endpoint that returns student traffic light report. Use /student/{studentId}/report endpoint instead.',
   })
   @ApiParam({ name: 'studentId', description: 'Student identification code' })
   @ApiResponse({
     status: 200,
-    description: 'Student traffic light data retrieved successfully'
+    description: 'Student traffic light data retrieved successfully',
   })
   @ApiResponse({
     status: 404,
-    description: 'Student not found'
+    description: 'Student not found',
   })
   findOne(@Param('studentId') studentId: string) {
     return this.academicTrafficLightService.findOne(studentId);

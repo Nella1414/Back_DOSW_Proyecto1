@@ -26,8 +26,12 @@ export class AcademicPeriod {
   @Prop({ default: true })
   isEnrollmentOpen: boolean;
 
+  @Prop({ default: 'ACTIVE', enum: ['ACTIVE', 'CLOSED', 'PLANNING'] })
+  status: string;
+
   @Prop()
   description?: string;
 }
 
-export const AcademicPeriodSchema = SchemaFactory.createForClass(AcademicPeriod);
+export const AcademicPeriodSchema =
+  SchemaFactory.createForClass(AcademicPeriod);

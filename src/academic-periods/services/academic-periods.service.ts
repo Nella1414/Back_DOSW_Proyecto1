@@ -1,9 +1,16 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateAcademicPeriodDto } from '../dto/create-academic-period.dto';
 import { UpdateAcademicPeriodDto } from '../dto/update-academic-period.dto';
-import { AcademicPeriod, AcademicPeriodDocument } from '../entities/academic-period.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodDocument,
+} from '../entities/academic-period.entity';
 
 /**
  * Academic Periods Service
@@ -28,11 +35,13 @@ export class AcademicPeriodsService {
    * @returns Promise<AcademicPeriod> - The created academic period
    * @throws ConflictException - If period code already exists
    */
-  async create(createAcademicPeriodDto: CreateAcademicPeriodDto): Promise<AcademicPeriod> {
+  async create(
+    createAcademicPeriodDto: CreateAcademicPeriodDto,
+  ): Promise<AcademicPeriod> {
     try {
       // TODO: Verificar que el código del periodo no exista
       const existingPeriod = await this.academicPeriodModel.findOne({
-        code: createAcademicPeriodDto.code
+        code: createAcademicPeriodDto.code,
       });
 
       if (existingPeriod) {
@@ -40,7 +49,10 @@ export class AcademicPeriodsService {
       }
 
       // TODO: Validar que las fechas sean coherentes
-      if (new Date(createAcademicPeriodDto.startDate) >= new Date(createAcademicPeriodDto.endDate)) {
+      if (
+        new Date(createAcademicPeriodDto.startDate) >=
+        new Date(createAcademicPeriodDto.endDate)
+      ) {
         throw new ConflictException('Start date must be before end date');
       }
 
@@ -91,7 +103,9 @@ export class AcademicPeriodsService {
     const period = await this.academicPeriodModel.findOne({ code }).exec();
 
     if (!period) {
-      throw new NotFoundException(`Academic period with code ${code} not found`);
+      throw new NotFoundException(
+        `Academic period with code ${code} not found`,
+      );
     }
 
     return period;
@@ -112,7 +126,9 @@ export class AcademicPeriodsService {
    * @returns Promise<AcademicPeriod[]> - Periods with change requests enabled
    */
   async getPeriodsAllowingChanges(): Promise<AcademicPeriod[]> {
-    return await this.academicPeriodModel.find({ allowChangeRequests: true }).exec();
+    return await this.academicPeriodModel
+      .find({ allowChangeRequests: true })
+      .exec();
   }
 
   /**
@@ -121,7 +137,9 @@ export class AcademicPeriodsService {
    * @returns Promise<AcademicPeriod[]> - Periods with enrollment open
    */
   async getPeriodsWithOpenEnrollment(): Promise<AcademicPeriod[]> {
-    return await this.academicPeriodModel.find({ isEnrollmentOpen: true }).exec();
+    return await this.academicPeriodModel
+      .find({ isEnrollmentOpen: true })
+      .exec();
   }
 
   /**
@@ -132,10 +150,16 @@ export class AcademicPeriodsService {
    * @returns Promise<AcademicPeriod> - The updated period
    * @throws NotFoundException - If period not found
    */
-  async update(id: string, updateAcademicPeriodDto: UpdateAcademicPeriodDto): Promise<AcademicPeriod> {
+  async update(
+    id: string,
+    updateAcademicPeriodDto: UpdateAcademicPeriodDto,
+  ): Promise<AcademicPeriod> {
     // TODO: Validar fechas si se están actualizando
     if (updateAcademicPeriodDto.startDate && updateAcademicPeriodDto.endDate) {
-      if (new Date(updateAcademicPeriodDto.startDate) >= new Date(updateAcademicPeriodDto.endDate)) {
+      if (
+        new Date(updateAcademicPeriodDto.startDate) >=
+        new Date(updateAcademicPeriodDto.endDate)
+      ) {
         throw new ConflictException('Start date must be before end date');
       }
     }
@@ -179,13 +203,129 @@ export class AcademicPeriodsService {
    * @param id - MongoDB ObjectId of the period to delete
    * @returns Promise<void>
    * @throws NotFoundException - If period not found
+   * @throws ConflictException - If period has associated data
    */
   async remove(id: string): Promise<void> {
-    const result = await this.academicPeriodModel.findByIdAndDelete(id).exec();
+    const period = await this.academicPeriodModel.findById(id).exec();
 
-    if (!result) {
+    if (!period) {
       throw new NotFoundException(`Academic period with ID ${id} not found`);
     }
+
+    // Check if period has associated enrollments or course groups
+    const hasAssociatedData = this.hasAssociatedData();
+    if (hasAssociatedData) {
+      throw new ConflictException(
+        'Cannot delete academic period with associated enrollments or course groups',
+      );
+    }
+
+    await this.academicPeriodModel.findByIdAndDelete(id).exec();
+  }
+
+  /**
+   * Check if a period has associated data (enrollments, course groups, etc.)
+   */
+  private hasAssociatedData(): boolean {
+    // This would need to be implemented based on your database relationships
+    // For now, return false to allow deletion
+    // In a real implementation, you would check for:
+    // - Course groups in this period
+    // - Enrollments in course groups of this period
+    // - Any other associated data
+    return false;
+  }
+
+  /**
+   * Validate period dates don't overlap with existing periods
+   */
+  async validatePeriodDates(
+    startDate: Date,
+    endDate: Date,
+    excludeId?: string,
+  ): Promise<void> {
+    const query: any = {
+      $or: [
+        {
+          $and: [
+            { startDate: { $lte: startDate } },
+            { endDate: { $gte: startDate } },
+          ],
+        },
+        {
+          $and: [
+            { startDate: { $lte: endDate } },
+            { endDate: { $gte: endDate } },
+          ],
+        },
+        {
+          $and: [
+            { startDate: { $gte: startDate } },
+            { endDate: { $lte: endDate } },
+          ],
+        },
+      ],
+    };
+
+    if (excludeId) {
+      query._id = { $ne: excludeId };
+    }
+
+    const overlappingPeriods = await this.academicPeriodModel
+      .find(query)
+      .exec();
+
+    if (overlappingPeriods.length > 0) {
+      throw new ConflictException(
+        'Academic period dates overlap with existing periods',
+      );
+    }
+  }
+
+  /**
+   * Get periods with pagination and filtering
+   */
+  async findAllWithFilters(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    year?: number,
+  ): Promise<{
+    periods: AcademicPeriod[];
+    total: number;
+    page: number;
+    totalPages: number;
+  }> {
+    const skip = (page - 1) * limit;
+    const query: any = {};
+
+    if (status) {
+      query.status = status;
+    }
+
+    if (year) {
+      query.startDate = {
+        $gte: new Date(year, 0, 1),
+        $lt: new Date(year + 1, 0, 1),
+      };
+    }
+
+    const [periods, total] = await Promise.all([
+      this.academicPeriodModel
+        .find(query)
+        .sort({ startDate: -1 })
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.academicPeriodModel.countDocuments(query).exec(),
+    ]);
+
+    return {
+      periods,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**

@@ -15,29 +15,29 @@ export enum Permission {
   READ_USER = 'read_user',
   UPDATE_USER = 'update_user',
   DELETE_USER = 'delete_user',
-  
+
   // Course management
   CREATE_COURSE = 'create_course',
   READ_COURSE = 'read_course',
   UPDATE_COURSE = 'update_course',
   DELETE_COURSE = 'delete_course',
-  
+
   // Enrollment management
   CREATE_ENROLLMENT = 'create_enrollment',
   READ_ENROLLMENT = 'read_enrollment',
   UPDATE_ENROLLMENT = 'update_enrollment',
   DELETE_ENROLLMENT = 'delete_enrollment',
-  
+
   // Academic records
   CREATE_GRADE = 'create_grade',
   READ_GRADE = 'read_grade',
   UPDATE_GRADE = 'update_grade',
   DELETE_GRADE = 'delete_grade',
-  
+
   // Reports
   VIEW_REPORTS = 'view_reports',
   EXPORT_DATA = 'export_data',
-  
+
   // System administration
   MANAGE_SYSTEM = 'manage_system',
   VIEW_LOGS = 'view_logs',
@@ -45,11 +45,11 @@ export enum Permission {
 
 @Schema({ timestamps: true })
 export class Role {
-  @Prop({ 
-    required: true, 
+  @Prop({
+    required: true,
     unique: true,
     enum: RoleName,
-    type: String 
+    type: String,
   })
   name: RoleName;
 
@@ -59,10 +59,10 @@ export class Role {
   @Prop({ required: false })
   description?: string;
 
-  @Prop({ 
-    type: [String], 
+  @Prop({
+    type: [String],
     enum: Permission,
-    default: [] 
+    default: [],
   })
   permissions: Permission[];
 
@@ -70,7 +70,7 @@ export class Role {
   isActive: boolean;
 
   @Prop({ default: 1 })
-  priority: number; 
+  priority: number;
 }
 
 export const RoleSchema = SchemaFactory.createForClass(Role);

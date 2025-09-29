@@ -40,7 +40,7 @@ export class AuthService {
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
   ) {}
   /**
    * Registers a new user in the system
@@ -58,7 +58,9 @@ export class AuthService {
   async register(userObject: RegisterAuthDto) {
     try {
       // Step 1: Check if user with this email already exists
-      const findUser = await this.userModel.findOne({ email: userObject.email });
+      const findUser = await this.userModel.findOne({
+        email: userObject.email,
+      });
       if (findUser) {
         throw new HttpException('USER_ALREADY_EXISTS', HttpStatus.CONFLICT);
       }
@@ -70,13 +72,12 @@ export class AuthService {
       // Step 3: Create new user in database with hashed password
       const newUser = await this.userModel.create({
         ...userData,
-        password: hashedPassword
+        password: hashedPassword,
       });
 
       // ? Critical: Never return password in API responses for security
       const { password: _, ...userResponse } = newUser.toObject();
       return userResponse;
-
     } catch (error) {
       // Handle known errors first
       if (error instanceof HttpException) {
@@ -91,11 +92,14 @@ export class AuthService {
       // Log unexpected errors securely (without sensitive data)
       this.logger.error('Registration failed', {
         email: userObject.email,
-        errorType: error.constructor.name
+        errorType: error.constructor.name,
       });
 
       // Throw generic error to prevent information leakage
-      throw new HttpException('REGISTRATION_FAILED', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'REGISTRATION_FAILED',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
   /**
@@ -131,7 +135,10 @@ export class AuthService {
 
       // Step 3: Ensure user has a password (not OAuth-only user)
       if (!findUser.password) {
-        throw new HttpException('INVALID_USER_DATA', HttpStatus.INTERNAL_SERVER_ERROR);
+        throw new HttpException(
+          'INVALID_USER_DATA',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
       }
 
       // Step 4: Compare provided password with stored hash
@@ -143,9 +150,9 @@ export class AuthService {
 
       // Step 5: Generate JWT token with user information
       const payload = {
-        sub: findUser._id,         // Subject (user ID)
-        email: findUser.email,     // User email
-        roles: findUser.roles      // User roles for authorization
+        sub: findUser._id, // Subject (user ID)
+        email: findUser.email, // User email
+        roles: findUser.roles, // User roles for authorization
       };
 
       const accessToken = this.jwtService.sign(payload);
@@ -158,12 +165,11 @@ export class AuthService {
           displayName: findUser.displayName,
           externalId: findUser.externalId,
           roles: findUser.roles,
-          active: findUser.active
+          active: findUser.active,
         },
         accessToken,
-        tokenType: 'Bearer' // Standard OAuth 2.0 token type
+        tokenType: 'Bearer', // Standard OAuth 2.0 token type
       };
-
     } catch (error) {
       // Re-throw known HTTP exceptions
       if (error instanceof HttpException) {
@@ -191,7 +197,7 @@ export class AuthService {
     const user = await this.userModel.findByIdAndUpdate(
       userId,
       { roles: newRoles },
-      { new: true } // Return updated document instead of original
+      { new: true }, // Return updated document instead of original
     );
 
     // Check if user exists
@@ -276,7 +282,7 @@ export class AuthService {
       const payload = {
         sub: user._id,
         email: user.email,
-        roles: user.roles
+        roles: user.roles,
       };
 
       const accessToken = this.jwtService.sign(payload);
@@ -291,20 +297,22 @@ export class AuthService {
           roles: user.roles,
           active: user.active,
           picture: user.picture,
-          isGoogleUser: true
+          isGoogleUser: true,
         },
         accessToken,
-        tokenType: 'Bearer'
+        tokenType: 'Bearer',
       };
-
     } catch (error) {
       // Log error securely without exposing sensitive data
       this.logger.error('Google login failed', {
         email: googleUser?.email,
-        errorType: error.constructor.name
+        errorType: error.constructor.name,
       });
 
-      throw new HttpException('GOOGLE_LOGIN_FAILED', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'GOOGLE_LOGIN_FAILED',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
   }
 }

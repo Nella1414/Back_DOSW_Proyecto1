@@ -7,7 +7,6 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './services/app.service';
 
-
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { RolesModule } from '../roles/roles.module';
@@ -27,7 +26,6 @@ import { ReportsModule } from '../reports/reports.module';
 import { CommonModule } from '../common/common.module';
 import { SchedulesModule } from '../schedules/schedules.module';
 
-
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 
@@ -37,10 +35,12 @@ import { RolesGuard } from '../auth/guards/roles.guard';
       isGlobal: true,
     }),
     //Add rate limiting to all endpoints
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // one minute
-      limit: 100,  // 100 requests per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // one minute
+        limit: 100, // 100 requests per minute
+      },
+    ]),
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],

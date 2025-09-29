@@ -22,7 +22,9 @@ export class UsersService {
    * * Constructor injects User MongoDB model
    * @param usersModule - Mongoose model for User collection operations
    */
-  constructor(@InjectModel(User.name) private usersModule: Model<UserDocument>) {}
+  constructor(
+    @InjectModel(User.name) private usersModule: Model<UserDocument>,
+  ) {}
 
   /**
    * * Create new user account

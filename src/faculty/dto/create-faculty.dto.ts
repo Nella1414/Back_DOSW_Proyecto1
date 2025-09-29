@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsEmail, Length, Matches, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  IsEmail,
+  Length,
+  Matches,
+  IsMongoId,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -23,13 +32,14 @@ export class CreateFacultyDto {
     example: 'FAC-ENG',
     minLength: 5,
     maxLength: 20,
-    pattern: '^FAC-[A-Z]{3,10}$'
+    pattern: '^FAC-[A-Z]{3,10}$',
   })
   @IsString()
   @IsNotEmpty()
   @Length(5, 20)
   @Matches(/^FAC-[A-Z]{3,10}$/, {
-    message: 'Faculty code must follow format: FAC-[LETTERS] (e.g., FAC-ENG, FAC-MED)'
+    message:
+      'Faculty code must follow format: FAC-[LETTERS] (e.g., FAC-ENG, FAC-MED)',
   })
   code: string;
 
@@ -42,7 +52,7 @@ export class CreateFacultyDto {
     description: 'Complete official faculty name',
     example: 'Faculty of Engineering',
     minLength: 5,
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -58,7 +68,7 @@ export class CreateFacultyDto {
   @ApiProperty({
     description: 'MongoDB ObjectId of the user assigned as dean',
     example: '674a1b2c3d4e5f6g7h8i9j0k',
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -75,7 +85,7 @@ export class CreateFacultyDto {
     description: 'Whether the faculty is currently active and operational',
     example: true,
     default: true,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()
@@ -88,9 +98,10 @@ export class CreateFacultyDto {
    */
   @ApiProperty({
     description: 'Detailed description of the faculty and its academic areas',
-    example: 'Faculty responsible for engineering programs including systems, civil, electrical, and mechanical engineering',
+    example:
+      'Faculty responsible for engineering programs including systems, civil, electrical, and mechanical engineering',
     maxLength: 500,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -106,7 +117,7 @@ export class CreateFacultyDto {
     description: 'Official faculty contact email address',
     example: 'engineering@university.edu',
     format: 'email',
-    required: false
+    required: false,
   })
   @IsEmail()
   @IsOptional()
@@ -121,12 +132,12 @@ export class CreateFacultyDto {
     description: 'Faculty contact phone number',
     example: '+57 1 234-5678',
     pattern: '^\\+?[1-9]\\d{1,14}$',
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
   @Matches(/^\+?[1-9]\d{1,14}$/, {
-    message: 'Phone number must be a valid international format'
+    message: 'Phone number must be a valid international format',
   })
   phone?: string;
 }

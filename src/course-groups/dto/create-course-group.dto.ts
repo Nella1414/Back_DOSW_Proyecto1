@@ -1,4 +1,11 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsNumber, Min } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  IsNumber,
+  Min,
+} from 'class-validator';
 
 export class CreateCourseGroupDto {
   @IsString()

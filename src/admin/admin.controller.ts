@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -7,7 +15,7 @@ import {
   ApiParam,
   ApiBody,
   ApiConsumes,
-  ApiProduces
+  ApiProduces,
 } from '@nestjs/swagger';
 import { AdminService } from './services/admin.service';
 import { CreateAdminDto } from './dto/create-admin.dto';
@@ -56,7 +64,7 @@ export class AdminController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'createAdminOperation'
+    operationId: 'createAdminOperation',
   })
   @ApiBody({
     type: CreateAdminDto,
@@ -70,9 +78,9 @@ export class AdminController {
           targetEntity: 'USER',
           configuration: {
             source: 'external_system',
-            batchSize: 100
-          }
-        }
+            batchSize: 100,
+          },
+        },
       },
       systemMaintenance: {
         summary: 'System Maintenance',
@@ -80,10 +88,10 @@ export class AdminController {
         value: {
           operationType: 'MAINTENANCE',
           scheduledAt: '2024-01-15T02:00:00Z',
-          duration: 3600
-        }
-      }
-    }
+          duration: 3600,
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 201,
@@ -99,12 +107,18 @@ export class AdminController {
             operationType: { type: 'string', example: 'BULK_IMPORT' },
             status: { type: 'string', example: 'PENDING' },
             createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-            estimatedCompletion: { type: 'string', example: '2024-01-15T11:00:00Z' }
-          }
+            estimatedCompletion: {
+              type: 'string',
+              example: '2024-01-15T11:00:00Z',
+            },
+          },
         },
-        message: { type: 'string', example: 'Administrative operation created successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Administrative operation created successfully',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -117,11 +131,14 @@ export class AdminController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'INVALID_OPERATION_CONFIG' },
-            message: { type: 'string', example: 'Invalid administrative operation configuration' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Invalid administrative operation configuration',
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 403,
@@ -134,11 +151,14 @@ export class AdminController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'INSUFFICIENT_PRIVILEGES' },
-            message: { type: 'string', example: 'Administrative privileges required' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Administrative privileges required',
+            },
+          },
+        },
+      },
+    },
   })
   @Post()
   create(@Body() createAdminDto: CreateAdminDto) {
@@ -174,7 +194,7 @@ export class AdminController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'getAllAdminOperations'
+    operationId: 'getAllAdminOperations',
   })
   @ApiResponse({
     status: 200,
@@ -195,10 +215,16 @@ export class AdminController {
                   operationType: { type: 'string', example: 'BULK_IMPORT' },
                   status: { type: 'string', example: 'COMPLETED' },
                   progress: { type: 'number', example: 100 },
-                  createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-                  completedAt: { type: 'string', example: '2024-01-15T10:45:00Z' }
-                }
-              }
+                  createdAt: {
+                    type: 'string',
+                    example: '2024-01-15T10:30:00Z',
+                  },
+                  completedAt: {
+                    type: 'string',
+                    example: '2024-01-15T10:45:00Z',
+                  },
+                },
+              },
             },
             pagination: {
               type: 'object',
@@ -206,14 +232,17 @@ export class AdminController {
                 total: { type: 'number', example: 25 },
                 page: { type: 'number', example: 1 },
                 limit: { type: 'number', example: 10 },
-                totalPages: { type: 'number', example: 3 }
-              }
-            }
-          }
+                totalPages: { type: 'number', example: 3 },
+              },
+            },
+          },
         },
-        message: { type: 'string', example: 'Administrative operations retrieved successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Administrative operations retrieved successfully',
+        },
+      },
+    },
   })
   @Get()
   findAll() {
@@ -247,13 +276,13 @@ export class AdminController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'getAdminOperationById'
+    operationId: 'getAdminOperationById',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Unique identifier of the administrative operation',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
@@ -273,8 +302,8 @@ export class AdminController {
               type: 'object',
               properties: {
                 source: { type: 'string', example: 'external_system' },
-                batchSize: { type: 'number', example: 100 }
-              }
+                batchSize: { type: 'number', example: 100 },
+              },
             },
             metrics: {
               type: 'object',
@@ -282,27 +311,36 @@ export class AdminController {
                 processedItems: { type: 'number', example: 650 },
                 totalItems: { type: 'number', example: 1000 },
                 errors: { type: 'number', example: 2 },
-                executionTime: { type: 'number', example: 1800 }
-              }
+                executionTime: { type: 'number', example: 1800 },
+              },
             },
             logs: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
-                  timestamp: { type: 'string', example: '2024-01-15T10:35:00Z' },
+                  timestamp: {
+                    type: 'string',
+                    example: '2024-01-15T10:35:00Z',
+                  },
                   level: { type: 'string', example: 'INFO' },
-                  message: { type: 'string', example: 'Processed batch 7 of 10' }
-                }
-              }
+                  message: {
+                    type: 'string',
+                    example: 'Processed batch 7 of 10',
+                  },
+                },
+              },
             },
             createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' }
-          }
+            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Administrative operation details retrieved successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Administrative operation details retrieved successfully',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -315,11 +353,14 @@ export class AdminController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'OPERATION_NOT_FOUND' },
-            message: { type: 'string', example: 'Administrative operation with specified ID not found' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Administrative operation with specified ID not found',
+            },
+          },
+        },
+      },
+    },
   })
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -352,13 +393,13 @@ export class AdminController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'updateAdminOperation'
+    operationId: 'updateAdminOperation',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Unique identifier of the administrative operation to update',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiBody({
     type: UpdateAdminDto,
@@ -369,18 +410,18 @@ export class AdminController {
         description: 'Change operation priority',
         value: {
           priority: 'HIGH',
-          scheduledAt: '2024-01-15T12:00:00Z'
-        }
+          scheduledAt: '2024-01-15T12:00:00Z',
+        },
       },
       statusUpdate: {
         summary: 'Manual Status Change',
         description: 'Manually change operation status',
         value: {
           status: 'CANCELLED',
-          reason: 'Manual cancellation due to system maintenance'
-        }
-      }
-    }
+          reason: 'Manual cancellation due to system maintenance',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -396,12 +437,15 @@ export class AdminController {
             operationType: { type: 'string', example: 'BULK_IMPORT' },
             status: { type: 'string', example: 'CANCELLED' },
             priority: { type: 'string', example: 'HIGH' },
-            updatedAt: { type: 'string', example: '2024-01-15T10:50:00Z' }
-          }
+            updatedAt: { type: 'string', example: '2024-01-15T10:50:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Administrative operation updated successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Administrative operation updated successfully',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -414,11 +458,14 @@ export class AdminController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'INVALID_STATUS_TRANSITION' },
-            message: { type: 'string', example: 'Cannot transition from COMPLETED to PENDING status' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Cannot transition from COMPLETED to PENDING status',
+            },
+          },
+        },
+      },
+    },
   })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateAdminDto: UpdateAdminDto) {
@@ -450,13 +497,13 @@ export class AdminController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'deleteAdminOperation'
+    operationId: 'deleteAdminOperation',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Unique identifier of the administrative operation to delete',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
@@ -470,12 +517,15 @@ export class AdminController {
           properties: {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             operationType: { type: 'string', example: 'BULK_IMPORT' },
-            deletedAt: { type: 'string', example: '2024-01-15T10:55:00Z' }
-          }
+            deletedAt: { type: 'string', example: '2024-01-15T10:55:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Administrative operation deleted successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Administrative operation deleted successfully',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -488,11 +538,14 @@ export class AdminController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'OPERATION_CANNOT_BE_DELETED' },
-            message: { type: 'string', example: 'Cannot delete operation in RUNNING status' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Cannot delete operation in RUNNING status',
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -505,11 +558,14 @@ export class AdminController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'OPERATION_NOT_FOUND' },
-            message: { type: 'string', example: 'Administrative operation with specified ID not found' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Administrative operation with specified ID not found',
+            },
+          },
+        },
+      },
+    },
   })
   @Delete(':id')
   remove(@Param('id') id: string) {

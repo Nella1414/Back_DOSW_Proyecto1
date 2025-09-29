@@ -1,0 +1,369 @@
+import {
+  Controller,
+  Get,
+  UseGuards,
+  Request,
+  Query,
+  HttpStatus,
+  HttpException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
+import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
+import { StudentScheduleService } from '../services/student-schedule.service';
+import { ScheduleValidationService } from '../services/schedule-validation.service';
+import { AcademicTrafficLightService } from '../services/academic-traffic-light.service';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
+import { Auth } from '../../auth/decorators/auth.decorator';
+
+// * ═══════════════════════════════════════════════════════════════
+// *                    SCHEDULES CONTROLLER - SPRINT 2
+// * ═══════════════════════════════════════════════════════════════
+
+/**
+ * ! SPRINT 2 IMPLEMENTATION: Complete schedules management system
+ *
+ * * FEATURES IMPLEMENTED:
+ * - ✅ Current schedule with conflict detection (US-0006 to US-0010)
+ * - ✅ Historical schedules with academic records (US-0011 to US-0015)
+ * - ✅ Academic traffic light performance indicator (US-0016 to US-0020)
+ *
+ * ? AUTHORIZATION PATTERNS:
+ * - Students can only access their own data
+ * - ADMIN/FACULTY can access any student's data
+ * - All unauthorized access attempts are logged
+ */
+
+@ApiTags('Student Schedules')
+@ApiBearerAuth()
+@Controller('schedules')
+@UseGuards(JwtAuthGuard)
+export class SchedulesController {
+  private readonly logger = new Logger(SchedulesController.name);
+
+  constructor(
+    private readonly studentScheduleService: StudentScheduleService,
+    private readonly scheduleValidationService: ScheduleValidationService,
+    private readonly academicTrafficLightService: AcademicTrafficLightService,
+  ) {}
+
+  // * ═══════════════════════════════════════════════════════════════
+  // *                    CURRENT SCHEDULE ENDPOINT
+  // * ═══════════════════════════════════════════════════════════════
+
+  /**
+   * ! US-0006 to US-0010: Current Schedule Feature Implementation
+   *
+   * * ENDPOINT: GET /schedules/current
+   * * PURPOSE: Get current semester schedule with conflict detection
+   *
+   * ? PARAMETERS:
+   * - userId (optional): Access other student's schedule (ADMIN/FACULTY only)
+   *
+   * * FEATURES:
+   * - ✅ Ordered by days and hours (US-0006)
+   * - ✅ Authorization validation (US-0007)
+   * - ✅ Room information included (US-0008)
+   * - ✅ Conflict detection (US-0009)
+   * - ✅ Empty schedule handling (US-0010)
+   */
+  @Get('current')
+  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @ApiOperation({ summary: 'Get current schedule for authenticated student' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current schedule retrieved successfully',
+  })
+  @ApiResponse({ status: 403, description: 'Unauthorized access attempt' })
+  @ApiResponse({ status: 404, description: 'No enrollments found' })
+  async getCurrentSchedule(
+    @Request() req: any,
+    @Query('userId') queryUserId?: string,
+  ) {
+    // * PERFORMANCE: Track response time for monitoring
+    const startTime = Date.now();
+    const authenticatedUserId = req.user?.externalId;
+    const userRoles = req.user?.roles || [];
+
+    let targetUserId = authenticatedUserId;
+
+    // ! AUTHORIZATION: Validate cross-student access (US-0007)
+    if (queryUserId) {
+      if (
+        !userRoles.includes('ADMIN') &&
+        !userRoles.includes('FACULTY') &&
+        queryUserId !== authenticatedUserId
+      ) {
+        // ! SECURITY: Log unauthorized access attempts for audit trail
+        this.logger.warn(
+          `Unauthorized access attempt: User ${authenticatedUserId} tried to access ${queryUserId}'s schedule`,
+        );
+        throw new ForbiddenException('You can only access your own schedule');
+      }
+      targetUserId = queryUserId;
+    }
+
+    try {
+      const schedule =
+        await this.studentScheduleService.getCurrentSchedule(targetUserId);
+
+      if (!schedule.schedule || schedule.schedule.length === 0) {
+        return {
+          schedule: [],
+          emptySchedule: true,
+          message: 'No enrollments found for current period',
+          studentId: targetUserId,
+          currentPeriod: schedule.period || null,
+        };
+      }
+
+      const conflicts =
+        await this.scheduleValidationService.detectScheduleConflicts(
+          schedule.schedule,
+        );
+
+      const latency = Date.now() - startTime;
+      this.logger.log(
+        `Schedule request for user ${targetUserId} completed in ${latency}ms`,
+      );
+
+      return {
+        ...schedule,
+        conflicts: conflicts || [],
+        emptySchedule: false,
+        latency: latency,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving schedule for user ${targetUserId}: ${(error as Error).message}`,
+      );
+
+      if ((error as Error).message.includes('not found')) {
+        throw new HttpException('Student not found', HttpStatus.NOT_FOUND);
+      }
+
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('historical')
+  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @ApiOperation({ summary: 'Get historical schedules for closed periods' })
+  @ApiResponse({
+    status: 200,
+    description: 'Historical schedules retrieved successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid period or period not closed',
+  })
+  async getHistoricalSchedules(
+    @Request() req: any,
+    @Query('userId') queryUserId?: string,
+    @Query('from') fromDate?: string,
+    @Query('to') toDate?: string,
+  ) {
+    const authenticatedUserId = req.user?.externalId;
+    const userRoles = req.user?.roles || [];
+
+    let targetUserId = authenticatedUserId;
+
+    if (queryUserId) {
+      if (
+        !userRoles.includes('ADMIN') &&
+        !userRoles.includes('FACULTY') &&
+        queryUserId !== authenticatedUserId
+      ) {
+        this.logger.warn(
+          `Unauthorized access attempt: User ${authenticatedUserId} tried to access ${queryUserId}'s historical schedules`,
+        );
+        throw new ForbiddenException(
+          'You can only access your own historical schedules',
+        );
+      }
+      targetUserId = queryUserId;
+    }
+
+    try {
+      const historicalData =
+        await this.studentScheduleService.getHistoricalSchedules(
+          targetUserId,
+          fromDate,
+          toDate,
+        );
+
+      if (!historicalData.periods || historicalData.periods.length === 0) {
+        return {
+          periods: [],
+          emptyHistory: true,
+          message: 'No historical academic data found',
+          studentId: targetUserId,
+        };
+      }
+
+      return {
+        ...historicalData,
+        emptyHistory: false,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving historical schedules for user ${targetUserId}: ${(error as Error).message}`,
+      );
+
+      if (
+        (error as Error).message.includes('Invalid period') ||
+        (error as Error).message.includes('not closed')
+      ) {
+        throw new HttpException(
+          (error as Error).message,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('historical/:periodId')
+  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @ApiOperation({
+    summary: 'Get specific historical schedule for a closed period',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Historical schedule retrieved successfully',
+  })
+  @ApiResponse({ status: 400, description: 'Period is not closed' })
+  async getHistoricalScheduleByPeriod(
+    @Request() req: any,
+    @Query('periodId') periodId: string,
+    @Query('userId') queryUserId?: string,
+  ) {
+    const authenticatedUserId = req.user?.externalId;
+    const userRoles = req.user?.roles || [];
+
+    let targetUserId = authenticatedUserId;
+
+    if (queryUserId) {
+      if (
+        !userRoles.includes('ADMIN') &&
+        !userRoles.includes('FACULTY') &&
+        queryUserId !== authenticatedUserId
+      ) {
+        this.logger.warn(
+          `Unauthorized access attempt: User ${authenticatedUserId} tried to access ${queryUserId}'s historical schedule`,
+        );
+        throw new ForbiddenException(
+          'You can only access your own historical schedules',
+        );
+      }
+      targetUserId = queryUserId;
+    }
+
+    try {
+      const isValidPeriod =
+        await this.scheduleValidationService.validateClosedPeriod(periodId);
+
+      if (!isValidPeriod) {
+        this.logger.warn(
+          `Access attempt to non-closed period ${periodId} by user ${authenticatedUserId}`,
+        );
+        throw new HttpException(
+          'Period is not closed or does not exist',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      const historicalSchedule =
+        await this.studentScheduleService.getHistoricalScheduleByPeriod(
+          targetUserId,
+          periodId,
+        );
+
+      return historicalSchedule;
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving historical schedule for period ${periodId}: ${(error as Error).message}`,
+      );
+
+      if (
+        (error as Error).message.includes('not closed') ||
+        (error as Error).message.includes('does not exist')
+      ) {
+        throw new HttpException(
+          (error as Error).message,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('traffic-light')
+  @Auth('STUDENT', 'ADMIN', 'FACULTY')
+  @ApiOperation({ summary: 'Get academic traffic light status' })
+  @ApiResponse({
+    status: 200,
+    description: 'Academic traffic light retrieved successfully',
+  })
+  async getAcademicTrafficLight(
+    @Request() req: any,
+    @Query('userId') queryUserId?: string,
+    @Query('details') includeDetails?: string,
+  ) {
+    const authenticatedUserId = req.user?.externalId;
+    const userRoles = req.user?.roles || [];
+
+    let targetUserId = authenticatedUserId;
+
+    if (queryUserId) {
+      if (
+        !userRoles.includes('ADMIN') &&
+        !userRoles.includes('FACULTY') &&
+        queryUserId !== authenticatedUserId
+      ) {
+        this.logger.warn(
+          `Unauthorized access attempt: User ${authenticatedUserId} tried to access ${queryUserId}'s traffic light`,
+        );
+        throw new ForbiddenException(
+          'You can only access your own academic status',
+        );
+      }
+      targetUserId = queryUserId;
+    }
+
+    try {
+      const includeBreakdown = includeDetails === 'true';
+      const trafficLight =
+        await this.academicTrafficLightService.getAcademicTrafficLight(
+          targetUserId,
+          includeBreakdown,
+        );
+
+      return trafficLight;
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving academic traffic light for user ${targetUserId}: ${(error as Error).message}`,
+      );
+      throw new HttpException(
+        'Internal server error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+}

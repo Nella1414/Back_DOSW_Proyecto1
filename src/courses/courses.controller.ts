@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,7 +17,7 @@ import {
   ApiBody,
   ApiQuery,
   ApiConsumes,
-  ApiProduces
+  ApiProduces,
 } from '@nestjs/swagger';
 import { CoursesService } from './services/courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
@@ -62,7 +71,7 @@ export class CoursesController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'createCourse'
+    operationId: 'createCourse',
   })
   @ApiBody({
     type: CreateCourseDto,
@@ -75,9 +84,10 @@ export class CoursesController {
           code: 'CS101',
           name: 'Introduction to Computer Science',
           credits: 3,
-          description: 'Fundamental concepts of computer science and programming',
-          isActive: true
-        }
+          description:
+            'Fundamental concepts of computer science and programming',
+          isActive: true,
+        },
       },
       advancedCourse: {
         summary: 'Advanced Course with Prerequisites',
@@ -86,12 +96,13 @@ export class CoursesController {
           code: 'CS301',
           name: 'Advanced Programming',
           credits: 4,
-          description: 'Advanced programming concepts including data structures and algorithms',
+          description:
+            'Advanced programming concepts including data structures and algorithms',
           prerequisites: ['CS101', 'CS201'],
-          isActive: true
-        }
-      }
-    }
+          isActive: true,
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 201,
@@ -105,17 +116,27 @@ export class CoursesController {
           properties: {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'CS101' },
-            name: { type: 'string', example: 'Introduction to Computer Science' },
+            name: {
+              type: 'string',
+              example: 'Introduction to Computer Science',
+            },
             credits: { type: 'number', example: 3 },
-            description: { type: 'string', example: 'Fundamental concepts of computer science' },
-            prerequisites: { type: 'array', items: { type: 'string' }, example: [] },
+            description: {
+              type: 'string',
+              example: 'Fundamental concepts of computer science',
+            },
+            prerequisites: {
+              type: 'array',
+              items: { type: 'string' },
+              example: [],
+            },
             isActive: { type: 'boolean', example: true },
-            createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' }
-          }
+            createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Course created successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Course created successfully' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -135,14 +156,17 @@ export class CoursesController {
                 type: 'object',
                 properties: {
                   field: { type: 'string', example: 'code' },
-                  message: { type: 'string', example: 'Course code must be unique' }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+                  message: {
+                    type: 'string',
+                    example: 'Course code must be unique',
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 409,
@@ -155,11 +179,14 @@ export class CoursesController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'COURSE_CODE_EXISTS' },
-            message: { type: 'string', example: 'Course with this code already exists' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Course with this code already exists',
+            },
+          },
+        },
+      },
+    },
   })
   @Post()
   create(@Body() createCourseDto: CreateCourseDto) {
@@ -198,16 +225,58 @@ export class CoursesController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'getAllCourses'
+    operationId: 'getAllCourses',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number', example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Results per page', example: 20 })
-  @ApiQuery({ name: 'active', required: false, type: Boolean, description: 'Filter by active status' })
-  @ApiQuery({ name: 'minCredits', required: false, type: Number, description: 'Minimum credit hours' })
-  @ApiQuery({ name: 'maxCredits', required: false, type: Number, description: 'Maximum credit hours' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search term' })
-  @ApiQuery({ name: 'sortBy', required: false, enum: ['code', 'name', 'credits', 'createdAt'], description: 'Sort field' })
-  @ApiQuery({ name: 'sortOrder', required: false, enum: ['asc', 'desc'], description: 'Sort direction' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Results per page',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'active',
+    required: false,
+    type: Boolean,
+    description: 'Filter by active status',
+  })
+  @ApiQuery({
+    name: 'minCredits',
+    required: false,
+    type: Number,
+    description: 'Minimum credit hours',
+  })
+  @ApiQuery({
+    name: 'maxCredits',
+    required: false,
+    type: Number,
+    description: 'Maximum credit hours',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search term',
+  })
+  @ApiQuery({
+    name: 'sortBy',
+    required: false,
+    enum: ['code', 'name', 'credits', 'createdAt'],
+    description: 'Sort field',
+  })
+  @ApiQuery({
+    name: 'sortOrder',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Sort direction',
+  })
   @ApiResponse({
     status: 200,
     description: 'Courses retrieved successfully',
@@ -225,15 +294,21 @@ export class CoursesController {
                 properties: {
                   id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
                   code: { type: 'string', example: 'CS101' },
-                  name: { type: 'string', example: 'Introduction to Computer Science' },
+                  name: {
+                    type: 'string',
+                    example: 'Introduction to Computer Science',
+                  },
                   credits: { type: 'number', example: 3 },
-                  description: { type: 'string', example: 'Fundamental concepts' },
+                  description: {
+                    type: 'string',
+                    example: 'Fundamental concepts',
+                  },
                   prerequisites: { type: 'array', items: { type: 'string' } },
                   isActive: { type: 'boolean', example: true },
                   groupCount: { type: 'number', example: 2 },
-                  enrollmentCount: { type: 'number', example: 45 }
-                }
-              }
+                  enrollmentCount: { type: 'number', example: 45 },
+                },
+              },
             },
             pagination: {
               type: 'object',
@@ -241,14 +316,14 @@ export class CoursesController {
                 total: { type: 'number', example: 150 },
                 page: { type: 'number', example: 1 },
                 limit: { type: 'number', example: 20 },
-                totalPages: { type: 'number', example: 8 }
-              }
-            }
-          }
+                totalPages: { type: 'number', example: 8 },
+              },
+            },
+          },
         },
-        message: { type: 'string', example: 'Courses retrieved successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Courses retrieved successfully' },
+      },
+    },
   })
   @Get()
   findAll(
@@ -259,7 +334,7 @@ export class CoursesController {
     @Query('maxCredits') maxCredits?: number,
     @Query('search') search?: string,
     @Query('sortBy') sortBy?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc'
+    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
   ) {
     return this.coursesService.findAll();
   }
@@ -290,13 +365,13 @@ export class CoursesController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'getCourseById'
+    operationId: 'getCourseById',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Course unique identifier',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
@@ -310,18 +385,25 @@ export class CoursesController {
           properties: {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'CS101' },
-            name: { type: 'string', example: 'Introduction to Computer Science' },
+            name: {
+              type: 'string',
+              example: 'Introduction to Computer Science',
+            },
             credits: { type: 'number', example: 3 },
-            description: { type: 'string', example: 'Comprehensive introduction to computer science fundamentals' },
+            description: {
+              type: 'string',
+              example:
+                'Comprehensive introduction to computer science fundamentals',
+            },
             prerequisites: {
               type: 'array',
               items: {
                 type: 'object',
                 properties: {
                   code: { type: 'string', example: 'MATH101' },
-                  name: { type: 'string', example: 'College Mathematics' }
-                }
-              }
+                  name: { type: 'string', example: 'College Mathematics' },
+                },
+              },
             },
             isActive: { type: 'boolean', example: true },
             groups: {
@@ -335,9 +417,9 @@ export class CoursesController {
                   schedule: { type: 'string', example: 'Mon/Wed 10:00-11:30' },
                   capacity: { type: 'number', example: 30 },
                   enrolled: { type: 'number', example: 25 },
-                  available: { type: 'number', example: 5 }
-                }
-              }
+                  available: { type: 'number', example: 5 },
+                },
+              },
             },
             statistics: {
               type: 'object',
@@ -345,16 +427,19 @@ export class CoursesController {
                 totalEnrollments: { type: 'number', example: 245 },
                 averageGrade: { type: 'number', example: 3.7 },
                 passRate: { type: 'number', example: 0.92 },
-                popularityRank: { type: 'number', example: 15 }
-              }
+                popularityRank: { type: 'number', example: 15 },
+              },
             },
             createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-            updatedAt: { type: 'string', example: '2024-01-15T10:30:00Z' }
-          }
+            updatedAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Course details retrieved successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Course details retrieved successfully',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -367,11 +452,14 @@ export class CoursesController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'COURSE_NOT_FOUND' },
-            message: { type: 'string', example: 'Course with specified ID not found' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Course with specified ID not found',
+            },
+          },
+        },
+      },
+    },
   })
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -409,13 +497,13 @@ export class CoursesController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'updateCourse'
+    operationId: 'updateCourse',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Course unique identifier to update',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiBody({
     type: UpdateCourseDto,
@@ -426,26 +514,27 @@ export class CoursesController {
         description: 'Change course name and description',
         value: {
           name: 'Advanced Computer Science Concepts',
-          description: 'Updated comprehensive introduction with advanced topics'
-        }
+          description:
+            'Updated comprehensive introduction with advanced topics',
+        },
       },
       prerequisiteUpdate: {
         summary: 'Update Prerequisites',
         description: 'Modify course prerequisite requirements',
         value: {
           prerequisites: ['MATH101', 'CS100'],
-          description: 'Added mathematics prerequisite for better preparation'
-        }
+          description: 'Added mathematics prerequisite for better preparation',
+        },
       },
       statusUpdate: {
         summary: 'Deactivate Course',
         description: 'Mark course as inactive',
         value: {
           isActive: false,
-          reason: 'Course content outdated, replaced by CS102'
-        }
-      }
-    }
+          reason: 'Course content outdated, replaced by CS102',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -459,17 +548,27 @@ export class CoursesController {
           properties: {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'CS101' },
-            name: { type: 'string', example: 'Advanced Computer Science Concepts' },
+            name: {
+              type: 'string',
+              example: 'Advanced Computer Science Concepts',
+            },
             credits: { type: 'number', example: 3 },
-            description: { type: 'string', example: 'Updated comprehensive introduction' },
-            prerequisites: { type: 'array', items: { type: 'string' }, example: ['MATH101', 'CS100'] },
+            description: {
+              type: 'string',
+              example: 'Updated comprehensive introduction',
+            },
+            prerequisites: {
+              type: 'array',
+              items: { type: 'string' },
+              example: ['MATH101', 'CS100'],
+            },
             isActive: { type: 'boolean', example: true },
-            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' }
-          }
+            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Course updated successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Course updated successfully' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -482,11 +581,15 @@ export class CoursesController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'INVALID_PREREQUISITE' },
-            message: { type: 'string', example: 'Cannot add prerequisite that creates circular dependency' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example:
+                'Cannot add prerequisite that creates circular dependency',
+            },
+          },
+        },
+      },
+    },
   })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto) {
@@ -524,13 +627,13 @@ export class CoursesController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'deleteCourse'
+    operationId: 'deleteCourse',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Course unique identifier to delete',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
@@ -544,13 +647,16 @@ export class CoursesController {
           properties: {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'CS101' },
-            name: { type: 'string', example: 'Introduction to Computer Science' },
-            deletedAt: { type: 'string', example: '2024-01-15T10:50:00Z' }
-          }
+            name: {
+              type: 'string',
+              example: 'Introduction to Computer Science',
+            },
+            deletedAt: { type: 'string', example: '2024-01-15T10:50:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Course deleted successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Course deleted successfully' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -563,19 +669,27 @@ export class CoursesController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'COURSE_HAS_DEPENDENCIES' },
-            message: { type: 'string', example: 'Cannot delete course: 3 other courses list this as prerequisite' },
+            message: {
+              type: 'string',
+              example:
+                'Cannot delete course: 3 other courses list this as prerequisite',
+            },
             details: {
               type: 'object',
               properties: {
-                dependentCourses: { type: 'array', items: { type: 'string' }, example: ['CS201', 'CS301', 'IT150'] },
+                dependentCourses: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['CS201', 'CS301', 'IT150'],
+                },
                 activeEnrollments: { type: 'number', example: 0 },
-                historicalEnrollments: { type: 'number', example: 245 }
-              }
-            }
-          }
-        }
-      }
-    }
+                historicalEnrollments: { type: 'number', example: 245 },
+              },
+            },
+          },
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -588,11 +702,14 @@ export class CoursesController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'COURSE_NOT_FOUND' },
-            message: { type: 'string', example: 'Course with specified ID not found' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Course with specified ID not found',
+            },
+          },
+        },
+      },
+    },
   })
   @Delete(':id')
   remove(@Param('id') id: string) {

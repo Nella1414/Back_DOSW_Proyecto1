@@ -28,7 +28,8 @@ async function bootstrap() {
    */
   const swaggerConfig = new DocumentBuilder()
     .setTitle('SIRHA - Student Information & Registration Hub API')
-    .setDescription(`
+    .setDescription(
+      `
 # SIRHA API - Academic Management System
 
 A comprehensive REST API for academic student information management and course registration built with **NestJS**, **MongoDB**, and **TypeScript**.
@@ -98,17 +99,23 @@ All API responses follow consistent JSON format with proper HTTP status codes an
 ## **Support**
 
 For API support and documentation issues, please refer to the comprehensive endpoint documentation below.
-    `)
-    .setVersion('1.0.2')
-    .setContact(
-      'Development Team',
-      '',
-      ''
+    `,
     )
+    .setVersion('1.0.2')
+    .setContact('Development Team', '', '')
     .addServer('http://localhost:3000', 'Development Server')
-    .addTag('Authentication', 'User authentication, registration, and Google OAuth')
-    .addTag('Student Management', 'Complete student CRUD operations and profile management')
-    .addTag('User Management', 'User account administration and role management')
+    .addTag(
+      'Authentication',
+      'User authentication, registration, and Google OAuth',
+    )
+    .addTag(
+      'Student Management',
+      'Complete student CRUD operations and profile management',
+    )
+    .addTag(
+      'User Management',
+      'User account administration and role management',
+    )
     .addTag('Faculty', 'Faculty and department management')
     .addTag('Programs', 'Academic program definitions and curriculum')
     .addTag('Courses', 'Course catalog and academic content management')
@@ -127,7 +134,7 @@ For API support and documentation issues, please refer to the comprehensive endp
         description: 'Enter your JWT token received from login endpoint',
         in: 'header',
       },
-      'JWT-auth'
+      'JWT-auth',
     )
     .addSecurityRequirements('JWT-auth')
     .build();
@@ -168,15 +175,17 @@ For API support and documentation issues, please refer to the comprehensive endp
    * Provides comprehensive input validation, transformation, and sanitization
    * for all incoming requests to ensure data integrity and security.
    */
-  app.useGlobalPipes(new ValidationPipe({
-    transform: true,           // Automatically transform payloads to DTO instances
-    whitelist: true,          // Strip properties that do not have decorators
-    forbidNonWhitelisted: true, // Throw error when non-whitelisted properties are present
-    transformOptions: {
-      enableImplicitConversion: true, // Enable automatic type conversion
-    },
-    disableErrorMessages: process.env.NODE_ENV === 'production', // Hide detailed errors in production
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true, // Automatically transform payloads to DTO instances
+      whitelist: true, // Strip properties that do not have decorators
+      forbidNonWhitelisted: true, // Throw error when non-whitelisted properties are present
+      transformOptions: {
+        enableImplicitConversion: true, // Enable automatic type conversion
+      },
+      disableErrorMessages: process.env.NODE_ENV === 'production', // Hide detailed errors in production
+    }),
+  );
 
   /**
    * CORS Configuration
@@ -198,7 +207,9 @@ For API support and documentation issues, please refer to the comprehensive endp
 
   logger.log(`SIRHA API Server running on: http://localhost:${port}`);
   logger.log(`API Documentation: http://localhost:${port}/doc`);
-  logger.log(`CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3001'}`);
+  logger.log(
+    `CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3001'}`,
+  );
   logger.log('Application bootstrap completed successfully');
 }
 

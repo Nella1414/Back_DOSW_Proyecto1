@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AcademicPeriod, AcademicPeriodSchema } from './entities/academic-period.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodSchema,
+} from './entities/academic-period.entity';
 import { AcademicPeriodsService } from './services/academic-periods.service';
 import { AcademicPeriodsController } from './academic-periods.controller';
 
@@ -16,11 +19,11 @@ import { AcademicPeriodsController } from './academic-periods.controller';
 @Module({
   imports: [
     MongooseModule.forFeature([
-      { name: AcademicPeriod.name, schema: AcademicPeriodSchema }
-    ])
+      { name: AcademicPeriod.name, schema: AcademicPeriodSchema },
+    ]),
   ],
   controllers: [AcademicPeriodsController],
   providers: [AcademicPeriodsService],
-  exports: [MongooseModule, AcademicPeriodsService]
+  exports: [MongooseModule, AcademicPeriodsService],
 })
 export class AcademicPeriodsModule {}

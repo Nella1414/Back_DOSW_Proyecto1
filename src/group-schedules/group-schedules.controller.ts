@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { GroupSchedulesService } from './services/group-schedules.service';
 import { CreateGroupScheduleDto } from './dto/create-group-schedule.dto';
 import { UpdateGroupScheduleDto } from './dto/update-group-schedule.dto';
@@ -23,7 +31,10 @@ export class GroupSchedulesController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGroupScheduleDto: UpdateGroupScheduleDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateGroupScheduleDto: UpdateGroupScheduleDto,
+  ) {
     return this.groupSchedulesService.update(+id, updateGroupScheduleDto);
   }
 

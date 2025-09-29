@@ -1,11 +1,28 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CourseGroup, CourseGroupDocument } from '../entities/course-group.entity';
+import {
+  CourseGroup,
+  CourseGroupDocument,
+} from '../entities/course-group.entity';
 import { Course, CourseDocument } from '../../courses/entities/course.entity';
-import { AcademicPeriod, AcademicPeriodDocument } from '../../academic-periods/entities/academic-period.entity';
-import { GroupSchedule, GroupScheduleDocument } from '../../group-schedules/entities/group-schedule.entity';
-import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../../enrollments/entities/enrollment.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodDocument,
+} from '../../academic-periods/entities/academic-period.entity';
+import {
+  GroupSchedule,
+  GroupScheduleDocument,
+} from '../../group-schedules/entities/group-schedule.entity';
+import {
+  Enrollment,
+  EnrollmentDocument,
+  EnrollmentStatus,
+} from '../../enrollments/entities/enrollment.entity';
 import { CreateCourseGroupDto } from '../dto/create-course-group.dto';
 import { UpdateCourseGroupDto } from '../dto/update-course-group.dto';
 
@@ -53,11 +70,15 @@ export class CourseGroupsService {
    * @param enrollmentModel - Model for enrollment tracking
    */
   constructor(
-    @InjectModel(CourseGroup.name) private courseGroupModel: Model<CourseGroupDocument>,
+    @InjectModel(CourseGroup.name)
+    private courseGroupModel: Model<CourseGroupDocument>,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
-    @InjectModel(AcademicPeriod.name) private academicPeriodModel: Model<AcademicPeriodDocument>,
-    @InjectModel(GroupSchedule.name) private groupScheduleModel: Model<GroupScheduleDocument>,
-    @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
+    @InjectModel(AcademicPeriod.name)
+    private academicPeriodModel: Model<AcademicPeriodDocument>,
+    @InjectModel(GroupSchedule.name)
+    private groupScheduleModel: Model<GroupScheduleDocument>,
+    @InjectModel(Enrollment.name)
+    private enrollmentModel: Model<EnrollmentDocument>,
   ) {}
 
   /**
@@ -68,35 +89,43 @@ export class CourseGroupsService {
    * TODO: Agregar validacion de capacidad de aula asignada
    * TODO: Validar disponibilidad de profesor en horario
    */
-  async create(createCourseGroupDto: CreateCourseGroupDto): Promise<CourseGroup> {
+  async create(
+    createCourseGroupDto: CreateCourseGroupDto,
+  ): Promise<CourseGroup> {
     // Validar que el curso existe
-    const course = await this.courseModel.findById(createCourseGroupDto.courseId).exec();
+    const course = await this.courseModel
+      .findById(createCourseGroupDto.courseId)
+      .exec();
     if (!course) {
       throw new NotFoundException('Course not found');
     }
 
     // Validar que el periodo existe
-    const period = await this.academicPeriodModel.findById(createCourseGroupDto.periodId).exec();
+    const period = await this.academicPeriodModel
+      .findById(createCourseGroupDto.periodId)
+      .exec();
     if (!period) {
       throw new NotFoundException('Academic period not found');
     }
 
     // Verificar que no existe un grupo con el mismo número para el mismo curso y periodo
-    const existingGroup = await this.courseGroupModel.findOne({
-      courseId: createCourseGroupDto.courseId,
-      periodId: createCourseGroupDto.periodId,
-      groupNumber: createCourseGroupDto.groupNumber
-    }).exec();
+    const existingGroup = await this.courseGroupModel
+      .findOne({
+        courseId: createCourseGroupDto.courseId,
+        periodId: createCourseGroupDto.periodId,
+        groupNumber: createCourseGroupDto.groupNumber,
+      })
+      .exec();
 
     if (existingGroup) {
       throw new BadRequestException(
-        `Group ${createCourseGroupDto.groupNumber} already exists for this course in period ${period.code}`
+        `Group ${createCourseGroupDto.groupNumber} already exists for this course in period ${period.code}`,
       );
     }
 
     const courseGroup = new this.courseGroupModel({
       ...createCourseGroupDto,
-      currentEnrollments: 0
+      currentEnrollments: 0,
     });
 
     return await courseGroup.save();
@@ -141,7 +170,10 @@ export class CourseGroupsService {
    * TODO: Agregar filtro por disponibilidad de cupos
    * TODO: Incluir informacion de horarios en response
    */
-  async findByCourse(courseId: string, periodId?: string): Promise<CourseGroup[]> {
+  async findByCourse(
+    courseId: string,
+    periodId?: string,
+  ): Promise<CourseGroup[]> {
     const query: any = { courseId, isActive: true };
     if (periodId) {
       query.periodId = periodId;
@@ -164,7 +196,7 @@ export class CourseGroupsService {
    */
   async getAvailableGroups(
     courseId?: string,
-    periodId?: string
+    periodId?: string,
   ): Promise<AvailableGroupDto[]> {
     const query: any = { isActive: true };
     if (courseId) query.courseId = courseId;
@@ -177,21 +209,30 @@ export class CourseGroupsService {
       .exec();
 
     const availableGroups: AvailableGroupDto[] = [];
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const daysOfWeek = [
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ];
 
     for (const group of groups) {
       // Obtener enrollments actuales
-      const currentEnrollments = await this.enrollmentModel.countDocuments({
-        groupId: group._id,
-        status: EnrollmentStatus.ENROLLED
-      }).exec();
+      const currentEnrollments = await this.enrollmentModel
+        .countDocuments({
+          groupId: group._id,
+          status: EnrollmentStatus.ENROLLED,
+        })
+        .exec();
 
       // Actualizar contador si es diferente
       if (currentEnrollments !== group.currentEnrollments) {
-        await this.courseGroupModel.updateOne(
-          { _id: group._id },
-          { currentEnrollments }
-        ).exec();
+        await this.courseGroupModel
+          .updateOne({ _id: group._id }, { currentEnrollments })
+          .exec();
         group.currentEnrollments = currentEnrollments;
       }
 
@@ -202,12 +243,12 @@ export class CourseGroupsService {
           .find({ groupId: group._id })
           .exec();
 
-        const groupSchedules = schedules.map(schedule => ({
+        const groupSchedules = schedules.map((schedule) => ({
           dayOfWeek: schedule.dayOfWeek,
           dayName: daysOfWeek[schedule.dayOfWeek] || 'Desconocido',
           startTime: schedule.startTime,
           endTime: schedule.endTime,
-          room: schedule.room
+          room: schedule.room,
         }));
 
         availableGroups.push({
@@ -219,14 +260,15 @@ export class CourseGroupsService {
           currentEnrollments: currentEnrollments,
           availableSpots: group.maxStudents - currentEnrollments,
           schedule: groupSchedules.sort((a, b) => a.dayOfWeek - b.dayOfWeek),
-          professorName: group.professorId ? 'Por asignar' : undefined
+          professorName: group.professorId ? 'Por asignar' : undefined,
         });
       }
     }
 
-    return availableGroups.sort((a, b) =>
-      a.courseCode.localeCompare(b.courseCode) ||
-      a.groupNumber.localeCompare(b.groupNumber)
+    return availableGroups.sort(
+      (a, b) =>
+        a.courseCode.localeCompare(b.courseCode) ||
+        a.groupNumber.localeCompare(b.groupNumber),
     );
   }
 
@@ -245,28 +287,37 @@ export class CourseGroupsService {
     return group;
   }
 
-  async update(id: string, updateCourseGroupDto: UpdateCourseGroupDto): Promise<CourseGroup> {
+  async update(
+    id: string,
+    updateCourseGroupDto: UpdateCourseGroupDto,
+  ): Promise<CourseGroup> {
     const group = await this.courseGroupModel.findById(id).exec();
     if (!group) {
       throw new NotFoundException('Course group not found');
     }
 
     // Si se está cambiando el curso o periodo, validar que no haya conflictos
-    if (updateCourseGroupDto.courseId || updateCourseGroupDto.periodId || updateCourseGroupDto.groupNumber) {
+    if (
+      updateCourseGroupDto.courseId ||
+      updateCourseGroupDto.periodId ||
+      updateCourseGroupDto.groupNumber
+    ) {
       const courseId = updateCourseGroupDto.courseId || group.courseId;
       const periodId = updateCourseGroupDto.periodId || group.periodId;
       const groupNumber = updateCourseGroupDto.groupNumber || group.groupNumber;
 
-      const existingGroup = await this.courseGroupModel.findOne({
-        _id: { $ne: id },
-        courseId,
-        periodId,
-        groupNumber
-      }).exec();
+      const existingGroup = await this.courseGroupModel
+        .findOne({
+          _id: { $ne: id },
+          courseId,
+          periodId,
+          groupNumber,
+        })
+        .exec();
 
       if (existingGroup) {
         throw new BadRequestException(
-          `Group ${groupNumber} already exists for this course in the specified period`
+          `Group ${groupNumber} already exists for this course in the specified period`,
         );
       }
     }
@@ -282,14 +333,16 @@ export class CourseGroupsService {
     }
 
     // Verificar que no hay estudiantes inscritos
-    const enrollmentCount = await this.enrollmentModel.countDocuments({
-      groupId: id,
-      status: EnrollmentStatus.ENROLLED
-    }).exec();
+    const enrollmentCount = await this.enrollmentModel
+      .countDocuments({
+        groupId: id,
+        status: EnrollmentStatus.ENROLLED,
+      })
+      .exec();
 
     if (enrollmentCount > 0) {
       throw new BadRequestException(
-        'Cannot delete a group that has enrolled students'
+        'Cannot delete a group that has enrolled students',
       );
     }
 
@@ -301,25 +354,29 @@ export class CourseGroupsService {
   }
 
   async updateEnrollmentCount(groupId: string): Promise<void> {
-    const currentEnrollments = await this.enrollmentModel.countDocuments({
-      groupId,
-      status: EnrollmentStatus.ENROLLED
-    }).exec();
+    const currentEnrollments = await this.enrollmentModel
+      .countDocuments({
+        groupId,
+        status: EnrollmentStatus.ENROLLED,
+      })
+      .exec();
 
-    await this.courseGroupModel.updateOne(
-      { _id: groupId },
-      { currentEnrollments }
-    ).exec();
+    await this.courseGroupModel
+      .updateOne({ _id: groupId }, { currentEnrollments })
+      .exec();
   }
 
-  async getGroupsByStudent(studentId: string, periodId?: string): Promise<CourseGroup[]> {
+  async getGroupsByStudent(
+    studentId: string,
+    periodId?: string,
+  ): Promise<CourseGroup[]> {
     const query: any = {
       studentId,
-      status: EnrollmentStatus.ENROLLED
+      status: EnrollmentStatus.ENROLLED,
     };
 
     const enrollments = await this.enrollmentModel.find(query).exec();
-    const groupIds = enrollments.map(e => e.groupId);
+    const groupIds = enrollments.map((e) => e.groupId);
 
     const groupQuery: any = { _id: { $in: groupIds } };
     if (periodId) {

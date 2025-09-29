@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { WaitlistsService } from './services/waitlists.service';
 import { CreateWaitlistDto } from './dto/create-waitlist.dto';
 import { UpdateWaitlistDto } from './dto/update-waitlist.dto';
@@ -55,7 +63,10 @@ export class WaitlistsController {
    * TODO: Implementar logica de procesamiento automatico
    */
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateWaitlistDto: UpdateWaitlistDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateWaitlistDto: UpdateWaitlistDto,
+  ) {
     return this.waitlistsService.update(+id, updateWaitlistDto);
   }
 

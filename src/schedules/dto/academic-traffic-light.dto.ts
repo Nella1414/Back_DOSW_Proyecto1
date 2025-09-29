@@ -18,7 +18,7 @@ export class StudentAcademicStatusDto {
    */
   @ApiProperty({
     description: 'Unique student identification code',
-    example: 'CS2024001'
+    example: 'CS2024001',
   })
   studentId: string;
 
@@ -28,7 +28,7 @@ export class StudentAcademicStatusDto {
    */
   @ApiProperty({
     description: 'Complete student name for display',
-    example: 'Maria Rodriguez'
+    example: 'Maria Rodriguez',
   })
   studentName: string;
 
@@ -40,7 +40,7 @@ export class StudentAcademicStatusDto {
     description: 'Current academic semester',
     example: 3,
     minimum: 1,
-    maximum: 12
+    maximum: 12,
   })
   currentSemester: number;
 
@@ -51,7 +51,7 @@ export class StudentAcademicStatusDto {
   @ApiProperty({
     description: 'Overall traffic light color indicating academic performance',
     example: 'green',
-    enum: ['green', 'yellow', 'red']
+    enum: ['green', 'yellow', 'red'],
   })
   overallColor: TrafficLightColor;
 
@@ -62,7 +62,7 @@ export class StudentAcademicStatusDto {
   @ApiProperty({
     description: 'Total academic credits successfully passed',
     example: 45,
-    minimum: 0
+    minimum: 0,
   })
   passedCredits: number;
 
@@ -73,7 +73,7 @@ export class StudentAcademicStatusDto {
   @ApiProperty({
     description: 'Total academic credits attempted',
     example: 48,
-    minimum: 0
+    minimum: 0,
   })
   totalCredits: number;
 
@@ -85,7 +85,7 @@ export class StudentAcademicStatusDto {
     description: 'Grade Point Average (GPA)',
     example: 3.75,
     minimum: 0,
-    maximum: 5
+    maximum: 5,
   })
   gpa: number;
 
@@ -96,7 +96,7 @@ export class StudentAcademicStatusDto {
   @ApiProperty({
     description: 'Academic risk level assessment',
     example: 'low',
-    enum: ['low', 'medium', 'high']
+    enum: ['low', 'medium', 'high'],
   })
   riskLevel: 'low' | 'medium' | 'high';
 
@@ -106,8 +106,11 @@ export class StudentAcademicStatusDto {
    */
   @ApiProperty({
     description: 'Personalized academic recommendations',
-    example: ['Continue excellent academic performance', 'Consider advanced courses'],
-    type: [String]
+    example: [
+      'Continue excellent academic performance',
+      'Consider advanced courses',
+    ],
+    type: [String],
   })
   recommendations: string[];
 }
@@ -127,7 +130,7 @@ export class CourseStatusDto {
    */
   @ApiProperty({
     description: 'Course identification code',
-    example: 'CS101'
+    example: 'CS101',
   })
   courseCode: string;
 
@@ -137,7 +140,7 @@ export class CourseStatusDto {
    */
   @ApiProperty({
     description: 'Full course name',
-    example: 'Introduction to Computer Science'
+    example: 'Introduction to Computer Science',
   })
   courseName: string;
 
@@ -149,7 +152,7 @@ export class CourseStatusDto {
     description: 'Number of academic credits for this course',
     example: 3,
     minimum: 1,
-    maximum: 10
+    maximum: 10,
   })
   credits: number;
 
@@ -162,7 +165,7 @@ export class CourseStatusDto {
     example: 4.2,
     minimum: 0,
     maximum: 5,
-    required: false
+    required: false,
   })
   grade?: number;
 
@@ -173,7 +176,7 @@ export class CourseStatusDto {
   @ApiProperty({
     description: 'Current enrollment status',
     example: 'PASSED',
-    enum: ['ENROLLED', 'PASSED', 'FAILED']
+    enum: ['ENROLLED', 'PASSED', 'FAILED'],
   })
   status: string;
 
@@ -184,7 +187,7 @@ export class CourseStatusDto {
   @ApiProperty({
     description: 'Traffic light color for this course',
     example: 'green',
-    enum: ['green', 'yellow', 'red']
+    enum: ['green', 'yellow', 'red'],
   })
   color: TrafficLightColor;
 
@@ -194,7 +197,7 @@ export class CourseStatusDto {
    */
   @ApiProperty({
     description: 'Academic period code when course was taken',
-    example: '2024-1'
+    example: '2024-1',
   })
   periodCode: string;
 }
@@ -215,7 +218,7 @@ export class AcademicStatisticsDto {
   @ApiProperty({
     description: 'Total number of students in the system',
     example: 1250,
-    minimum: 0
+    minimum: 0,
   })
   totalStudents: number;
 
@@ -226,7 +229,7 @@ export class AcademicStatisticsDto {
   @ApiProperty({
     description: 'Number of students with green status (good performance)',
     example: 875,
-    minimum: 0
+    minimum: 0,
   })
   greenStudents: number;
 
@@ -237,7 +240,7 @@ export class AcademicStatisticsDto {
   @ApiProperty({
     description: 'Number of students with yellow status (attention needed)',
     example: 250,
-    minimum: 0
+    minimum: 0,
   })
   yellowStudents: number;
 
@@ -248,7 +251,7 @@ export class AcademicStatisticsDto {
   @ApiProperty({
     description: 'Number of students with red status (intervention required)',
     example: 125,
-    minimum: 0
+    minimum: 0,
   })
   redStudents: number;
 
@@ -260,7 +263,7 @@ export class AcademicStatisticsDto {
     description: 'Overall average GPA across all students',
     example: 3.45,
     minimum: 0,
-    maximum: 5
+    maximum: 5,
   })
   averageGPA: number;
 
@@ -272,7 +275,7 @@ export class AcademicStatisticsDto {
     description: 'Percentage of students with green status',
     example: 70,
     minimum: 0,
-    maximum: 100
+    maximum: 100,
   })
   greenPercentage: number;
 
@@ -284,7 +287,7 @@ export class AcademicStatisticsDto {
     description: 'Percentage of students with yellow status',
     example: 20,
     minimum: 0,
-    maximum: 100
+    maximum: 100,
   })
   yellowPercentage: number;
 
@@ -296,7 +299,7 @@ export class AcademicStatisticsDto {
     description: 'Percentage of students with red status',
     example: 10,
     minimum: 0,
-    maximum: 100
+    maximum: 100,
   })
   redPercentage: number;
 }
@@ -317,7 +320,7 @@ export class StudentTrafficLightReportDto {
    */
   @ApiProperty({
     description: 'General student academic status and metrics',
-    type: StudentAcademicStatusDto
+    type: StudentAcademicStatusDto,
   })
   studentInfo: StudentAcademicStatusDto;
 
@@ -331,17 +334,17 @@ export class StudentTrafficLightReportDto {
     properties: {
       passedCourses: {
         type: 'array',
-        items: { $ref: '#/components/schemas/CourseStatusDto' }
+        items: { $ref: '#/components/schemas/CourseStatusDto' },
       },
       currentCourses: {
         type: 'array',
-        items: { $ref: '#/components/schemas/CourseStatusDto' }
+        items: { $ref: '#/components/schemas/CourseStatusDto' },
       },
       failedCourses: {
         type: 'array',
-        items: { $ref: '#/components/schemas/CourseStatusDto' }
-      }
-    }
+        items: { $ref: '#/components/schemas/CourseStatusDto' },
+      },
+    },
   })
   courseStatuses: {
     passedCourses: CourseStatusDto[];

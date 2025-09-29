@@ -29,11 +29,9 @@ import { SchedulesModule } from '../schedules/schedules.module';
 @Module({
   imports: [
     // TODO: Configurar esquema de estudiante con validaciones apropiadas
-    MongooseModule.forFeature([
-      { name: Student.name, schema: StudentSchema }
-    ]),
+    MongooseModule.forFeature([{ name: Student.name, schema: StudentSchema }]),
     // * Integración con módulo de horarios para funcionalidad académica
-    SchedulesModule
+    SchedulesModule,
   ],
   controllers: [StudentsController],
   providers: [StudentsService],

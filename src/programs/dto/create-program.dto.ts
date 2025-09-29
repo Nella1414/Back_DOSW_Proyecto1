@@ -1,4 +1,15 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsNumber, Min, Max, Length, Matches, IsMongoId } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  Length,
+  Matches,
+  IsMongoId,
+} from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 /**
@@ -23,13 +34,14 @@ export class CreateProgramDto {
     example: 'SYS-ENG',
     minLength: 5,
     maxLength: 20,
-    pattern: '^[A-Z]{3,4}-[A-Z]{3,6}$'
+    pattern: '^[A-Z]{3,4}-[A-Z]{3,6}$',
   })
   @IsString()
   @IsNotEmpty()
   @Length(5, 20)
   @Matches(/^[A-Z]{3,4}-[A-Z]{3,6}$/, {
-    message: 'Program code must follow format: [3-4 LETTERS]-[3-6 LETTERS] (e.g., SYS-ENG, MED-DOC)'
+    message:
+      'Program code must follow format: [3-4 LETTERS]-[3-6 LETTERS] (e.g., SYS-ENG, MED-DOC)',
   })
   code: string;
 
@@ -42,7 +54,7 @@ export class CreateProgramDto {
     description: 'Complete official program name',
     example: 'Systems Engineering',
     minLength: 5,
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -57,7 +69,7 @@ export class CreateProgramDto {
    */
   @ApiProperty({
     description: 'MongoDB ObjectId of the faculty this program belongs to',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @IsString()
   @IsNotEmpty()
@@ -74,7 +86,7 @@ export class CreateProgramDto {
     description: 'Total number of academic semesters in the program',
     example: 10,
     minimum: 6,
-    maximum: 16
+    maximum: 16,
   })
   @IsNumber()
   @Min(6)
@@ -88,10 +100,11 @@ export class CreateProgramDto {
    * * Por defecto: true
    */
   @ApiProperty({
-    description: 'Whether the program is currently active and accepting new enrollments',
+    description:
+      'Whether the program is currently active and accepting new enrollments',
     example: true,
     default: true,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()
@@ -103,10 +116,12 @@ export class CreateProgramDto {
    * ? Descripción detallada del programa, objetivos y perfil profesional
    */
   @ApiProperty({
-    description: 'Detailed description of the program, objectives, and professional profile',
-    example: 'Comprehensive systems engineering program focusing on software development, system analysis, and technology management',
+    description:
+      'Detailed description of the program, objectives, and professional profile',
+    example:
+      'Comprehensive systems engineering program focusing on software development, system analysis, and technology management',
     maxLength: 1000,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -122,7 +137,7 @@ export class CreateProgramDto {
     description: 'Type of degree awarded upon program completion',
     example: 'Bachelor of Systems Engineering',
     maxLength: 100,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -140,7 +155,7 @@ export class CreateProgramDto {
     example: 160,
     minimum: 120,
     maximum: 220,
-    required: false
+    required: false,
   })
   @IsNumber()
   @IsOptional()
@@ -158,7 +173,7 @@ export class CreateProgramDto {
     example: 5,
     minimum: 3,
     maximum: 8,
-    required: false
+    required: false,
   })
   @IsNumber()
   @IsOptional()
@@ -175,7 +190,7 @@ export class CreateProgramDto {
     description: 'Current accreditation status of the program',
     example: 'Accredited',
     enum: ['Accredited', 'In Process', 'Not Accredited', 'Pending'],
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()

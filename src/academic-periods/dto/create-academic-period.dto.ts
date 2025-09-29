@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsDate, IsBoolean, IsOptional, Length, Matches } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsDate,
+  IsBoolean,
+  IsOptional,
+  Length,
+  Matches,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -24,13 +32,14 @@ export class CreateAcademicPeriodDto {
     example: '2024-1',
     minLength: 3,
     maxLength: 20,
-    pattern: '^[A-Za-z0-9-_]+$'
+    pattern: '^[A-Za-z0-9-_]+$',
   })
   @IsString()
   @IsNotEmpty()
   @Length(3, 20)
   @Matches(/^[A-Za-z0-9-_]+$/, {
-    message: 'Code must contain only letters, numbers, hyphens, and underscores'
+    message:
+      'Code must contain only letters, numbers, hyphens, and underscores',
   })
   code: string;
 
@@ -43,7 +52,7 @@ export class CreateAcademicPeriodDto {
     description: 'Descriptive name for the academic period',
     example: 'First Semester 2024',
     minLength: 5,
-    maxLength: 100
+    maxLength: 100,
   })
   @IsString()
   @IsNotEmpty()
@@ -59,7 +68,7 @@ export class CreateAcademicPeriodDto {
     description: 'Official start date of the academic period',
     example: '2024-01-15T00:00:00.000Z',
     type: 'string',
-    format: 'date-time'
+    format: 'date-time',
   })
   @IsDate()
   @Type(() => Date)
@@ -74,7 +83,7 @@ export class CreateAcademicPeriodDto {
     description: 'Official end date of the academic period',
     example: '2024-06-30T23:59:59.999Z',
     type: 'string',
-    format: 'date-time'
+    format: 'date-time',
   })
   @IsDate()
   @Type(() => Date)
@@ -87,10 +96,11 @@ export class CreateAcademicPeriodDto {
    * * Por defecto: false
    */
   @ApiProperty({
-    description: 'Whether this period is currently active (only one can be active at a time)',
+    description:
+      'Whether this period is currently active (only one can be active at a time)',
     example: false,
     default: false,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()
@@ -106,7 +116,7 @@ export class CreateAcademicPeriodDto {
     description: 'Whether change requests are allowed during this period',
     example: false,
     default: false,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()
@@ -122,7 +132,7 @@ export class CreateAcademicPeriodDto {
     description: 'Whether enrollment is currently open for this period',
     example: true,
     default: true,
-    required: false
+    required: false,
   })
   @IsBoolean()
   @IsOptional()
@@ -134,10 +144,11 @@ export class CreateAcademicPeriodDto {
    * ? Información adicional sobre el periodo académico
    */
   @ApiProperty({
-    description: 'Optional description with additional details about the period',
+    description:
+      'Optional description with additional details about the period',
     example: 'First academic semester of 2024 with extended enrollment period',
     maxLength: 500,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()

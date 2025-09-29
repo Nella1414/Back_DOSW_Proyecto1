@@ -1,11 +1,24 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Student, StudentDocument } from '../../students/entities/student.entity';
-import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../../enrollments/entities/enrollment.entity';
-import { CourseGroup, CourseGroupDocument } from '../../course-groups/entities/course-group.entity';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
+import {
+  Enrollment,
+  EnrollmentDocument,
+  EnrollmentStatus,
+} from '../../enrollments/entities/enrollment.entity';
+import {
+  CourseGroup,
+  CourseGroupDocument,
+} from '../../course-groups/entities/course-group.entity';
 import { Course, CourseDocument } from '../../courses/entities/course.entity';
-import { AcademicPeriod, AcademicPeriodDocument } from '../../academic-periods/entities/academic-period.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodDocument,
+} from '../../academic-periods/entities/academic-period.entity';
 
 /**
  * Traffic Light Color Types
@@ -72,16 +85,22 @@ export interface CourseStatus {
 export class AcademicTrafficLightService {
   constructor(
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
-    @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
-    @InjectModel(CourseGroup.name) private courseGroupModel: Model<CourseGroupDocument>,
+    @InjectModel(Enrollment.name)
+    private enrollmentModel: Model<EnrollmentDocument>,
+    @InjectModel(CourseGroup.name)
+    private courseGroupModel: Model<CourseGroupDocument>,
     @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
-    @InjectModel(AcademicPeriod.name) private academicPeriodModel: Model<AcademicPeriodDocument>,
+    @InjectModel(AcademicPeriod.name)
+    private academicPeriodModel: Model<AcademicPeriodDocument>,
   ) {}
 
   /**
    * Determine traffic light color based on enrollment status and grade
    */
-  getTrafficLightColor(status: EnrollmentStatus, grade?: number): TrafficLightColor {
+  getTrafficLightColor(
+    status: EnrollmentStatus,
+    _grade?: number,
+  ): TrafficLightColor {
     switch (status) {
       case EnrollmentStatus.PASSED:
         return 'green';
@@ -97,7 +116,10 @@ export class AcademicTrafficLightService {
   /**
    * Enhanced traffic light color considering grade thresholds
    */
-  getEnhancedTrafficLightColor(status: EnrollmentStatus, grade?: number): TrafficLightColor {
+  getEnhancedTrafficLightColor(
+    status: EnrollmentStatus,
+    grade?: number,
+  ): TrafficLightColor {
     if (status === EnrollmentStatus.PASSED) {
       if (grade && grade >= 4.0) return 'green';
       if (grade && grade >= 3.0) return 'green';
@@ -118,7 +140,9 @@ export class AcademicTrafficLightService {
   /**
    * Calculate overall academic status for a student
    */
-  async getStudentAcademicStatus(studentId: string): Promise<StudentAcademicStatus> {
+  async getStudentAcademicStatus(
+    studentId: string,
+  ): Promise<StudentAcademicStatus> {
     const student = await this.studentModel.findOne({ code: studentId }).exec();
     if (!student) {
       throw new Error('Student not found');
@@ -128,10 +152,7 @@ export class AcademicTrafficLightService {
       .find({ studentId: student._id })
       .populate({
         path: 'groupId',
-        populate: [
-          { path: 'courseId' },
-          { path: 'periodId' }
-        ]
+        populate: [{ path: 'courseId' }, { path: 'periodId' }],
       })
       .exec();
 
@@ -165,7 +186,8 @@ export class AcademicTrafficLightService {
       }
     }
 
-    const gpa = totalPassedCourses > 0 ? totalGradePoints / totalPassedCourses : 0;
+    const gpa =
+      totalPassedCourses > 0 ? totalGradePoints / totalPassedCourses : 0;
     const completionRate = totalCredits > 0 ? passedCredits / totalCredits : 0;
 
     // Determine overall risk level and color
@@ -179,13 +201,15 @@ export class AcademicTrafficLightService {
       recommendations.push('Schedule academic tutoring sessions');
       recommendations.push('Meet with academic advisor immediately');
       if (gpa < 3.0) recommendations.push('Focus on improving study habits');
-      if (failedCourses > 2) recommendations.push('Consider reducing course load');
+      if (failedCourses > 2)
+        recommendations.push('Consider reducing course load');
     } else if (gpa < 3.5 || completionRate < 0.8 || failedCourses > 0) {
       overallColor = 'yellow';
       riskLevel = 'medium';
       recommendations.push('Monitor academic progress closely');
       recommendations.push('Consider additional study resources');
-      if (currentEnrollments > 6) recommendations.push('Evaluate current course load');
+      if (currentEnrollments > 6)
+        recommendations.push('Evaluate current course load');
     } else {
       recommendations.push('Continue excellent academic performance');
       recommendations.push('Consider advanced or honors courses');
@@ -200,7 +224,7 @@ export class AcademicTrafficLightService {
       totalCredits,
       gpa: Math.round(gpa * 100) / 100,
       riskLevel,
-      recommendations
+      recommendations,
     };
   }
 
@@ -221,10 +245,7 @@ export class AcademicTrafficLightService {
       .find({ studentId: student._id })
       .populate({
         path: 'groupId',
-        populate: [
-          { path: 'courseId' },
-          { path: 'periodId' }
-        ]
+        populate: [{ path: 'courseId' }, { path: 'periodId' }],
       })
       .exec();
 
@@ -244,7 +265,10 @@ export class AcademicTrafficLightService {
         credits: course.credits,
         grade: enrollment.grade,
         status: enrollment.status,
-        color: this.getEnhancedTrafficLightColor(enrollment.status, enrollment.grade)
+        color: this.getEnhancedTrafficLightColor(
+          enrollment.status,
+          enrollment.grade,
+        ),
       };
 
       switch (enrollment.status) {
@@ -261,10 +285,234 @@ export class AcademicTrafficLightService {
     }
 
     return {
-      passedCourses: passedCourses.sort((a, b) => a.periodCode.localeCompare(b.periodCode)),
-      currentCourses: currentCourses.sort((a, b) => a.courseCode.localeCompare(b.courseCode)),
-      failedCourses: failedCourses.sort((a, b) => a.periodCode.localeCompare(b.periodCode))
+      passedCourses: passedCourses.sort((a, b) =>
+        a.periodCode.localeCompare(b.periodCode),
+      ),
+      currentCourses: currentCourses.sort((a, b) =>
+        a.courseCode.localeCompare(b.courseCode),
+      ),
+      failedCourses: failedCourses.sort((a, b) =>
+        a.periodCode.localeCompare(b.periodCode),
+      ),
     };
+  }
+
+  /**
+   * Get comprehensive academic traffic light for a student
+   */
+  async getAcademicTrafficLight(
+    studentId: string,
+    includeDetails: boolean = false,
+  ): Promise<any> {
+    const student = await this.studentModel.findOne({ code: studentId }).exec();
+    if (!student) {
+      throw new Error('Student not found');
+    }
+
+    const academicStatus = await this.getStudentAcademicStatus(studentId);
+
+    const currentPeriod = await this.academicPeriodModel
+      .findOne({ isActive: true })
+      .exec();
+    const progressPercentage =
+      academicStatus.totalCredits > 0
+        ? Math.round(
+            (academicStatus.passedCredits / academicStatus.totalCredits) * 100,
+          )
+        : 0;
+
+    const inconsistencies = await this.detectInconsistencies(studentId);
+
+    const result: any = {
+      studentId: academicStatus.studentId,
+      studentName: academicStatus.studentName,
+      currentSemester: academicStatus.currentSemester,
+      status: academicStatus.overallColor,
+      progressPercentage,
+      passedCredits: academicStatus.passedCredits,
+      totalCredits: academicStatus.totalCredits,
+      gpa: academicStatus.gpa,
+      riskLevel: academicStatus.riskLevel,
+      recommendations: academicStatus.recommendations,
+      currentPeriod: currentPeriod ? currentPeriod.code : null,
+      inconsistent: inconsistencies.length > 0,
+      inconsistencies: inconsistencies,
+    };
+
+    if (includeDetails) {
+      const courseStatuses = await this.getStudentCourseStatuses(studentId);
+      result.breakdown = {
+        passedCourses: courseStatuses.passedCourses,
+        currentCourses: courseStatuses.currentCourses,
+        failedCourses: courseStatuses.failedCourses,
+        metrics: {
+          totalPassed: courseStatuses.passedCourses.length,
+          totalCurrent: courseStatuses.currentCourses.length,
+          totalFailed: courseStatuses.failedCourses.length,
+          averageGradePerSemester:
+            await this.calculateAverageGradePerSemester(studentId),
+        },
+      };
+    }
+
+    return result;
+  }
+
+  /**
+   * Detect inconsistencies in academic data
+   */
+  async detectInconsistencies(studentId: string): Promise<string[]> {
+    const inconsistencies: string[] = [];
+    const student = await this.studentModel.findOne({ code: studentId }).exec();
+
+    if (!student) {
+      return ['Student data not found'];
+    }
+
+    const allEnrollments = await this.enrollmentModel
+      .find({ studentId: student._id })
+      .populate({
+        path: 'groupId',
+        populate: [{ path: 'courseId' }, { path: 'periodId' }],
+      })
+      .exec();
+
+    for (const enrollment of allEnrollments) {
+      const group = enrollment.groupId as any;
+
+      if (!group) {
+        inconsistencies.push('Enrollment with missing group information');
+        continue;
+      }
+
+      const course = group.courseId;
+      const period = group.periodId;
+
+      if (!course) {
+        inconsistencies.push('Group with missing course information');
+        continue;
+      }
+
+      if (!period) {
+        inconsistencies.push('Group with missing period information');
+        continue;
+      }
+
+      if (!course.credits || course.credits <= 0) {
+        inconsistencies.push(`Course ${course.code} has invalid credit value`);
+      }
+
+      if (enrollment.status === EnrollmentStatus.PASSED && !enrollment.grade) {
+        inconsistencies.push(`Passed course ${course.code} missing grade`);
+      }
+
+      if (enrollment.grade && (enrollment.grade < 0 || enrollment.grade > 5)) {
+        inconsistencies.push(
+          `Course ${course.code} has invalid grade: ${enrollment.grade}`,
+        );
+      }
+
+      if (
+        enrollment.status === EnrollmentStatus.PASSED &&
+        enrollment.grade &&
+        enrollment.grade < 3.0
+      ) {
+        inconsistencies.push(
+          `Course ${course.code} marked as passed but grade is below passing threshold`,
+        );
+      }
+    }
+
+    const duplicateCourses = this.findDuplicatePassedCourses(allEnrollments);
+    if (duplicateCourses.length > 0) {
+      inconsistencies.push(
+        `Duplicate passed courses detected: ${duplicateCourses.join(', ')}`,
+      );
+    }
+
+    return inconsistencies;
+  }
+
+  /**
+   * Find duplicate passed courses
+   */
+  private findDuplicatePassedCourses(enrollments: any[]): string[] {
+    const passedCourses = new Map<string, number>();
+    const duplicates: string[] = [];
+
+    for (const enrollment of enrollments) {
+      if (enrollment.status === EnrollmentStatus.PASSED) {
+        const group = enrollment.groupId;
+        if (group && group.courseId) {
+          const courseCode = group.courseId.code;
+          const count = passedCourses.get(courseCode) || 0;
+          passedCourses.set(courseCode, count + 1);
+
+          if (count + 1 > 1 && !duplicates.includes(courseCode)) {
+            duplicates.push(courseCode);
+          }
+        }
+      }
+    }
+
+    return duplicates;
+  }
+
+  /**
+   * Calculate average grade per semester
+   */
+  async calculateAverageGradePerSemester(studentId: string): Promise<any[]> {
+    const student = await this.studentModel.findOne({ code: studentId }).exec();
+    if (!student) {
+      throw new Error('Student not found');
+    }
+
+    const allEnrollments = await this.enrollmentModel
+      .find({
+        studentId: student._id,
+        status: EnrollmentStatus.PASSED,
+        grade: { $exists: true },
+      })
+      .populate({
+        path: 'groupId',
+        populate: [{ path: 'courseId' }, { path: 'periodId' }],
+      })
+      .exec();
+
+    const semesterMap = new Map<
+      string,
+      { total: number; credits: number; courses: number }
+    >();
+
+    for (const enrollment of allEnrollments) {
+      const group = enrollment.groupId as any;
+      if (group && group.courseId && group.periodId && enrollment.grade) {
+        const periodCode = group.periodId.code;
+        const grade = enrollment.grade;
+        const credits = group.courseId.credits;
+
+        if (!semesterMap.has(periodCode)) {
+          semesterMap.set(periodCode, { total: 0, credits: 0, courses: 0 });
+        }
+
+        const semester = semesterMap.get(periodCode)!;
+        semester.total += grade * credits;
+        semester.credits += credits;
+        semester.courses += 1;
+      }
+    }
+
+    return Array.from(semesterMap.entries())
+      .map(([periodCode, data]) => ({
+        period: periodCode,
+        averageGrade:
+          data.credits > 0
+            ? Math.round((data.total / data.credits) * 100) / 100
+            : 0,
+        totalCredits: data.credits,
+        courseCount: data.courses,
+      }))
+      .sort((a, b) => a.period.localeCompare(b.period));
   }
 
   /**
@@ -316,7 +564,10 @@ export class AcademicTrafficLightService {
       greenStudents: greenCount,
       yellowStudents: yellowCount,
       redStudents: redCount,
-      averageGPA: studentsWithGPA > 0 ? Math.round((totalGPA / studentsWithGPA) * 100) / 100 : 0
+      averageGPA:
+        studentsWithGPA > 0
+          ? Math.round((totalGPA / studentsWithGPA) * 100) / 100
+          : 0,
     };
   }
 }

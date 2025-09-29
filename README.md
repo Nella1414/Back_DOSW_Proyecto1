@@ -190,6 +190,31 @@ The API uses a sophisticated **Role-Based Access Control (RBAC)** system with gr
 | `PATCH` | `/users/:id` | Update user | `UPDATE_USER` |
 | `DELETE` | `/users/:id` | Delete user | `DELETE_USER` |
 
+### ** Schedules Management** *Fully Implemented - Sprint 2*
+
+| Method | Endpoint | Description | Required Permission |
+|--------|----------|-------------|-------------------|
+| `GET` | `/schedules/current` | Get current semester schedule | STUDENT (own), ADMIN/FACULTY (any) |
+| `GET` | `/schedules/historical` | List closed academic periods | STUDENT (own), ADMIN/FACULTY (any) |
+| `GET` | `/schedules/historical/:periodId` | Get historical schedule for specific period | STUDENT (own), ADMIN/FACULTY (any) |
+| `GET` | `/schedules/traffic-light` | Get academic performance indicator | STUDENT (own), ADMIN/FACULTY (any) |
+
+### ** Academic Periods Management** *Fully Implemented - Sprint 2*
+
+| Method | Endpoint | Description | Required Permission |
+|--------|----------|-------------|-------------------|
+| `POST` | `/academic-periods` | Create academic period | ADMIN Only |
+| `GET` | `/academic-periods` | List periods (with pagination/filters) | Authenticated Users |
+| `GET` | `/academic-periods/:id` | Get specific academic period | Authenticated Users |
+| `PATCH` | `/academic-periods/:id` | Update academic period | ADMIN Only |
+| `DELETE` | `/academic-periods/:id` | Delete academic period | ADMIN Only |
+| `PATCH` | `/academic-periods/:id/activate` | Set period as active | ADMIN Only |
+| `GET` | `/academic-periods/active` | Get current active period | Authenticated Users |
+| `GET` | `/academic-periods/allowing-changes` | Get periods allowing change requests | Authenticated Users |
+| `GET` | `/academic-periods/open-enrollment` | Get periods with open enrollment | Authenticated Users |
+| `GET` | `/academic-periods/:id/enrollment-status` | Check enrollment status for period | Authenticated Users |
+| `GET` | `/academic-periods/:id/change-requests-status` | Check change requests status | Authenticated Users |
+
 ### **Other Modules** *Template Structure*
 
 The following endpoints exist but need implementation:
@@ -359,18 +384,6 @@ src/
 - **Error Handling**: Comprehensive try-catch blocks
 - **Validation**: Input validation on all endpoints
 
-## **API Documentation**
-
-### **Interactive Documentation**
-
-Access the interactive Swagger documentation at `http://localhost:3000/doc` when the server is running.
-
-Features:
-- **Complete API Reference**: All endpoints with examples
-- **Authentication Testing**: Built-in JWT token management
-- **Request/Response Examples**: Real data examples
-- **Schema Definitions**: Complete data models
-
 ### **Using the API**
 
 1. **Register a User**
@@ -443,13 +456,6 @@ FRONTEND_URL=https://your-frontend-domain.com
 - Follow existing code style
 - Add meaningful commit messages
 
-## **Roadmap**
-
-### **Phase 1: Core Features** *Completed*
-- [x] Authentication system (JWT + Google OAuth)
-- [x] Role-based authorization
-- [x] Student management (full CRUD)
-- [x] Rate limiting and security
 
 
 ## **Team**

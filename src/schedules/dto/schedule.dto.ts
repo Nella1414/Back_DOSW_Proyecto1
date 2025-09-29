@@ -1,4 +1,15 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional, Min, Max, Length, IsIn, IsArray, ValidateNested } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  Min,
+  Max,
+  Length,
+  IsIn,
+  IsArray,
+  ValidateNested,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -18,7 +29,7 @@ export class ClassScheduleDto {
    */
   @ApiProperty({
     description: 'Course identification code',
-    example: 'CS101'
+    example: 'CS101',
   })
   @IsString()
   @IsNotEmpty()
@@ -31,7 +42,7 @@ export class ClassScheduleDto {
    */
   @ApiProperty({
     description: 'Complete course name',
-    example: 'Introduction to Computer Science'
+    example: 'Introduction to Computer Science',
   })
   @IsString()
   @IsNotEmpty()
@@ -44,7 +55,7 @@ export class ClassScheduleDto {
    */
   @ApiProperty({
     description: 'Course group identifier',
-    example: 'A'
+    example: 'A',
   })
   @IsString()
   @IsNotEmpty()
@@ -59,7 +70,7 @@ export class ClassScheduleDto {
   @ApiProperty({
     description: 'Class start time in 24-hour format',
     example: '08:00',
-    pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+    pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$',
   })
   @IsString()
   @IsNotEmpty()
@@ -73,7 +84,7 @@ export class ClassScheduleDto {
   @ApiProperty({
     description: 'Class end time in 24-hour format',
     example: '10:00',
-    pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$'
+    pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$',
   })
   @IsString()
   @IsNotEmpty()
@@ -88,7 +99,7 @@ export class ClassScheduleDto {
     description: 'Classroom or location where the class takes place',
     example: 'Aula 201',
     maxLength: 50,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -104,7 +115,7 @@ export class ClassScheduleDto {
     description: 'Professor or instructor name',
     example: 'Dr. John Smith',
     maxLength: 100,
-    required: false
+    required: false,
   })
   @IsString()
   @IsOptional()
@@ -130,7 +141,7 @@ export class DailyScheduleDto {
     description: 'Day of week number (1=Monday, 7=Sunday)',
     example: 1,
     minimum: 1,
-    maximum: 7
+    maximum: 7,
   })
   @IsNumber()
   @Min(1)
@@ -145,10 +156,26 @@ export class DailyScheduleDto {
   @ApiProperty({
     description: 'Day name in Spanish',
     example: 'Lunes',
-    enum: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo']
+    enum: [
+      'Lunes',
+      'Martes',
+      'Miércoles',
+      'Jueves',
+      'Viernes',
+      'Sábado',
+      'Domingo',
+    ],
   })
   @IsString()
-  @IsIn(['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'])
+  @IsIn([
+    'Lunes',
+    'Martes',
+    'Miércoles',
+    'Jueves',
+    'Viernes',
+    'Sábado',
+    'Domingo',
+  ])
   dayName: string;
 
   /**
@@ -158,7 +185,7 @@ export class DailyScheduleDto {
    */
   @ApiProperty({
     description: 'Classes scheduled for this day',
-    type: [ClassScheduleDto]
+    type: [ClassScheduleDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -183,7 +210,7 @@ export class StudentScheduleDto {
    */
   @ApiProperty({
     description: 'Student identification code',
-    example: 'CS2024001'
+    example: 'CS2024001',
   })
   @IsString()
   @IsNotEmpty()
@@ -196,7 +223,7 @@ export class StudentScheduleDto {
    */
   @ApiProperty({
     description: 'Complete student name',
-    example: 'Maria Rodriguez'
+    example: 'Maria Rodriguez',
   })
   @IsString()
   @IsNotEmpty()
@@ -211,7 +238,7 @@ export class StudentScheduleDto {
     description: 'Current academic semester',
     example: 3,
     minimum: 1,
-    maximum: 12
+    maximum: 12,
   })
   @IsNumber()
   @Min(1)
@@ -225,7 +252,7 @@ export class StudentScheduleDto {
    */
   @ApiProperty({
     description: 'Academic period code',
-    example: '2024-1'
+    example: '2024-1',
   })
   @IsString()
   @IsNotEmpty()
@@ -238,7 +265,7 @@ export class StudentScheduleDto {
    */
   @ApiProperty({
     description: 'Daily schedule breakdown for each day of the week',
-    type: [DailyScheduleDto]
+    type: [DailyScheduleDto],
   })
   @IsArray()
   @ValidateNested({ each: true })
@@ -263,7 +290,7 @@ export class AcademicHistoryDto {
    */
   @ApiProperty({
     description: 'Student identification code',
-    example: 'CS2024001'
+    example: 'CS2024001',
   })
   @IsString()
   @IsNotEmpty()
@@ -278,7 +305,7 @@ export class AcademicHistoryDto {
     description: 'Current academic semester',
     example: 5,
     minimum: 1,
-    maximum: 12
+    maximum: 12,
   })
   @IsNumber()
   @Min(1)
@@ -296,17 +323,17 @@ export class AcademicHistoryDto {
     properties: {
       passedCourses: {
         type: 'array',
-        items: { $ref: '#/components/schemas/CourseHistoryDto' }
+        items: { $ref: '#/components/schemas/CourseHistoryDto' },
       },
       currentCourses: {
         type: 'array',
-        items: { $ref: '#/components/schemas/CourseHistoryDto' }
+        items: { $ref: '#/components/schemas/CourseHistoryDto' },
       },
       failedCourses: {
         type: 'array',
-        items: { $ref: '#/components/schemas/CourseHistoryDto' }
-      }
-    }
+        items: { $ref: '#/components/schemas/CourseHistoryDto' },
+      },
+    },
   })
   academicHistory: {
     passedCourses: CourseHistoryDto[];
@@ -331,7 +358,7 @@ export class CourseHistoryDto {
    */
   @ApiProperty({
     description: 'Academic period code when course was taken',
-    example: '2024-1'
+    example: '2024-1',
   })
   @IsString()
   @IsNotEmpty()
@@ -344,7 +371,7 @@ export class CourseHistoryDto {
    */
   @ApiProperty({
     description: 'Course identification code',
-    example: 'CS101'
+    example: 'CS101',
   })
   @IsString()
   @IsNotEmpty()
@@ -357,7 +384,7 @@ export class CourseHistoryDto {
    */
   @ApiProperty({
     description: 'Complete course name',
-    example: 'Introduction to Computer Science'
+    example: 'Introduction to Computer Science',
   })
   @IsString()
   @IsNotEmpty()
@@ -372,7 +399,7 @@ export class CourseHistoryDto {
     description: 'Course credit hours',
     example: 3,
     minimum: 1,
-    maximum: 10
+    maximum: 10,
   })
   @IsNumber()
   @Min(1)
@@ -389,7 +416,7 @@ export class CourseHistoryDto {
     example: 4.2,
     minimum: 0,
     maximum: 5,
-    required: false
+    required: false,
   })
   @IsNumber()
   @IsOptional()
@@ -405,7 +432,7 @@ export class CourseHistoryDto {
   @ApiProperty({
     description: 'Course enrollment status',
     example: 'PASSED',
-    enum: ['ENROLLED', 'PASSED', 'FAILED']
+    enum: ['ENROLLED', 'PASSED', 'FAILED'],
   })
   @IsString()
   @IsIn(['ENROLLED', 'PASSED', 'FAILED'])
@@ -419,7 +446,7 @@ export class CourseHistoryDto {
   @ApiProperty({
     description: 'Traffic light color indicator for academic performance',
     example: 'green',
-    enum: ['green', 'yellow', 'red']
+    enum: ['green', 'yellow', 'red'],
   })
   @IsString()
   @IsIn(['green', 'yellow', 'red'])

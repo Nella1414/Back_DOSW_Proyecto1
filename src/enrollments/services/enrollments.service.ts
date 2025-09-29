@@ -1,11 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { CreateEnrollmentDto } from '../dto/create-enrollment.dto';
 import { UpdateEnrollmentDto } from '../dto/update-enrollment.dto';
-import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../entities/enrollment.entity';
-import { Student, StudentDocument } from '../../students/entities/student.entity';
-import { CourseGroup, CourseGroupDocument } from '../../course-groups/entities/course-group.entity';
+import {
+  Enrollment,
+  EnrollmentDocument,
+  EnrollmentStatus,
+} from '../entities/enrollment.entity';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
+import {
+  CourseGroup,
+  CourseGroupDocument,
+} from '../../course-groups/entities/course-group.entity';
 
 /**
  * * Enrollments Management Service
@@ -27,9 +41,11 @@ export class EnrollmentsService {
    * @param courseGroupModel - Mongoose model for CourseGroup validation
    */
   constructor(
-    @InjectModel(Enrollment.name) private enrollmentModel: Model<EnrollmentDocument>,
+    @InjectModel(Enrollment.name)
+    private enrollmentModel: Model<EnrollmentDocument>,
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
-    @InjectModel(CourseGroup.name) private courseGroupModel: Model<CourseGroupDocument>,
+    @InjectModel(CourseGroup.name)
+    private courseGroupModel: Model<CourseGroupDocument>,
   ) {}
 
   /**
@@ -42,24 +58,34 @@ export class EnrollmentsService {
    * TODO: Verificar limite de creditos del estudiante
    */
   async create(createEnrollmentDto: CreateEnrollmentDto): Promise<Enrollment> {
-    const student = await this.studentModel.findOne({ code: createEnrollmentDto.studentId });
+    const student = await this.studentModel.findOne({
+      code: createEnrollmentDto.studentId,
+    });
     if (!student) {
-      throw new NotFoundException(`Student with ID ${createEnrollmentDto.studentId} not found`);
+      throw new NotFoundException(
+        `Student with ID ${createEnrollmentDto.studentId} not found`,
+      );
     }
 
-    const group = await this.courseGroupModel.findById(createEnrollmentDto.groupId).populate('courseId');
+    const group = await this.courseGroupModel
+      .findById(createEnrollmentDto.groupId)
+      .populate('courseId');
     if (!group) {
-      throw new NotFoundException(`Course group with ID ${createEnrollmentDto.groupId} not found`);
+      throw new NotFoundException(
+        `Course group with ID ${createEnrollmentDto.groupId} not found`,
+      );
     }
 
     const existingEnrollment = await this.enrollmentModel.findOne({
       studentId: student._id,
       groupId: createEnrollmentDto.groupId,
-      status: { $in: [EnrollmentStatus.ENROLLED, EnrollmentStatus.PASSED] }
+      status: { $in: [EnrollmentStatus.ENROLLED, EnrollmentStatus.PASSED] },
     });
 
     if (existingEnrollment) {
-      throw new BadRequestException('Student is already enrolled in this course group');
+      throw new BadRequestException(
+        'Student is already enrolled in this course group',
+      );
     }
 
     const enrollment = new this.enrollmentModel({
@@ -67,7 +93,7 @@ export class EnrollmentsService {
       groupId: createEnrollmentDto.groupId,
       enrolledAt: new Date(),
       status: createEnrollmentDto.status || EnrollmentStatus.ENROLLED,
-      grade: createEnrollmentDto.grade
+      grade: createEnrollmentDto.grade,
     });
 
     return enrollment.save();
@@ -86,7 +112,7 @@ export class EnrollmentsService {
       .populate('studentId')
       .populate({
         path: 'groupId',
-        populate: { path: 'courseId' }
+        populate: { path: 'courseId' },
       })
       .exec();
   }
@@ -103,7 +129,7 @@ export class EnrollmentsService {
       .populate('studentId')
       .populate({
         path: 'groupId',
-        populate: { path: 'courseId' }
+        populate: { path: 'courseId' },
       })
       .exec();
 
@@ -131,7 +157,7 @@ export class EnrollmentsService {
       .find({ studentId: student._id })
       .populate({
         path: 'groupId',
-        populate: { path: 'courseId' }
+        populate: { path: 'courseId' },
       })
       .exec();
   }
@@ -144,11 +170,14 @@ export class EnrollmentsService {
    * TODO: Implementar audit trail para cambios importantes
    * TODO: Notificar estudiante sobre cambios de calificacion
    */
-  async update(id: string, updateEnrollmentDto: UpdateEnrollmentDto): Promise<Enrollment> {
+  async update(
+    id: string,
+    updateEnrollmentDto: UpdateEnrollmentDto,
+  ): Promise<Enrollment> {
     const enrollment = await this.enrollmentModel.findByIdAndUpdate(
       id,
       updateEnrollmentDto,
-      { new: true }
+      { new: true },
     );
 
     if (!enrollment) {
@@ -179,11 +208,14 @@ export class EnrollmentsService {
    * ? Usa el metodo create internamente con estado ENROLLED
    * TODO: Agregar validaciones adicionales especificas para este flujo
    */
-  async enrollStudentInCourse(studentCode: string, groupId: string): Promise<Enrollment> {
+  async enrollStudentInCourse(
+    studentCode: string,
+    groupId: string,
+  ): Promise<Enrollment> {
     return this.create({
       studentId: studentCode,
       groupId,
-      status: EnrollmentStatus.ENROLLED
+      status: EnrollmentStatus.ENROLLED,
     });
   }
 }

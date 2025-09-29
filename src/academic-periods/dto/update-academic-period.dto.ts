@@ -19,4 +19,6 @@ import { CreateAcademicPeriodDto } from './create-academic-period.dto';
  *
  * ? Permite actualización parcial de cualquier campo del periodo
  */
-export class UpdateAcademicPeriodDto extends PartialType(CreateAcademicPeriodDto) {}
+export class UpdateAcademicPeriodDto extends PartialType(
+  CreateAcademicPeriodDto,
+) {}

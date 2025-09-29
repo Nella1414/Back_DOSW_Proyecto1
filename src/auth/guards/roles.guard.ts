@@ -1,10 +1,19 @@
 // Import necessary NestJS decorators and types for guard implementation
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
 // Import services and types for role/permission management
 import { RolesService } from '../../roles/services/roles.service';
-import { ROLES_KEY, PERMISSIONS_KEY, IS_PUBLIC_KEY } from '../decorators/auth.decorator';
+import {
+  ROLES_KEY,
+  PERMISSIONS_KEY,
+  IS_PUBLIC_KEY,
+} from '../decorators/auth.decorator';
 import { RoleName, Permission } from '../../roles/entities/role.entity';
 
 /**
@@ -34,7 +43,7 @@ export class RolesGuard implements CanActivate {
    */
   constructor(
     private reflector: Reflector,
-    private rolesService: RolesService
+    private rolesService: RolesService,
   ) {}
 
   /**
@@ -52,7 +61,7 @@ export class RolesGuard implements CanActivate {
     // Step 1: Check if route is marked as @Public()
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(), // Method level decorator
-      context.getClass(),   // Class level decorator
+      context.getClass(), // Class level decorator
     ]);
 
     // Allow access to public routes without any checks
@@ -70,16 +79,16 @@ export class RolesGuard implements CanActivate {
     }
 
     // Step 3: Extract required roles from @Roles() decorator
-    const requiredRoles = this.reflector.getAllAndOverride<RoleName[]>(ROLES_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredRoles = this.reflector.getAllAndOverride<RoleName[]>(
+      ROLES_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // Step 4: Extract required permissions from @RequirePermissions() decorator
-    const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(PERMISSIONS_KEY, [
-      context.getHandler(),
-      context.getClass(),
-    ]);
+    const requiredPermissions = this.reflector.getAllAndOverride<Permission[]>(
+      PERMISSIONS_KEY,
+      [context.getHandler(), context.getClass()],
+    );
 
     // Step 5: If no specific roles or permissions required, allow authenticated users
     if (!requiredRoles && !requiredPermissions) {
@@ -91,10 +100,10 @@ export class RolesGuard implements CanActivate {
 
     // Step 6: Validate user has required roles (if specified)
     if (requiredRoles && requiredRoles.length > 0) {
-      const hasRole = requiredRoles.some(role => userRoles.includes(role));
+      const hasRole = requiredRoles.some((role) => userRoles.includes(role));
       if (!hasRole) {
         throw new ForbiddenException(
-          `Access denied. One of the following roles is required: ${requiredRoles.join(', ')}`
+          `Access denied. One of the following roles is required: ${requiredRoles.join(', ')}`,
         );
       }
     }
@@ -103,10 +112,13 @@ export class RolesGuard implements CanActivate {
     if (requiredPermissions && requiredPermissions.length > 0) {
       for (const permission of requiredPermissions) {
         // Check each permission against user's roles
-        const hasPermission = await this.rolesService.hasPermission(userRoles, permission);
+        const hasPermission = await this.rolesService.hasPermission(
+          userRoles,
+          permission,
+        );
         if (!hasPermission) {
           throw new ForbiddenException(
-            `Access denied. Permission required: ${permission}`
+            `Access denied. Permission required: ${permission}`,
           );
         }
       }

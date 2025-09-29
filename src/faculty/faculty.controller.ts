@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -8,7 +17,7 @@ import {
   ApiBody,
   ApiQuery,
   ApiConsumes,
-  ApiProduces
+  ApiProduces,
 } from '@nestjs/swagger';
 import { FacultyService } from './services/faculty.service';
 import { CreateFacultyDto } from './dto/create-faculty.dto';
@@ -61,7 +70,7 @@ export class FacultyController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'createFaculty'
+    operationId: 'createFaculty',
   })
   @ApiBody({
     type: CreateFacultyDto,
@@ -76,8 +85,8 @@ export class FacultyController {
           description: 'Engineering and Technology Faculty',
           email: 'engineering@university.edu',
           phone: '+57 1 234-5678',
-          isActive: true
-        }
+          isActive: true,
+        },
       },
       facultyWithDean: {
         summary: 'Faculty with Dean',
@@ -89,10 +98,10 @@ export class FacultyController {
           email: 'medicine@university.edu',
           phone: '+57 1 345-6789',
           deanId: '674a1b2c3d4e5f6g7h8i9j0k',
-          isActive: true
-        }
-      }
-    }
+          isActive: true,
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 201,
@@ -107,17 +116,24 @@ export class FacultyController {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'FAC-ENG' },
             name: { type: 'string', example: 'Faculty of Engineering' },
-            description: { type: 'string', example: 'Engineering and Technology Faculty' },
+            description: {
+              type: 'string',
+              example: 'Engineering and Technology Faculty',
+            },
             email: { type: 'string', example: 'engineering@university.edu' },
             phone: { type: 'string', example: '+57 1 234-5678' },
-            deanId: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k', nullable: true },
+            deanId: {
+              type: 'string',
+              example: '674a1b2c3d4e5f6g7h8i9j0k',
+              nullable: true,
+            },
             isActive: { type: 'boolean', example: true },
-            createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' }
-          }
+            createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Faculty created successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Faculty created successfully' },
+      },
+    },
   })
   @ApiResponse({
     status: 409,
@@ -130,11 +146,14 @@ export class FacultyController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'FACULTY_CODE_EXISTS' },
-            message: { type: 'string', example: 'Faculty with this code already exists' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Faculty with this code already exists',
+            },
+          },
+        },
+      },
+    },
   })
   @Post()
   create(@Body() createFacultyDto: CreateFacultyDto) {
@@ -169,14 +188,46 @@ export class FacultyController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'getAllFaculties'
+    operationId: 'getAllFaculties',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Page number', example: 1 })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Results per page', example: 20 })
-  @ApiQuery({ name: 'active', required: false, type: Boolean, description: 'Filter by active status' })
-  @ApiQuery({ name: 'search', required: false, type: String, description: 'Search term' })
-  @ApiQuery({ name: 'includeDean', required: false, type: Boolean, description: 'Include dean information' })
-  @ApiQuery({ name: 'includePrograms', required: false, type: Boolean, description: 'Include program counts' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Results per page',
+    example: 20,
+  })
+  @ApiQuery({
+    name: 'active',
+    required: false,
+    type: Boolean,
+    description: 'Filter by active status',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search term',
+  })
+  @ApiQuery({
+    name: 'includeDean',
+    required: false,
+    type: Boolean,
+    description: 'Include dean information',
+  })
+  @ApiQuery({
+    name: 'includePrograms',
+    required: false,
+    type: Boolean,
+    description: 'Include program counts',
+  })
   @ApiResponse({
     status: 200,
     description: 'Faculties retrieved successfully',
@@ -195,20 +246,29 @@ export class FacultyController {
                   id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
                   code: { type: 'string', example: 'FAC-ENG' },
                   name: { type: 'string', example: 'Faculty of Engineering' },
-                  description: { type: 'string', example: 'Engineering and Technology' },
+                  description: {
+                    type: 'string',
+                    example: 'Engineering and Technology',
+                  },
                   dean: {
                     type: 'object',
                     properties: {
-                      id: { type: 'string', example: '675b2c3d4e5f6g7h8i9j0k1l' },
+                      id: {
+                        type: 'string',
+                        example: '675b2c3d4e5f6g7h8i9j0k1l',
+                      },
                       name: { type: 'string', example: 'Dr. John Smith' },
-                      email: { type: 'string', example: 'john.smith@university.edu' }
-                    }
+                      email: {
+                        type: 'string',
+                        example: 'john.smith@university.edu',
+                      },
+                    },
                   },
                   programCount: { type: 'number', example: 5 },
                   studentCount: { type: 'number', example: 1250 },
-                  isActive: { type: 'boolean', example: true }
-                }
-              }
+                  isActive: { type: 'boolean', example: true },
+                },
+              },
             },
             pagination: {
               type: 'object',
@@ -216,14 +276,17 @@ export class FacultyController {
                 total: { type: 'number', example: 8 },
                 page: { type: 'number', example: 1 },
                 limit: { type: 'number', example: 20 },
-                totalPages: { type: 'number', example: 1 }
-              }
-            }
-          }
+                totalPages: { type: 'number', example: 1 },
+              },
+            },
+          },
         },
-        message: { type: 'string', example: 'Faculties retrieved successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Faculties retrieved successfully',
+        },
+      },
+    },
   })
   @Get()
   findAll(
@@ -232,7 +295,7 @@ export class FacultyController {
     @Query('active') active?: boolean,
     @Query('search') search?: string,
     @Query('includeDean') includeDean?: boolean,
-    @Query('includePrograms') includePrograms?: boolean
+    @Query('includePrograms') includePrograms?: boolean,
   ) {
     return this.facultyService.findAll();
   }
@@ -258,13 +321,13 @@ export class FacultyController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'getFacultyById'
+    operationId: 'getFacultyById',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Faculty unique identifier',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
@@ -279,7 +342,10 @@ export class FacultyController {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'FAC-ENG' },
             name: { type: 'string', example: 'Faculty of Engineering' },
-            description: { type: 'string', example: 'Engineering and Technology Faculty' },
+            description: {
+              type: 'string',
+              example: 'Engineering and Technology Faculty',
+            },
             email: { type: 'string', example: 'engineering@university.edu' },
             phone: { type: 'string', example: '+57 1 234-5678' },
             dean: {
@@ -288,8 +354,8 @@ export class FacultyController {
                 id: { type: 'string', example: '675b2c3d4e5f6g7h8i9j0k1l' },
                 name: { type: 'string', example: 'Dr. John Smith' },
                 email: { type: 'string', example: 'john.smith@university.edu' },
-                phone: { type: 'string', example: '+57 1 987-6543' }
-              }
+                phone: { type: 'string', example: '+57 1 987-6543' },
+              },
             },
             programs: {
               type: 'array',
@@ -299,9 +365,9 @@ export class FacultyController {
                   id: { type: 'string', example: '676c3d4e5f6g7h8i9j0k1l2m' },
                   code: { type: 'string', example: 'SYS-ENG' },
                   name: { type: 'string', example: 'Systems Engineering' },
-                  studentCount: { type: 'number', example: 250 }
-                }
-              }
+                  studentCount: { type: 'number', example: 250 },
+                },
+              },
             },
             statistics: {
               type: 'object',
@@ -309,17 +375,20 @@ export class FacultyController {
                 totalPrograms: { type: 'number', example: 5 },
                 totalStudents: { type: 'number', example: 1250 },
                 totalFaculty: { type: 'number', example: 45 },
-                activePrograms: { type: 'number', example: 5 }
-              }
+                activePrograms: { type: 'number', example: 5 },
+              },
             },
             isActive: { type: 'boolean', example: true },
             createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-            updatedAt: { type: 'string', example: '2024-01-15T10:30:00Z' }
-          }
+            updatedAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Faculty details retrieved successfully' }
-      }
-    }
+        message: {
+          type: 'string',
+          example: 'Faculty details retrieved successfully',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -332,11 +401,14 @@ export class FacultyController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'FACULTY_NOT_FOUND' },
-            message: { type: 'string', example: 'Faculty with specified ID not found' }
-          }
-        }
-      }
-    }
+            message: {
+              type: 'string',
+              example: 'Faculty with specified ID not found',
+            },
+          },
+        },
+      },
+    },
   })
   @Get(':id')
   findOne(@Param('id') id: string) {
@@ -369,13 +441,13 @@ export class FacultyController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'updateFaculty'
+    operationId: 'updateFaculty',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Faculty unique identifier to update',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiBody({
     type: UpdateFacultyDto,
@@ -386,8 +458,9 @@ export class FacultyController {
         description: 'Assign a dean to the faculty',
         value: {
           deanId: '675b2c3d4e5f6g7h8i9j0k1l',
-          description: 'Assigned new dean with extensive engineering background'
-        }
+          description:
+            'Assigned new dean with extensive engineering background',
+        },
       },
       contactUpdate: {
         summary: 'Update Contact Info',
@@ -395,10 +468,10 @@ export class FacultyController {
         value: {
           email: 'new.engineering@university.edu',
           phone: '+57 1 999-8888',
-          description: 'Updated contact information for improved communication'
-        }
-      }
-    }
+          description: 'Updated contact information for improved communication',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -414,13 +487,16 @@ export class FacultyController {
             code: { type: 'string', example: 'FAC-ENG' },
             name: { type: 'string', example: 'Faculty of Engineering' },
             deanId: { type: 'string', example: '675b2c3d4e5f6g7h8i9j0k1l' },
-            email: { type: 'string', example: 'new.engineering@university.edu' },
-            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' }
-          }
+            email: {
+              type: 'string',
+              example: 'new.engineering@university.edu',
+            },
+            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Faculty updated successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Faculty updated successfully' },
+      },
+    },
   })
   @Patch(':id')
   update(@Param('id') id: string, @Body() updateFacultyDto: UpdateFacultyDto) {
@@ -453,13 +529,13 @@ export class FacultyController {
 
     **! Funcion aun no implementada** - Requires service implementation
     `,
-    operationId: 'deleteFaculty'
+    operationId: 'deleteFaculty',
   })
   @ApiParam({
     name: 'id',
     type: 'string',
     description: 'Faculty unique identifier to delete',
-    example: '674a1b2c3d4e5f6g7h8i9j0k'
+    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
@@ -474,12 +550,12 @@ export class FacultyController {
             id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
             code: { type: 'string', example: 'FAC-ENG' },
             name: { type: 'string', example: 'Faculty of Engineering' },
-            deletedAt: { type: 'string', example: '2024-01-15T10:50:00Z' }
-          }
+            deletedAt: { type: 'string', example: '2024-01-15T10:50:00Z' },
+          },
         },
-        message: { type: 'string', example: 'Faculty deleted successfully' }
-      }
-    }
+        message: { type: 'string', example: 'Faculty deleted successfully' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -492,19 +568,27 @@ export class FacultyController {
           type: 'object',
           properties: {
             code: { type: 'string', example: 'FACULTY_HAS_ACTIVE_PROGRAMS' },
-            message: { type: 'string', example: 'Cannot delete faculty: 5 active programs must be transferred first' },
+            message: {
+              type: 'string',
+              example:
+                'Cannot delete faculty: 5 active programs must be transferred first',
+            },
             details: {
               type: 'object',
               properties: {
                 activePrograms: { type: 'number', example: 5 },
                 enrolledStudents: { type: 'number', example: 1250 },
-                programCodes: { type: 'array', items: { type: 'string' }, example: ['SYS-ENG', 'ELEC-ENG', 'CIVIL-ENG'] }
-              }
-            }
-          }
-        }
-      }
-    }
+                programCodes: {
+                  type: 'array',
+                  items: { type: 'string' },
+                  example: ['SYS-ENG', 'ELEC-ENG', 'CIVIL-ENG'],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   })
   @Delete(':id')
   remove(@Param('id') id: string) {

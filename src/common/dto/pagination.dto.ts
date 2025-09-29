@@ -1,4 +1,11 @@
-import { IsOptional, IsNumber, Min, Max, IsString, IsIn } from 'class-validator';
+import {
+  IsOptional,
+  IsNumber,
+  Min,
+  Max,
+  IsString,
+  IsIn,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -23,7 +30,7 @@ export class PaginationDto {
     minimum: 1,
     maximum: 1000,
     default: 1,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -43,7 +50,7 @@ export class PaginationDto {
     minimum: 1,
     maximum: 100,
     default: 20,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Number)
@@ -71,7 +78,7 @@ export class SearchSortDto extends PaginationDto {
     description: 'Search term for filtering results',
     example: 'computer science',
     maxLength: 100,
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -85,7 +92,7 @@ export class SearchSortDto extends PaginationDto {
   @ApiProperty({
     description: 'Field to sort by',
     example: 'name',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -101,7 +108,7 @@ export class SearchSortDto extends PaginationDto {
     example: 'asc',
     enum: ['asc', 'desc'],
     default: 'asc',
-    required: false
+    required: false,
   })
   @IsOptional()
   @IsString()
@@ -124,9 +131,10 @@ export class ActiveFilterDto {
    * * Filtrar por estado activo/inactivo
    */
   @ApiProperty({
-    description: 'Filter by active status (true for active, false for inactive)',
+    description:
+      'Filter by active status (true for active, false for inactive)',
     example: true,
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Boolean)
@@ -152,7 +160,7 @@ export class DateRangeDto {
     example: '2024-01-01T00:00:00.000Z',
     type: 'string',
     format: 'date-time',
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Date)
@@ -168,7 +176,7 @@ export class DateRangeDto {
     example: '2024-12-31T23:59:59.999Z',
     type: 'string',
     format: 'date-time',
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Date)
@@ -189,7 +197,7 @@ export class ComprehensiveQueryDto extends SearchSortDto {
    */
   @ApiProperty({
     description: 'Filter by active status',
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Boolean)
@@ -202,7 +210,7 @@ export class ComprehensiveQueryDto extends SearchSortDto {
     description: 'Start date for filtering',
     type: 'string',
     format: 'date-time',
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Date)
@@ -215,7 +223,7 @@ export class ComprehensiveQueryDto extends SearchSortDto {
     description: 'End date for filtering',
     type: 'string',
     format: 'date-time',
-    required: false
+    required: false,
   })
   @IsOptional()
   @Type(() => Date)

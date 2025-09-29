@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Param, Get, Put, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Get,
+  Put,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -9,7 +19,7 @@ import {
   ApiExcludeEndpoint,
   ApiSecurity,
   ApiConsumes,
-  ApiProduces
+  ApiProduces,
 } from '@nestjs/swagger';
 
 import { AuthService } from './services/auth.service';
@@ -36,7 +46,7 @@ import { ConfigService } from '@nestjs/config';
 export class AuthController {
   constructor(
     private readonly authService: AuthService,
-    private configService: ConfigService
+    private configService: ConfigService,
   ) {}
 
   /**
@@ -60,7 +70,7 @@ export class AuthController {
     - Administrative account creation
     - Initial system setup
     `,
-    operationId: 'registerUser'
+    operationId: 'registerUser',
   })
   @ApiBody({
     type: RegisterAuthDto,
@@ -73,8 +83,8 @@ export class AuthController {
           email: 'john.doe@example.com',
           password: 'SecurePassword123!',
           displayName: 'John Doe',
-          name: 'John Doe'
-        }
+          name: 'John Doe',
+        },
       },
       admin: {
         summary: 'Administrator Registration',
@@ -83,10 +93,10 @@ export class AuthController {
           email: 'admin@example.com',
           password: 'AdminSecure456!',
           displayName: 'System Administrator',
-          name: 'Admin User'
-        }
-      }
-    }
+          name: 'Admin User',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 201,
@@ -97,36 +107,36 @@ export class AuthController {
         _id: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a1',
-          description: 'Unique user identifier'
+          description: 'Unique user identifier',
         },
         email: {
           type: 'string',
           example: 'john.doe@example.com',
-          description: 'User email address'
+          description: 'User email address',
         },
         displayName: {
           type: 'string',
           example: 'John Doe',
-          description: 'User display name'
+          description: 'User display name',
         },
         externalId: {
           type: 'string',
           example: 'usr_abc123def456',
-          description: 'External identifier for integrations'
+          description: 'External identifier for integrations',
         },
         roles: {
           type: 'array',
           items: { type: 'string' },
           example: ['STUDENT'],
-          description: 'Assigned user roles'
+          description: 'Assigned user roles',
         },
         active: {
           type: 'boolean',
           example: true,
-          description: 'Account activation status'
-        }
-      }
-    }
+          description: 'Account activation status',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 409,
@@ -136,9 +146,9 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 409 },
         message: { type: 'string', example: 'USER_ALREADY_EXISTS' },
-        error: { type: 'string', example: 'Conflict' }
-      }
-    }
+        error: { type: 'string', example: 'Conflict' },
+      },
+    },
   })
   @ApiResponse({
     status: 400,
@@ -150,11 +160,14 @@ export class AuthController {
         message: {
           type: 'array',
           items: { type: 'string' },
-          example: ['Invalid email format', 'Password must be at least 6 characters long']
+          example: [
+            'Invalid email format',
+            'Password must be at least 6 characters long',
+          ],
         },
-        error: { type: 'string', example: 'Bad Request' }
-      }
-    }
+        error: { type: 'string', example: 'Bad Request' },
+      },
+    },
   })
   @Public()
   @Post('register')
@@ -188,7 +201,7 @@ export class AuthController {
     Include the returned token in Authorization header:
     \`Authorization: Bearer <accessToken>\`
     `,
-    operationId: 'loginUser'
+    operationId: 'loginUser',
   })
   @ApiBody({
     type: LoginAuthDto,
@@ -199,22 +212,23 @@ export class AuthController {
         description: 'Login example for student account',
         value: {
           email: 'john.doe@example.com',
-          password: 'SecurePassword123!'
-        }
+          password: 'SecurePassword123!',
+        },
       },
       admin: {
         summary: 'Administrator Login',
         description: 'Login example for admin account',
         value: {
           email: 'admin@example.com',
-          password: 'AdminSecure456!'
-        }
-      }
-    }
+          password: 'AdminSecure456!',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
-    description: 'Authentication successful - Returns user data and access token',
+    description:
+      'Authentication successful - Returns user data and access token',
     schema: {
       type: 'object',
       properties: {
@@ -224,43 +238,43 @@ export class AuthController {
             id: {
               type: 'string',
               example: '60d5ecb8b0a7c4b4b8b9b1a1',
-              description: 'Unique user identifier'
+              description: 'Unique user identifier',
             },
             email: {
               type: 'string',
               example: 'john.doe@example.com',
-              description: 'User email address'
+              description: 'User email address',
             },
             displayName: {
               type: 'string',
               example: 'John Doe',
-              description: 'User display name'
+              description: 'User display name',
             },
             roles: {
               type: 'array',
               items: { type: 'string' },
               example: ['STUDENT'],
-              description: 'User roles for authorization'
+              description: 'User roles for authorization',
             },
             active: {
               type: 'boolean',
               example: true,
-              description: 'Account status'
-            }
-          }
+              description: 'Account status',
+            },
+          },
         },
         accessToken: {
           type: 'string',
           example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-          description: 'JWT access token for API authentication'
+          description: 'JWT access token for API authentication',
         },
         tokenType: {
           type: 'string',
           example: 'Bearer',
-          description: 'Token type for Authorization header'
-        }
-      }
-    }
+          description: 'Token type for Authorization header',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -270,9 +284,9 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 401 },
         message: { type: 'string', example: 'PASSWORD_INCORRECT' },
-        error: { type: 'string', example: 'Unauthorized' }
-      }
-    }
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -282,9 +296,9 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: 'USER_NOT_FOUND' },
-        error: { type: 'string', example: 'Not Found' }
-      }
-    }
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
   })
   @ApiResponse({
     status: 403,
@@ -294,9 +308,9 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 403 },
         message: { type: 'string', example: 'USER_INACTIVE' },
-        error: { type: 'string', example: 'Forbidden' }
-      }
-    }
+        error: { type: 'string', example: 'Forbidden' },
+      },
+    },
   })
   @Public()
   @Post('login')
@@ -331,13 +345,13 @@ export class AuthController {
     - Grant administrative access to staff
     - Manage role-based permissions
     `,
-    operationId: 'updateUserRoles'
+    operationId: 'updateUserRoles',
   })
   @ApiParam({
     name: 'userId',
     description: 'MongoDB ObjectId of the user to update',
     example: '60d5ecb8b0a7c4b4b8b9b1a1',
-    type: 'string'
+    type: 'string',
   })
   @ApiBody({
     description: 'Role assignment data',
@@ -348,36 +362,36 @@ export class AuthController {
           type: 'array',
           items: {
             type: 'string',
-            enum: ['ADMIN', 'DEAN', 'STUDENT']
+            enum: ['ADMIN', 'DEAN', 'STUDENT'],
           },
           example: ['DEAN'],
-          description: 'Array of roles to assign to the user'
-        }
+          description: 'Array of roles to assign to the user',
+        },
       },
-      required: ['roles']
+      required: ['roles'],
     },
     examples: {
       promoteToAdmin: {
         summary: 'Promote to Administrator',
         description: 'Grant full administrative access',
-        value: { roles: ['ADMIN'] }
+        value: { roles: ['ADMIN'] },
       },
       assignDean: {
         summary: 'Assign Dean Role',
         description: 'Grant academic administrative access',
-        value: { roles: ['DEAN'] }
+        value: { roles: ['DEAN'] },
       },
       multipleRoles: {
         summary: 'Multiple Role Assignment',
         description: 'Assign multiple roles to user',
-        value: { roles: ['DEAN', 'STUDENT'] }
+        value: { roles: ['DEAN', 'STUDENT'] },
       },
       demoteToStudent: {
         summary: 'Demote to Student',
         description: 'Restrict to basic student access',
-        value: { roles: ['STUDENT'] }
-      }
-    }
+        value: { roles: ['STUDENT'] },
+      },
+    },
   })
   @ApiResponse({
     status: 200,
@@ -388,31 +402,31 @@ export class AuthController {
         _id: {
           type: 'string',
           example: '60d5ecb8b0a7c4b4b8b9b1a1',
-          description: 'User identifier'
+          description: 'User identifier',
         },
         email: {
           type: 'string',
           example: 'john.doe@example.com',
-          description: 'User email'
+          description: 'User email',
         },
         displayName: {
           type: 'string',
           example: 'John Doe',
-          description: 'User display name'
+          description: 'User display name',
         },
         roles: {
           type: 'array',
           items: { type: 'string' },
           example: ['DEAN'],
-          description: 'Updated user roles'
+          description: 'Updated user roles',
         },
         active: {
           type: 'boolean',
           example: true,
-          description: 'Account status'
-        }
-      }
-    }
+          description: 'Account status',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 401,
@@ -422,9 +436,9 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 401 },
         message: { type: 'string', example: 'Unauthorized' },
-        error: { type: 'string', example: 'Unauthorized' }
-      }
-    }
+        error: { type: 'string', example: 'Unauthorized' },
+      },
+    },
   })
   @ApiResponse({
     status: 403,
@@ -435,11 +449,12 @@ export class AuthController {
         statusCode: { type: 'number', example: 403 },
         message: {
           type: 'string',
-          example: 'Access denied. One of the following roles is required: ADMIN'
+          example:
+            'Access denied. One of the following roles is required: ADMIN',
         },
-        error: { type: 'string', example: 'Forbidden' }
-      }
-    }
+        error: { type: 'string', example: 'Forbidden' },
+      },
+    },
   })
   @ApiResponse({
     status: 404,
@@ -449,16 +464,16 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 404 },
         message: { type: 'string', example: 'USER_NOT_FOUND' },
-        error: { type: 'string', example: 'Not Found' }
-      }
-    }
+        error: { type: 'string', example: 'Not Found' },
+      },
+    },
   })
   @ApiBearerAuth()
   @AdminOnly()
   @Put('user/:userId/roles')
   async updateUserRoles(
     @Param('userId') userId: string,
-    @Body() body: { roles: RoleName[] }
+    @Body() body: { roles: RoleName[] },
   ) {
     return this.authService.updateUserRoles(userId, body.roles);
   }
@@ -488,7 +503,7 @@ export class AuthController {
     - Links existing accounts by email address
     - Returns same token format as email/password login
     `,
-    operationId: 'googleAuth'
+    operationId: 'googleAuth',
   })
   @ApiResponse({
     status: 302,
@@ -498,10 +513,10 @@ export class AuthController {
         description: 'Google OAuth URL',
         schema: {
           type: 'string',
-          example: 'https://accounts.google.com/oauth/authorize?client_id=...'
-        }
-      }
-    }
+          example: 'https://accounts.google.com/oauth/authorize?client_id=...',
+        },
+      },
+    },
   })
   @ApiExcludeEndpoint()
   @Public()
@@ -534,7 +549,7 @@ export class AuthController {
     - Existing users: Links Google account to existing profile
     - Returns JWT token for immediate access
     `,
-    operationId: 'googleAuthCallback'
+    operationId: 'googleAuthCallback',
   })
   @ApiResponse({
     status: 302,
@@ -544,10 +559,11 @@ export class AuthController {
         description: 'Frontend URL with access token',
         schema: {
           type: 'string',
-          example: 'http://localhost:3001/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
-        }
-      }
-    }
+          example:
+            'http://localhost:3001/auth/callback?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+        },
+      },
+    },
   })
   @ApiResponse({
     status: 500,
@@ -557,9 +573,9 @@ export class AuthController {
       properties: {
         statusCode: { type: 'number', example: 500 },
         message: { type: 'string', example: 'GOOGLE_LOGIN_FAILED' },
-        error: { type: 'string', example: 'Internal Server Error' }
-      }
-    }
+        error: { type: 'string', example: 'Internal Server Error' },
+      },
+    },
   })
   @ApiExcludeEndpoint()
   @Public()

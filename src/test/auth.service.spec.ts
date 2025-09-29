@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { AuthService } from '../auth/auth.service';
+import { AuthService } from '../auth/services/auth.service';
 import { User } from '../users/entities/user.entity';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
@@ -93,7 +93,9 @@ describe('AuthService', () => {
       const result = await service.register(registerDto);
 
       // Assert
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ email: registerDto.email });
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        email: registerDto.email,
+      });
       expect(bcrypt.hash).toHaveBeenCalledWith(registerDto.password, 10);
       expect(result).toBeDefined();
     });
@@ -111,7 +113,7 @@ describe('AuthService', () => {
 
       // Act & Assert
       await expect(service.register(testDto)).rejects.toThrow(
-        new HttpException('USER_ALREADY_EXISTS', HttpStatus.CONFLICT)
+        new HttpException('USER_ALREADY_EXISTS', HttpStatus.CONFLICT),
       );
     });
   });
@@ -131,8 +133,13 @@ describe('AuthService', () => {
       const result = await service.login(loginDto);
 
       // Assert
-      expect(mockUserModel.findOne).toHaveBeenCalledWith({ email: loginDto.email });
-      expect(bcrypt.compare).toHaveBeenCalledWith(loginDto.password, mockUser.password);
+      expect(mockUserModel.findOne).toHaveBeenCalledWith({
+        email: loginDto.email,
+      });
+      expect(bcrypt.compare).toHaveBeenCalledWith(
+        loginDto.password,
+        mockUser.password,
+      );
       expect(jwtService.sign).toHaveBeenCalled();
       expect(result).toHaveProperty('accessToken', 'mock-jwt-token');
       expect(result).toHaveProperty('user');
@@ -145,7 +152,7 @@ describe('AuthService', () => {
 
       // Act & Assert
       await expect(service.login(loginDto)).rejects.toThrow(
-        new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND)
+        new HttpException('USER_NOT_FOUND', HttpStatus.NOT_FOUND),
       );
     });
   });
@@ -159,7 +166,9 @@ describe('AuthService', () => {
       const result = await service.validateUser('60d5ecb8b0a7c4b4b8b9b1a1');
 
       // Assert
-      expect(mockUserModel.findById).toHaveBeenCalledWith('60d5ecb8b0a7c4b4b8b9b1a1');
+      expect(mockUserModel.findById).toHaveBeenCalledWith(
+        '60d5ecb8b0a7c4b4b8b9b1a1',
+      );
       expect(result).toEqual(mockUser);
     });
 

@@ -6,12 +6,10 @@ import { Faculty, FacultySchema } from './entities/faculty.entity';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([
-      { name: Faculty.name, schema: FacultySchema }
-    ])
+    MongooseModule.forFeature([{ name: Faculty.name, schema: FacultySchema }]),
   ],
   controllers: [FacultyController],
   providers: [FacultyService],
-  exports: [MongooseModule, FacultyService]
+  exports: [MongooseModule, FacultyService],
 })
 export class FacultyModule {}

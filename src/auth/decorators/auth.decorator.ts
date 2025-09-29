@@ -40,7 +40,8 @@ export const Roles = (...roles: RoleName[]) => SetMetadata(ROLES_KEY, roles);
  * @param permissions - One or more permissions that grant access
  * @returns Decorator function that sets permission metadata
  */
-export const RequirePermissions = (...permissions: Permission[]) => SetMetadata(PERMISSIONS_KEY, permissions);
+export const RequirePermissions = (...permissions: Permission[]) =>
+  SetMetadata(PERMISSIONS_KEY, permissions);
 
 /**
  * @Public - Marks route as publicly accessible
@@ -89,3 +90,14 @@ export const AdminOrDean = () => Roles(RoleName.ADMIN, RoleName.DEAN);
  * so this decorator is mainly for explicit documentation.
  */
 export const AuthenticatedOnly = () => SetMetadata('authenticated', true);
+
+/**
+ * @Auth - Requires user to have specific roles (simplified version)
+ *
+ * Usage: @Auth('ADMIN', 'FACULTY')
+ * Effect: Only users with ADMIN OR FACULTY roles can access the route
+ *
+ * @param roles - One or more role names as strings
+ * @returns Decorator function that sets role metadata
+ */
+export const Auth = (...roles: string[]) => SetMetadata(ROLES_KEY, roles);

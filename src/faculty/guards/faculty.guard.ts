@@ -1,9 +1,23 @@
-import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  ForbiddenException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Faculty, FacultyDocument } from '../../faculty/entities/faculty.entity';
-import { Program, ProgramDocument } from '../../programs/entities/program.entity';
-import { Student, StudentDocument } from '../../students/entities/student.entity';
+import {
+  Faculty,
+  FacultyDocument,
+} from '../../faculty/entities/faculty.entity';
+import {
+  Program,
+  ProgramDocument,
+} from '../../programs/entities/program.entity';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
 import { User, UserDocument } from '../../users/entities/user.entity';
 
 @Injectable()
@@ -45,6 +59,8 @@ export class FacultyGuard implements CanActivate {
       return true;
     }
 
-    throw new ForbiddenException('Access denied: You can only access your own faculty data');
+    throw new ForbiddenException(
+      'Access denied: You can only access your own faculty data',
+    );
   }
 }
