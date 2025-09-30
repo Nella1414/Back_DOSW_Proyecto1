@@ -132,6 +132,7 @@ export class SchedulesController {
     @Query('userId') queryUserId?: string,
     @Query('from') fromDate?: string,
     @Query('to') toDate?: string,
+    @Query('closed') closed?: string,
   ) {
     const authenticatedUserId = req.user?.externalId;
     const userRoles = req.user?.roles || [];

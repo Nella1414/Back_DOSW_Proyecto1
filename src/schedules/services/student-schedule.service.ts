@@ -31,6 +31,7 @@ import {
   CourseHistoryDto,
 } from '../dto/schedule.dto';
 import { AcademicTrafficLightService } from './academic-traffic-light.service';
+import { empty } from 'rxjs';
 
 @Injectable()
 export class StudentScheduleService {
@@ -254,6 +255,14 @@ export class StudentScheduleService {
       throw new Error('Student not found');
     }
 
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+      if (from >= to) {
+        throw new Error('From date must be before to date');
+      }
+    }
+
     const periodQuery: any = { status: 'CLOSED' };
 
     if (fromDate || toDate) {
@@ -292,14 +301,28 @@ export class StudentScheduleService {
           periodName: period.name,
           startDate: period.startDate,
           endDate: period.endDate,
+          status: period.status,
           enrollmentCount: validEnrollments.length,
         });
       }
     }
 
+      if (periodsWithEnrollments.length === 0) {
+    return {
+      studentId: student.code,
+      periods: [],
+      emptyHistory: true,
+      message: 'No historical academic records found',
+      filters: { from: fromDate, to: toDate }
+    };
+  }
+
     return {
       studentId: student.code,
       periods: periodsWithEnrollments,
+      emptyHistory: false, 
+      total: periodsWithEnrollments.length, 
+      filters: { from: fromDate, to: toDate }
     };
   }
 
@@ -318,7 +341,13 @@ export class StudentScheduleService {
     }
 
     if (period.status !== 'CLOSED') {
-      throw new Error('Period is not closed');
+      console.warn(`[AUDIT] Attempt to access open period`, {
+      periodId,
+      studentId: student.externalId,
+      periodStatus: period.status,
+      timestamp: new Date().toISOString()
+    });
+      throw new Error('Cannot access schedules from active periods. Only closed periods are allowed.');
     }
 
     const enrollments = await this.enrollmentModel
@@ -331,6 +360,26 @@ export class StudentScheduleService {
       .exec();
 
     const validEnrollments = enrollments.filter((e) => e.groupId);
+    
+      if (validEnrollments.length === 0) {
+    return {
+      studentId: student.code,
+      studentName: `${student.firstName} ${student.lastName}`,
+      period: {
+        id: period._id,
+        code: period.code,
+        name: period.name,
+        startDate: period.startDate,
+        endDate: period.endDate,
+        status: period.status,
+      },
+      schedule: [],
+      coursesWithResults: [],
+      emptyHistory: true, 
+      message: 'No enrollments found for this period' // AGREGAR
+    };
+  }
+    
     const scheduleMap = new Map<number, any[]>();
     const coursesWithResults: any[] = [];
 
@@ -404,6 +453,8 @@ export class StudentScheduleService {
       },
       schedule,
       coursesWithResults,
+      emptyHistory: false,
+      isHistorical: true
     };
   }
 }
