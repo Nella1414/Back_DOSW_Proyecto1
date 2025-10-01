@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
+import { ConfigService } from '@nestjs/config';
 
 /**
  * Bootstrap function for the SIRHA (Student Information and Registration Hub API)
@@ -193,8 +194,11 @@ For API support and documentation issues, please refer to the comprehensive endp
    * Enables cross-origin requests from the frontend application
    * with secure defaults and credential support.
    */
+  const configService = app.get(ConfigService);
+  const corsOrigin = configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3001',
+    origin: corsOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -210,6 +214,7 @@ For API support and documentation issues, please refer to the comprehensive endp
   logger.log(
     `CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3001'}`,
   );
+
   logger.log('Application bootstrap completed successfully');
 }
 
