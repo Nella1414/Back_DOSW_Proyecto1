@@ -5,15 +5,16 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
-import { AppService } from './app.service';
-
+import { AppService } from './services/app.service';
 
 import { AuthModule } from '../auth/auth.module';
 import { UsersModule } from '../users/users.module';
 import { RolesModule } from '../roles/roles.module';
 import { FacultyModule } from '../faculty/faculty.module';
 import { ProgramsModule } from '../programs/programs.module';
+import { AcademicPeriodsModule } from '../academic-periods/academic-periods.module';
 import { CoursesModule } from '../courses/courses.module';
+import { CourseGroupsModule } from '../course-groups/course-groups.module';
 import { GroupSchedulesModule } from '../group-schedules/group-schedules.module';
 import { StudentsModule } from '../students/students.module';
 import { EnrollmentsModule } from '../enrollments/enrollments.module';
@@ -22,7 +23,8 @@ import { AcademicTrafficLightModule } from '../academic-traffic-light/academic-t
 import { ChangeRequestsModule } from '../change-requests/change-requests.module';
 import { ChangeWindowsModule } from '../change-windows/change-windows.module';
 import { ReportsModule } from '../reports/reports.module';
-
+import { CommonModule } from '../common/common.module';
+import { SchedulesModule } from '../schedules/schedules.module';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -33,10 +35,12 @@ import { RolesGuard } from '../auth/guards/roles.guard';
       isGlobal: true,
     }),
     //Add rate limiting to all endpoints
-    ThrottlerModule.forRoot([{
-      ttl: 60000, // one minute
-      limit: 100,  // 100 requests per minute
-    }]),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 60000, // one minute
+        limit: 100, // 100 requests per minute
+      },
+    ]),
 
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
@@ -51,7 +55,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
     RolesModule,
     FacultyModule,
     ProgramsModule,
+    AcademicPeriodsModule,
     CoursesModule,
+    CourseGroupsModule,
     GroupSchedulesModule,
     StudentsModule,
     EnrollmentsModule,
@@ -60,6 +66,8 @@ import { RolesGuard } from '../auth/guards/roles.guard';
     ChangeRequestsModule,
     ChangeWindowsModule,
     ReportsModule,
+    CommonModule,
+    SchedulesModule,
   ],
   controllers: [AppController],
   providers: [

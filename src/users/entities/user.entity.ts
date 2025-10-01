@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-import { Student } from 'src/students/entities/student.entity';
 import { v4 as uuidv4 } from 'uuid';
 export type UserDocument = User & Document;
 
@@ -18,7 +17,7 @@ export class User {
   @Prop({ default: true })
   active: boolean;
 
-  @Prop({ type: [String], default: ["STUDENT"] })
+  @Prop({ type: [String], default: ['STUDENT'] })
   roles: string[];
 
   @Prop({ required: false })

@@ -1,5 +1,13 @@
 // Import validation decorators from class-validator library
-import { IsString, IsNotEmpty, IsOptional, IsInt, Min, Max, Length } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsInt,
+  Min,
+  Max,
+  Length,
+} from 'class-validator';
 // Import Swagger documentation decorator
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -32,11 +40,13 @@ export class CreateStudentDto {
     description: 'Unique student code used for identification',
     example: 'EST001',
     minLength: 3,
-    maxLength: 20
+    maxLength: 20,
   })
   @IsString({ message: 'Student code must be a string' })
   @IsNotEmpty({ message: 'Student code is required' })
-  @Length(3, 20, { message: 'Student code must be between 3 and 20 characters' })
+  @Length(3, 20, {
+    message: 'Student code must be between 3 and 20 characters',
+  })
   code: string;
 
   /**
@@ -48,7 +58,7 @@ export class CreateStudentDto {
     description: 'Student first name',
     example: 'Juan',
     minLength: 2,
-    maxLength: 50
+    maxLength: 50,
   })
   @IsString({ message: 'First name must be a string' })
   @IsNotEmpty({ message: 'First name is required' })
@@ -64,7 +74,7 @@ export class CreateStudentDto {
     description: 'Student last name',
     example: 'Pérez',
     minLength: 2,
-    maxLength: 50
+    maxLength: 50,
   })
   @IsString({ message: 'Last name must be a string' })
   @IsNotEmpty({ message: 'Last name is required' })
@@ -79,7 +89,7 @@ export class CreateStudentDto {
    */
   @ApiProperty({
     description: 'Program ID that student belongs to (MongoDB ObjectId)',
-    example: '60d5ecb8b0a7c4b4b8b9b1a1'
+    example: '60d5ecb8b0a7c4b4b8b9b1a1',
   })
   @IsString({ message: 'Program ID must be a string' })
   @IsNotEmpty({ message: 'Program ID is required' })
@@ -96,7 +106,7 @@ export class CreateStudentDto {
     example: 5,
     required: false,
     minimum: 1,
-    maximum: 12
+    maximum: 12,
   })
   @IsOptional() // Field is not required
   @IsInt({ message: 'Current semester must be an integer' })

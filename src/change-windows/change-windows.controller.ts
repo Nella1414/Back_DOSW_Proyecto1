@@ -1,5 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
-import { ChangeWindowsService } from './change-windows.service';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
+import { ChangeWindowsService } from './services/change-windows.service';
 import { CreateChangeWindowDto } from './dto/create-change-window.dto';
 import { UpdateChangeWindowDto } from './dto/update-change-window.dto';
 
@@ -23,7 +31,10 @@ export class ChangeWindowsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateChangeWindowDto: UpdateChangeWindowDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateChangeWindowDto: UpdateChangeWindowDto,
+  ) {
     return this.changeWindowsService.update(+id, updateChangeWindowDto);
   }
 
