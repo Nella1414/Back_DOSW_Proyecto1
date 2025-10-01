@@ -23,7 +23,6 @@ import { AcademicTrafficLightModule } from '../academic-traffic-light/academic-t
 import { ChangeRequestsModule } from '../change-requests/change-requests.module';
 import { ChangeWindowsModule } from '../change-windows/change-windows.module';
 import { ReportsModule } from '../reports/reports.module';
-import { CommonModule } from '../common/common.module';
 import { SchedulesModule } from '../schedules/schedules.module';
 
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -66,7 +65,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
     ChangeRequestsModule,
     ChangeWindowsModule,
     ReportsModule,
-    CommonModule,
     SchedulesModule,
   ],
   controllers: [AppController],
