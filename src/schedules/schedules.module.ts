@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleValidationService } from './services/schedule-validation.service';
 import { StudentScheduleService } from './services/student-schedule.service';
-import { AcademicTrafficLightService } from './services/academic-traffic-light.service';
 import { SchedulesController } from './controllers/schedules.controller';
+import { AcademicTrafficLightModule } from '../academic-traffic-light/academic-traffic-light.module';
 import { Student, StudentSchema } from '../students/entities/student.entity';
 import {
   Enrollment,
@@ -33,17 +33,10 @@ import {
       { name: GroupSchedule.name, schema: GroupScheduleSchema },
       { name: AcademicPeriod.name, schema: AcademicPeriodSchema },
     ]),
+    AcademicTrafficLightModule,
   ],
   controllers: [SchedulesController],
-  providers: [
-    ScheduleValidationService,
-    StudentScheduleService,
-    AcademicTrafficLightService,
-  ],
-  exports: [
-    ScheduleValidationService,
-    StudentScheduleService,
-    AcademicTrafficLightService,
-  ],
+  providers: [ScheduleValidationService, StudentScheduleService],
+  exports: [ScheduleValidationService, StudentScheduleService],
 })
 export class SchedulesModule {}

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -30,7 +30,13 @@ import {
   AcademicHistoryDto,
   CourseHistoryDto,
 } from '../dto/schedule.dto';
-import { AcademicTrafficLightService } from './academic-traffic-light.service';
+import { AcademicTrafficLightService } from '../../academic-traffic-light/services/academic-traffic-light.service';
+import {
+  PopulatedEnrollment,
+  PopulatedGroup,
+  PopulatedPeriod,
+  PeriodQuery,
+} from '../interfaces/populated-types.interface';
 
 @Injectable()
 export class StudentScheduleService {
@@ -72,11 +78,14 @@ export class StudentScheduleService {
       })
       .exec();
 
-    const currentPeriodEnrollments = enrollments.filter(
-      (enrollment) =>
-        (enrollment.groupId as any).periodId._id.toString() ===
-        (activePeriod as any)._id.toString(),
-    );
+    const currentPeriodEnrollments = enrollments.filter((enrollment) => {
+      const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+      const populatedPeriod = activePeriod as PopulatedPeriod;
+      return (
+        populatedEnrollment.groupId?.periodId?._id.toString() ===
+        populatedPeriod._id.toString()
+      );
+    });
 
     if (currentPeriodEnrollments.length === 0) {
       return {
@@ -91,7 +100,13 @@ export class StudentScheduleService {
     const scheduleMap = new Map<number, ClassScheduleDto[]>();
 
     for (const enrollment of currentPeriodEnrollments) {
-      const group = enrollment.groupId as any;
+      const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+      const group = populatedEnrollment.groupId;
+
+      if (!group || !group.courseId) {
+        continue;
+      }
+
       const course = group.courseId;
 
       const groupSchedules = await this.groupScheduleModel
@@ -106,7 +121,7 @@ export class StudentScheduleService {
         scheduleMap.get(schedule.dayOfWeek)?.push({
           courseCode: course.code,
           courseName: course.name,
-          groupNumber: group.groupNumber,
+          groupNumber: String(group.groupNumber),
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           room: schedule.room || 'Por asignar',
@@ -197,7 +212,13 @@ export class StudentScheduleService {
     const failedCourses: CourseHistoryDto[] = [];
 
     for (const enrollment of allEnrollments) {
-      const group = enrollment.groupId as any;
+      const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+      const group = populatedEnrollment.groupId;
+
+      if (!group || !group.courseId || !group.periodId) {
+        continue;
+      }
+
       const course = group.courseId;
       const period = group.periodId;
 
@@ -248,13 +269,27 @@ export class StudentScheduleService {
     studentId: string,
     fromDate?: string,
     toDate?: string,
-  ): Promise<any> {
+  ): Promise<{
+    studentId: string;
+    studentName: string;
+    currentSemester: number;
+    periods: Array<{
+      periodCode: string;
+      periodName: string;
+      startDate: Date;
+      endDate: Date;
+      coursesEnrolled: number;
+      coursesPassed: number;
+      coursesFailed: number;
+      semesterGPA: number;
+    }>;
+  }> {
     const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
-      throw new Error('Student not found');
+      throw new NotFoundException(`Student with ID ${studentId} not found`);
     }
 
-    const periodQuery: any = { status: 'CLOSED' };
+    const periodQuery: PeriodQuery = { status: 'CLOSED' };
 
     if (fromDate || toDate) {
       periodQuery.startDate = {};
@@ -271,7 +306,16 @@ export class StudentScheduleService {
       .sort({ startDate: -1 })
       .exec();
 
-    const periodsWithEnrollments: any[] = [];
+    const periodsWithEnrollments: Array<{
+      periodCode: string;
+      periodName: string;
+      startDate: Date;
+      endDate: Date;
+      coursesEnrolled: number;
+      coursesPassed: number;
+      coursesFailed: number;
+      semesterGPA: number;
+    }> = [];
 
     for (const period of closedPeriods) {
       const enrollments = await this.enrollmentModel
@@ -286,19 +330,52 @@ export class StudentScheduleService {
       const validEnrollments = enrollments.filter((e) => e.groupId);
 
       if (validEnrollments.length > 0) {
+        let passedCount = 0;
+        let failedCount = 0;
+        let totalGradePoints = 0;
+        let totalCredits = 0;
+
+        for (const enrollment of validEnrollments) {
+          const populatedEnrollment =
+            enrollment as unknown as PopulatedEnrollment;
+          if (enrollment.status === EnrollmentStatus.PASSED) {
+            passedCount++;
+            if (
+              enrollment.grade &&
+              populatedEnrollment.groupId?.courseId?.credits
+            ) {
+              totalGradePoints +=
+                enrollment.grade *
+                populatedEnrollment.groupId.courseId.credits;
+              totalCredits += populatedEnrollment.groupId.courseId.credits;
+            }
+          } else if (enrollment.status === EnrollmentStatus.FAILED) {
+            failedCount++;
+          }
+        }
+
+        const semesterGPA =
+          totalCredits > 0
+            ? Math.round((totalGradePoints / totalCredits) * 100) / 100
+            : 0;
+
         periodsWithEnrollments.push({
-          periodId: period._id,
           periodCode: period.code,
           periodName: period.name,
           startDate: period.startDate,
           endDate: period.endDate,
-          enrollmentCount: validEnrollments.length,
+          coursesEnrolled: validEnrollments.length,
+          coursesPassed: passedCount,
+          coursesFailed: failedCount,
+          semesterGPA,
         });
       }
     }
 
     return {
       studentId: student.code,
+      studentName: `${student.firstName} ${student.lastName}`,
+      currentSemester: student.currentSemester || 1,
       periods: periodsWithEnrollments,
     };
   }
@@ -306,19 +383,32 @@ export class StudentScheduleService {
   async getHistoricalScheduleByPeriod(
     studentId: string,
     periodId: string,
-  ): Promise<any> {
+  ): Promise<{
+    studentId: string;
+    studentName: string;
+    period: { code: string; name: string };
+    schedule: DailyScheduleDto[];
+    courses: Array<{
+      courseCode: string;
+      courseName: string;
+      credits: number;
+      groupNumber: number;
+      finalGrade?: number;
+      status: string;
+    }>;
+  }> {
     const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
-      throw new Error('Student not found');
+      throw new NotFoundException(`Student with ID ${studentId} not found`);
     }
 
     const period = await this.academicPeriodModel.findById(periodId).exec();
     if (!period) {
-      throw new Error('Period not found');
+      throw new NotFoundException(`Period with ID ${periodId} not found`);
     }
 
     if (period.status !== 'CLOSED') {
-      throw new Error('Period is not closed');
+      throw new BadRequestException('Period is not closed');
     }
 
     const enrollments = await this.enrollmentModel
@@ -331,11 +421,24 @@ export class StudentScheduleService {
       .exec();
 
     const validEnrollments = enrollments.filter((e) => e.groupId);
-    const scheduleMap = new Map<number, any[]>();
-    const coursesWithResults: any[] = [];
+    const scheduleMap = new Map<number, ClassScheduleDto[]>();
+    const coursesWithResults: Array<{
+      courseCode: string;
+      courseName: string;
+      credits: number;
+      groupNumber: number;
+      finalGrade?: number;
+      status: string;
+    }> = [];
 
     for (const enrollment of validEnrollments) {
-      const group = enrollment.groupId as any;
+      const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+      const group = populatedEnrollment.groupId;
+
+      if (!group || !group.courseId) {
+        continue;
+      }
+
       const course = group.courseId;
 
       coursesWithResults.push({
@@ -345,7 +448,6 @@ export class StudentScheduleService {
         groupNumber: group.groupNumber,
         finalGrade: enrollment.grade,
         status: enrollment.status,
-        classroom: group.classroom || 'Por asignar',
       });
 
       const groupSchedules = await this.groupScheduleModel
@@ -360,7 +462,7 @@ export class StudentScheduleService {
         scheduleMap.get(schedule.dayOfWeek)?.push({
           courseCode: course.code,
           courseName: course.name,
-          groupNumber: group.groupNumber,
+          groupNumber: String(group.groupNumber),
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           room: schedule.room || 'Por asignar',
@@ -377,7 +479,7 @@ export class StudentScheduleService {
       'Friday',
       'Saturday',
     ];
-    const schedule: any[] = [];
+    const schedule: DailyScheduleDto[] = [];
 
     for (let day = 1; day <= 7; day++) {
       const classes = scheduleMap.get(day) || [];
@@ -395,15 +497,11 @@ export class StudentScheduleService {
       studentId: student.code,
       studentName: `${student.firstName} ${student.lastName}`,
       period: {
-        id: period._id,
         code: period.code,
         name: period.name,
-        startDate: period.startDate,
-        endDate: period.endDate,
-        status: period.status,
       },
       schedule,
-      coursesWithResults,
+      courses: coursesWithResults,
     };
   }
 }

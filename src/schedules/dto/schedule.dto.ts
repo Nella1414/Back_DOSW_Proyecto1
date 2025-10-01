@@ -446,9 +446,9 @@ export class CourseHistoryDto {
   @ApiProperty({
     description: 'Traffic light color indicator for academic performance',
     example: 'green',
-    enum: ['green', 'yellow', 'red'],
+    enum: ['green', 'blue', 'red'],
   })
   @IsString()
-  @IsIn(['green', 'yellow', 'red'])
-  color: 'green' | 'yellow' | 'red';
+  @IsIn(['green', 'blue', 'red'])
+  color: 'green' | 'blue' | 'red';
 }
