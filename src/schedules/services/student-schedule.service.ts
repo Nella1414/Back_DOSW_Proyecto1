@@ -30,7 +30,6 @@ import {
   AcademicHistoryDto,
   CourseHistoryDto,
 } from '../dto/schedule.dto';
-
 import { AcademicTrafficLightService } from '../../academic-traffic-light/services/academic-traffic-light.service';
 import {
   PopulatedEnrollment,
@@ -38,7 +37,6 @@ import {
   PopulatedPeriod,
   PeriodQuery,
 } from '../interfaces/populated-types.interface';
-
 
 @Injectable()
 export class StudentScheduleService {
@@ -56,13 +54,6 @@ export class StudentScheduleService {
     private academicTrafficLightService: AcademicTrafficLightService,
   ) {}
 
-  /**
-   * Retrieves the current academic schedule for a student in the active academic period.
-   * Groups classes by day and merges consecutive classes of the same course.
-   * @param studentId - The external ID of the student.
-   * @returns StudentScheduleDto containing student info and daily schedule.
-   * @throws Error if the student or active period is not found.
-   */
   async getCurrentSchedule(studentId: string): Promise<StudentScheduleDto> {
     const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
@@ -174,11 +165,6 @@ export class StudentScheduleService {
     };
   }
 
-  /**
-   * Groups consecutive classes of the same course into a single time block.
-   * @param classes - Array of ClassScheduleDto objects for a day.
-   * @returns Array of grouped ClassScheduleDto objects.
-   */
   private groupConsecutiveClasses(
     classes: ClassScheduleDto[],
   ): ClassScheduleDto[] {
@@ -205,13 +191,6 @@ export class StudentScheduleService {
     return grouped;
   }
 
-  /**
-   * Retrieves the complete academic history for a student, including passed, current, and failed courses.
-   * Each course includes period, grade, status, and a traffic light color.
-   * @param studentId - The external ID of the student.
-   * @returns AcademicHistoryDto with categorized course history.
-   * @throws Error if the student is not found.
-   */
   async getStudentAcademicHistory(
     studentId: string,
   ): Promise<AcademicHistoryDto> {
@@ -286,15 +265,6 @@ export class StudentScheduleService {
     };
   }
 
-  /**
-   * Retrieves a list of closed academic periods in which the student has enrollments.
-   * Can be filtered by date range.
-   * @param studentId - The external ID of the student.
-   * @param fromDate - (Optional) Start date filter for periods.
-   * @param toDate - (Optional) End date filter for periods.
-   * @returns Object with student code, periods with enrollments, and filter info.
-   * @throws Error if the student is not found or date range is invalid.
-   */
   async getHistoricalSchedules(
     studentId: string,
     fromDate?: string,
@@ -319,17 +289,7 @@ export class StudentScheduleService {
       throw new NotFoundException(`Student with ID ${studentId} not found`);
     }
 
-
-    if (fromDate && toDate) {
-      const from = new Date(fromDate);
-      const to = new Date(toDate);
-      if (from >= to) {
-        throw new Error('From date must be before to date');
-      }
-    }
-
-    const periodQuery: any = { status: 'CLOSED' };
-
+    const periodQuery: PeriodQuery = { status: 'CLOSED' };
 
     if (fromDate || toDate) {
       periodQuery.startDate = {};
@@ -404,46 +364,22 @@ export class StudentScheduleService {
           periodName: period.name,
           startDate: period.startDate,
           endDate: period.endDate,
-
-          status: period.status,
-          
           coursesEnrolled: validEnrollments.length,
           coursesPassed: passedCount,
           coursesFailed: failedCount,
           semesterGPA,
-
         });
       }
     }
-
-      if (periodsWithEnrollments.length === 0) {
-    return {
-      studentId: student.code,
-      periods: [],
-      emptyHistory: true,
-      message: 'No historical academic records found',
-      filters: { from: fromDate, to: toDate }
-    };
-  }
 
     return {
       studentId: student.code,
       studentName: `${student.firstName} ${student.lastName}`,
       currentSemester: student.currentSemester || 1,
       periods: periodsWithEnrollments,
-      emptyHistory: false, 
-      total: periodsWithEnrollments.length, 
-      filters: { from: fromDate, to: toDate }
     };
   }
 
-  /**
-   * Retrieves the detailed schedule and course results for a student in a specific closed period.
-   * @param studentId - The external ID of the student.
-   * @param periodId - The ID of the academic period.
-   * @returns Object with student info, period details, daily schedule, and course results.
-   * @throws Error if the student or period is not found, or if the period is not closed.
-   */
   async getHistoricalScheduleByPeriod(
     studentId: string,
     periodId: string,
@@ -472,15 +408,7 @@ export class StudentScheduleService {
     }
 
     if (period.status !== 'CLOSED') {
-
-      console.warn(`[AUDIT] Attempt to access open period`, {
-      periodId,
-      studentId: student.externalId,
-      periodStatus: period.status,
-      timestamp: new Date().toISOString()
-    });
-      throw new Error('Cannot access schedules from active periods. Only closed periods are allowed.');
-
+      throw new BadRequestException('Period is not closed');
     }
 
     const enrollments = await this.enrollmentModel
@@ -493,31 +421,15 @@ export class StudentScheduleService {
       .exec();
 
     const validEnrollments = enrollments.filter((e) => e.groupId);
-
-    
-      if (validEnrollments.length === 0) {
-    return {
-      studentId: student.code,
-      studentName: `${student.firstName} ${student.lastName}`,
-      period: {
-        id: period._id,
-        code: period.code,
-        name: period.name,
-        startDate: period.startDate,
-        endDate: period.endDate,
-        status: period.status,
-      },
-      schedule: [],
-      coursesWithResults: [],
-      emptyHistory: true, 
-      message: 'No enrollments found for this period' // AGREGAR
-    };
-  }
-    
-    const scheduleMap = new Map<number, any[]>();
-    const coursesWithResults: any[] = [];
-
-
+    const scheduleMap = new Map<number, ClassScheduleDto[]>();
+    const coursesWithResults: Array<{
+      courseCode: string;
+      courseName: string;
+      credits: number;
+      groupNumber: number;
+      finalGrade?: number;
+      status: string;
+    }> = [];
 
     for (const enrollment of validEnrollments) {
       const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
@@ -589,11 +501,7 @@ export class StudentScheduleService {
         name: period.name,
       },
       schedule,
-
-      coursesWithResults,
-      emptyHistory: false,
-      isHistorical: true
-
+      courses: coursesWithResults,
     };
   }
 }
