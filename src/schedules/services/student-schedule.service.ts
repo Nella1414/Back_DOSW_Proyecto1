@@ -33,6 +33,12 @@ import {
 import { AcademicTrafficLightService } from './academic-traffic-light.service';
 import { empty } from 'rxjs';
 
+/**
+ * Service responsible for retrieving and formatting student schedules and academic history.
+ * Provides methods to get the current schedule, academic history, and historical schedules
+ * for specific periods. Integrates with Mongoose models for students, enrollments, groups,
+ * courses, schedules, and academic periods.
+ */
 @Injectable()
 export class StudentScheduleService {
   constructor(
@@ -49,6 +55,13 @@ export class StudentScheduleService {
     private academicTrafficLightService: AcademicTrafficLightService,
   ) {}
 
+  /**
+   * Retrieves the current academic schedule for a student in the active academic period.
+   * Groups classes by day and merges consecutive classes of the same course.
+   * @param studentId - The external ID of the student.
+   * @returns StudentScheduleDto containing student info and daily schedule.
+   * @throws Error if the student or active period is not found.
+   */
   async getCurrentSchedule(studentId: string): Promise<StudentScheduleDto> {
     const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
@@ -151,6 +164,11 @@ export class StudentScheduleService {
     };
   }
 
+  /**
+   * Groups consecutive classes of the same course into a single time block.
+   * @param classes - Array of ClassScheduleDto objects for a day.
+   * @returns Array of grouped ClassScheduleDto objects.
+   */
   private groupConsecutiveClasses(
     classes: ClassScheduleDto[],
   ): ClassScheduleDto[] {
@@ -177,6 +195,13 @@ export class StudentScheduleService {
     return grouped;
   }
 
+  /**
+   * Retrieves the complete academic history for a student, including passed, current, and failed courses.
+   * Each course includes period, grade, status, and a traffic light color.
+   * @param studentId - The external ID of the student.
+   * @returns AcademicHistoryDto with categorized course history.
+   * @throws Error if the student is not found.
+   */
   async getStudentAcademicHistory(
     studentId: string,
   ): Promise<AcademicHistoryDto> {
@@ -245,6 +270,15 @@ export class StudentScheduleService {
     };
   }
 
+  /**
+   * Retrieves a list of closed academic periods in which the student has enrollments.
+   * Can be filtered by date range.
+   * @param studentId - The external ID of the student.
+   * @param fromDate - (Optional) Start date filter for periods.
+   * @param toDate - (Optional) End date filter for periods.
+   * @returns Object with student code, periods with enrollments, and filter info.
+   * @throws Error if the student is not found or date range is invalid.
+   */
   async getHistoricalSchedules(
     studentId: string,
     fromDate?: string,
@@ -326,6 +360,13 @@ export class StudentScheduleService {
     };
   }
 
+  /**
+   * Retrieves the detailed schedule and course results for a student in a specific closed period.
+   * @param studentId - The external ID of the student.
+   * @param periodId - The ID of the academic period.
+   * @returns Object with student info, period details, daily schedule, and course results.
+   * @throws Error if the student or period is not found, or if the period is not closed.
+   */
   async getHistoricalScheduleByPeriod(
     studentId: string,
     periodId: string,
