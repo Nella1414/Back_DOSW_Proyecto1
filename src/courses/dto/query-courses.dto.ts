@@ -9,7 +9,6 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
-import { SearchSortDto } from '../../common/dto/pagination.dto';
 
 /**
  * Query Courses DTO
@@ -21,7 +20,7 @@ import { SearchSortDto } from '../../common/dto/pagination.dto';
  * ! IMPORTANTE: Parámetros específicos para consultas de cursos
  * * Permite filtrado avanzado por créditos, nivel, prerequisitos, etc.
  */
-export class QueryCoursesDto extends SearchSortDto {
+export class QueryCoursesDto {
   /**
    * Filter by active status
    *

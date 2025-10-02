@@ -589,4 +589,25 @@ export class AuthController {
 
     return res.redirect(redirectUrl);
   }
+
+  /**
+   * Get current authenticated user profile
+   *
+   * Returns the user information resolved by the JWT strategy from the
+   * Bearer token provided in the Authorization header.
+   */
+  @ApiOperation({
+    summary: 'Get current authenticated user',
+    description: 'Returns the profile extracted from the JWT token.',
+    operationId: 'getCurrentUser'
+  })
+  @ApiBearerAuth()
+  @Get('me')
+  async getMe(@Req() req) {
+    // JwtAuthGuard is applied globally, so req.user is populated by JwtStrategy
+    return {
+      user: req.user,
+      tokenType: 'Bearer',
+    };
+  }
 }

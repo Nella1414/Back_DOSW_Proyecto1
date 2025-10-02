@@ -93,7 +93,7 @@ export class AcademicTrafficLightController {
     description: 'Academic statistics retrieved successfully',
   })
   findAll() {
-    return this.academicTrafficLightService.findAll();
+    return this.academicTrafficLightService.getAcademicStatistics();
   }
 
   /**
@@ -115,6 +115,8 @@ export class AcademicTrafficLightController {
     description: 'Student not found',
   })
   findOne(@Param('studentId') studentId: string) {
-    return this.academicTrafficLightService.findOne(studentId);
+    return this.academicTrafficLightService.getStudentTrafficLightReport(
+      studentId,
+    );
   }
 }

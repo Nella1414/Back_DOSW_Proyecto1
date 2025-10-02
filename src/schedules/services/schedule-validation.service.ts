@@ -402,14 +402,61 @@ export class ScheduleValidationService {
     return start1Min < end2Min && start2Min < end1Min;
   }
 
-  /**
-   * Detects schedule conflicts within a student's schedule for all days.
-   * Used to find overlapping classes in the current schedule.
-   * @param schedule - Array of daily schedules with classes.
-   * @returns Array of conflict objects with details.
-   */
-  async detectScheduleConflicts(schedule: any[]): Promise<any[]> {
-    const conflicts: any[] = [];
+
+  async detectScheduleConflicts(
+    schedule: Array<{
+      dayOfWeek: number;
+      dayName: string;
+      classes: Array<{
+        courseCode: string;
+        courseName: string;
+        groupNumber: string | number;
+        startTime: string;
+        endTime: string;
+        room?: string;
+      }>;
+    }>,
+  ): Promise<
+    Array<{
+      day: string;
+      dayOfWeek: number;
+      course1: {
+        code: string;
+        name: string;
+        group: string | number;
+        time: string;
+        room?: string;
+      };
+      course2: {
+        code: string;
+        name: string;
+        group: string | number;
+        time: string;
+        room?: string;
+      };
+      conflictType: string;
+    }>
+  > {
+    const conflicts: Array<{
+      day: string;
+      dayOfWeek: number;
+      course1: {
+        code: string;
+        name: string;
+        group: string | number;
+        time: string;
+        room?: string;
+      };
+      course2: {
+        code: string;
+        name: string;
+        group: string | number;
+        time: string;
+        room?: string;
+      };
+      conflictType: string;
+    }> = [];
+
     const daysOfWeek = [
       'Domingo',
       'Lunes',
@@ -471,7 +518,7 @@ export class ScheduleValidationService {
    */
   async validateClosedPeriod(periodId: string): Promise<boolean> {
     const period = await this.academicPeriodModel.findById(periodId).exec();
-    return period ? (period as any).status === 'CLOSED' : false;
+    return period ? period.status === 'CLOSED' : false;
   }
 
   /**

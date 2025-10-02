@@ -13,7 +13,7 @@ import {
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { StudentScheduleService } from '../services/student-schedule.service';
 import { ScheduleValidationService } from '../services/schedule-validation.service';
-import { AcademicTrafficLightService } from '../services/academic-traffic-light.service';
+import { AcademicTrafficLightService } from '../../academic-traffic-light/services/academic-traffic-light.service';
 import {
   ApiTags,
   ApiOperation,
@@ -182,12 +182,16 @@ export class SchedulesController {
         `Error retrieving schedule for user ${targetUserId}: ${(error as Error).message}`,
       );
 
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       if ((error as Error).message.includes('not found')) {
         throw new HttpException('Student not found', HttpStatus.NOT_FOUND);
       }
 
       throw new HttpException(
-        'Internal server error',
+        `Error retrieving schedule: ${(error as Error).message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -279,7 +283,8 @@ export class SchedulesController {
     );
   }
 
-  // B1. US-0014: Validación de formato de fecha
+
+  
   if ((error as Error).message.includes('Invalid') && 
       (error as Error).message.includes('date format')) {
     throw new HttpException(
@@ -288,7 +293,7 @@ export class SchedulesController {
     );
   }
 
-  // Validaciones existentes
+  
   if (
     (error as Error).message.includes('Invalid period') ||
     (error as Error).message.includes('not closed')
@@ -304,6 +309,8 @@ export class SchedulesController {
     HttpStatus.INTERNAL_SERVER_ERROR,
   );
 }
+
+
   }
 
   /**
@@ -379,6 +386,10 @@ export class SchedulesController {
         `Error retrieving historical schedule for period ${periodId}: ${(error as Error).message}`,
       );
 
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       if (
         (error as Error).message.includes('not closed') ||
         (error as Error).message.includes('does not exist')
@@ -390,7 +401,7 @@ export class SchedulesController {
       }
 
       throw new HttpException(
-        'Internal server error',
+        `Error retrieving historical schedule: ${(error as Error).message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -453,8 +464,13 @@ export class SchedulesController {
       this.logger.error(
         `Error retrieving academic traffic light for user ${targetUserId}: ${(error as Error).message}`,
       );
+
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
       throw new HttpException(
-        'Internal server error',
+        `Error retrieving academic traffic light: ${(error as Error).message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

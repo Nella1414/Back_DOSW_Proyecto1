@@ -461,7 +461,89 @@ export async function seedTestData() {
       { day: 5, start: '10:00', end: '12:00' },
     ];
 
-    // Create schedules for current period
+    // Create schedules for current period - prioritize student courses
+    const priorityCourseSchedules = [
+      {
+        code: 'NET501',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '08:00', end: '10:00', room: 'LAB-301' },
+          { day: 3, start: '08:00', end: '10:00', room: 'LAB-301' },
+        ],
+      },
+      {
+        code: 'WEB501',
+        group: 'A',
+        schedules: [
+          { day: 2, start: '10:00', end: '12:00', room: 'LAB-302' },
+          { day: 4, start: '10:00', end: '12:00', room: 'LAB-302' },
+        ],
+      },
+      {
+        code: 'DB401',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '14:00', end: '16:00', room: 'ROOM-201' },
+          { day: 3, start: '14:00', end: '16:00', room: 'ROOM-201' },
+          { day: 5, start: '14:00', end: '16:00', room: 'ROOM-201' },
+        ],
+      },
+      {
+        code: 'DSA301',
+        group: 'B',
+        schedules: [
+          { day: 2, start: '08:00', end: '10:00', room: 'ROOM-301' },
+          { day: 4, start: '08:00', end: '10:00', room: 'ROOM-301' },
+        ],
+      },
+      {
+        code: 'ALG301',
+        group: 'B',
+        schedules: [
+          { day: 1, start: '10:00', end: '12:00', room: 'ROOM-302' },
+          { day: 3, start: '10:00', end: '12:00', room: 'ROOM-302' },
+        ],
+      },
+      {
+        code: 'FIS201',
+        group: 'B',
+        schedules: [
+          { day: 5, start: '08:00', end: '10:00', room: 'LAB-201' },
+          { day: 5, start: '10:00', end: '12:00', room: 'LAB-201' },
+        ],
+      },
+    ];
+
+    // Helper to find group by course code and group number
+    const findGroupByCourse = (courseCode: string, groupNumber: string) => {
+      return currentPeriodGroups.find((g) => {
+        const course = courses.find(
+          (c) => (c._id as any).toString() === (g.courseId as any).toString(),
+        );
+        return course?.code === courseCode && g.groupNumber === groupNumber;
+      });
+    };
+
+    // Add priority schedules first
+    for (const courseSchedule of priorityCourseSchedules) {
+      const group = findGroupByCourse(
+        courseSchedule.code,
+        courseSchedule.group,
+      );
+      if (group) {
+        for (const schedule of courseSchedule.schedules) {
+          schedules.push({
+            groupId: group._id,
+            dayOfWeek: schedule.day,
+            startTime: schedule.start,
+            endTime: schedule.end,
+            room: schedule.room,
+          });
+        }
+      }
+    }
+
+    // Create schedules for remaining current period groups
     let timeIndex = 0;
     for (
       let i = 0;
@@ -470,10 +552,22 @@ export async function seedTestData() {
     ) {
       const groupA = currentPeriodGroups[i];
       const groupB = currentPeriodGroups[i + 1];
+
+      // Skip if already has schedule
+      const groupAHasSchedule = schedules.some(
+        (s) => (s.groupId as any).toString() === (groupA._id as any).toString(),
+      );
+      const groupBHasSchedule = groupB
+        ? schedules.some((s) => (s.groupId as any).toString() === (groupB._id as any).toString())
+        : true;
+
+      if (groupAHasSchedule && groupBHasSchedule) {
+        continue;
+      }
+
       const time = scheduleTimes[timeIndex];
 
-      if (groupA && groupB) {
-        // Group A schedule
+      if (groupA && !groupAHasSchedule) {
         schedules.push({
           groupId: groupA._id,
           dayOfWeek: time.day,
@@ -481,8 +575,9 @@ export async function seedTestData() {
           endTime: time.end,
           room: groupA.classroom,
         });
+      }
 
-        // Group B schedule (different time)
+      if (groupB && !groupBHasSchedule) {
         const nextTime = scheduleTimes[timeIndex + 1] || scheduleTimes[0];
         schedules.push({
           groupId: groupB._id,
@@ -491,13 +586,12 @@ export async function seedTestData() {
           endTime: nextTime.end,
           room: groupB.classroom,
         });
-
-        timeIndex += 2;
       }
+
+      timeIndex += 2;
     }
 
     // Create some schedule conflicts for testing
-    // Add conflicting schedule for testing conflict detection
     if (currentPeriodGroups.length > 20) {
       schedules.push({
         groupId: currentPeriodGroups[20]._id,
@@ -730,10 +824,10 @@ export async function seedTestData() {
     }
 
     console.log('Test data seeded successfully!');
-    console.log('\n🎉 COMPREHENSIVE TEST DATA SUMMARY FOR SPRINT 2:');
+    console.log('\n COMPREHENSIVE TEST DATA SUMMARY FOR SPRINT 2:');
     console.log('================================================\n');
 
-    console.log('👥 USERS CREATED:');
+    console.log(' USERS CREATED:');
     console.log('Admin 1: daniel.useche-p@mail.com (password: 123456789)');
     console.log('Admin 2: laura.venegas-p@mail.com (password: 123456789)');
     console.log(
@@ -744,7 +838,7 @@ export async function seedTestData() {
       'Student 2: maria.garcia@estudiante.edu (External ID: STU002)\n',
     );
 
-    console.log('🏫 ACADEMIC STRUCTURE:');
+    console.log(' ACADEMIC STRUCTURE:');
     console.log('Faculty: Faculty of Engineering');
     console.log('Program: Systems Engineering (10 semesters, 160 credits)');
     console.log(
@@ -753,7 +847,7 @@ export async function seedTestData() {
     console.log('Courses: 15 courses across 5 semesters');
     console.log('Course Groups: 2 groups per course per period\n');
 
-    console.log('📚 STUDENT 1 DATA (Juan Perez - STU001):');
+    console.log(' STUDENT 1 DATA (Juan Perez - STU001):');
     console.log('Current Semester: 5');
     console.log('Current Enrollments: NET501, WEB501, DB401 (retaking)');
     console.log('Total Historical Courses: 13 courses across 3 semesters');
@@ -762,41 +856,11 @@ export async function seedTestData() {
     );
     console.log('GPA: ~4.1 (calculated from historical grades)\n');
 
-    console.log('📚 STUDENT 2 DATA (Maria Garcia - STU002):');
+    console.log(' STUDENT 2 DATA (Maria Garcia - STU002):');
     console.log('Current Semester: 3');
     console.log('Current Enrollments: DSA301, ALG301, FIS201');
     console.log('Total Historical Courses: 6 courses across 2 semesters');
     console.log('Academic Performance: Consistent passing grades\n');
-
-    console.log('🔧 TESTING FEATURES AVAILABLE:');
-    console.log(
-      '✅ Current Schedule Endpoint - Both students have active schedules',
-    );
-    console.log('✅ Historical Schedules - Multiple closed periods with data');
-    console.log(
-      '✅ Academic Traffic Light - Rich academic history for calculations',
-    );
-    console.log(
-      '✅ Schedule Conflicts - Intentional conflicts for testing detection',
-    );
-    console.log(
-      '✅ Period Management - All CRUD operations with various statuses',
-    );
-    console.log(
-      '✅ Authorization Testing - Multiple user roles and access scenarios',
-    );
-    console.log(
-      '✅ Edge Cases - Empty schedules, retaking courses, failed courses\n',
-    );
-
-    console.log('🎯 ENDPOINTS READY FOR TESTING:');
-    console.log('GET /schedules/current?userId=STU001 or STU002');
-    console.log('GET /schedules/historical?from=2023-01-01&to=2024-12-31');
-    console.log('GET /schedules/historical/:periodId');
-    console.log('GET /schedules/traffic-light?details=true&userId=STU001');
-    console.log('GET /academic-periods (with pagination and filters)');
-    console.log('POST /academic-periods (admin only)');
-    console.log('\n🚀 Ready for comprehensive Sprint 2 testing!');
 
     return {
       faculty,

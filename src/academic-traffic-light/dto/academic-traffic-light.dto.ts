@@ -1,5 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
-import type { TrafficLightColor } from '../../academic-traffic-light/dto/academic-traffic-light.dto';
+import type { TrafficLightColor } from '../interfaces/academic-status.interface';
+
+export type { TrafficLightColor };
 
 /**
  * Student Academic Status DTO
@@ -51,7 +53,7 @@ export class StudentAcademicStatusDto {
   @ApiProperty({
     description: 'Overall traffic light color indicating academic performance',
     example: 'green',
-    enum: ['green', 'yellow', 'red'],
+    enum: ['green', 'blue', 'red'],
   })
   overallColor: TrafficLightColor;
 
@@ -187,7 +189,7 @@ export class CourseStatusDto {
   @ApiProperty({
     description: 'Traffic light color for this course',
     example: 'green',
-    enum: ['green', 'yellow', 'red'],
+    enum: ['green', 'blue', 'red'],
   })
   color: TrafficLightColor;
 
