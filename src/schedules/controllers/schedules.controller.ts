@@ -8,7 +8,6 @@ import {
   HttpException,
   ForbiddenException,
   Logger,
-  Param,
 } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { StudentScheduleService } from '../services/student-schedule.service';
@@ -22,11 +21,6 @@ import {
 } from '@nestjs/swagger';
 import { Auth } from '../../auth/decorators/auth.decorator';
 
-/**
- * Controller responsible for managing student schedules and academic status.
- * Provides endpoints for retrieving current and historical schedules, as well as academic traffic light status.
- * Enforces role-based access for STUDENT, ADMIN, and DEAN.
- */
 @ApiTags('Student Schedules')
 @ApiBearerAuth()
 @Controller('schedules')
@@ -40,77 +34,6 @@ export class SchedulesController {
     private readonly academicTrafficLightService: AcademicTrafficLightService,
   ) {}
 
-  /**
-   * @module SchedulesController
-   * @description
-   * This controller manages student schedules, including current and historical schedules,
-   * as well as academic traffic light status. It enforces role-based access control for
-   * students, admins, and deans, and provides endpoints for retrieving and validating
-   * schedule data.
-   *
-   * ## Endpoints
-   *
-   * ### GET /schedules/current
-   * Retrieves the current academic schedule for the authenticated student.
-   * - **Roles:** STUDENT, ADMIN, DEAN
-   * - **Query Parameters:**
-   *   - `userId` (optional): Target student ID (admin/dean only)
-   * - **Responses:**
-   *   - 200: Current schedule and conflict information
-   *   - 403: Unauthorized access attempt
-   *   - 404: No enrollments found
-   *
-   * ### GET /schedules/historical
-   * Retrieves historical schedules for closed academic periods.
-   * - **Roles:** STUDENT, ADMIN, DEAN
-   * - **Query Parameters:**
-   *   - `userId` (optional): Target student ID (admin/dean only)
-   *   - `from` (optional): Start date filter
-   *   - `to` (optional): End date filter
-   * - **Responses:**
-   *   - 200: Historical schedules
-   *   - 400: Invalid period or period not closed
-   *
-   * ### GET /schedules/historical/:periodId
-   * Retrieves a specific historical schedule for a closed period.
-   * - **Roles:** STUDENT, ADMIN, DEAN
-   * - **Query Parameters:**
-   *   - `periodId`: Academic period identifier (required)
-   *   - `userId` (optional): Target student ID (admin/dean only)
-   * - **Responses:**
-   *   - 200: Historical schedule for the period
-   *   - 400: Period is not closed or does not exist
-   *
-   * ### GET /schedules/traffic-light
-   * Retrieves the academic traffic light status for the student.
-   * - **Roles:** STUDENT, ADMIN, DEAN
-   * - **Query Parameters:**
-   *   - `userId` (optional): Target student ID (admin/dean only)
-   *   - `details` (optional): If 'true', includes detailed breakdown
-   * - **Responses:**
-   *   - 200: Academic traffic light status
-   *
-   * ## Security
-   * All endpoints require JWT authentication and role-based authorization.
-   *
-   * ## Error Handling
-   * Returns appropriate HTTP status codes and messages for unauthorized access,
-   * not found resources, invalid periods, and internal server errors.
-   *
-   * ## Logging
-   * Logs unauthorized access attempts and errors for audit and debugging purposes.
-   */
-
-  /**
-   * Retrieves the current academic schedule for the authenticated student.
-   * Allows ADMIN and DEAN to query schedules for other students via the userId parameter.
-   *
-   * @param req - The request object containing user authentication info.
-   * @param queryUserId - (Optional) The ID of the student whose schedule is requested.
-   * @returns The current schedule, conflict information, and metadata.
-   * @throws ForbiddenException if unauthorized access is attempted.
-   * @throws HttpException if the student is not found or an internal error occurs.
-   */
   @Get('current')
   @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({ summary: 'Get current schedule for authenticated student' })
@@ -197,19 +120,6 @@ export class SchedulesController {
     }
   }
 
-  /**
-   * Retrieves historical schedules for closed academic periods.
-   * Allows ADMIN and DEAN to query historical schedules for other students via the userId parameter.
-   *
-   * @param req - The request object containing user authentication info.
-   * @param queryUserId - (Optional) The ID of the student whose historical schedules are requested.
-   * @param fromDate - (Optional) Start date filter for historical periods.
-   * @param toDate - (Optional) End date filter for historical periods.
-   * @param closed - (Optional) Filter for closed periods.
-   * @returns Historical schedules and metadata.
-   * @throws ForbiddenException if unauthorized access is attempted.
-   * @throws HttpException if an invalid period is requested or an internal error occurs.
-   */
   @Get('historical')
   @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({ summary: 'Get historical schedules for closed periods' })
@@ -226,7 +136,6 @@ export class SchedulesController {
     @Query('userId') queryUserId?: string,
     @Query('from') fromDate?: string,
     @Query('to') toDate?: string,
-    @Query('closed') closed?: string,
   ) {
     const authenticatedUserId = req.user?.externalId;
     const userRoles = req.user?.roles || [];
@@ -270,60 +179,32 @@ export class SchedulesController {
         ...historicalData,
         emptyHistory: false,
       };
-} catch (error) {
-  this.logger.error(
-    `Error retrieving historical schedules for user ${targetUserId}: ${(error as Error).message}`,
-  );
+    } catch (error) {
+      this.logger.error(
+        `Error retrieving historical schedules for user ${targetUserId}: ${(error as Error).message}`,
+      );
 
-  // B1. US-0014: Validación de rango de fechas
-  if ((error as Error).message.includes('From date must be before')) {
-    throw new HttpException(
-      (error as Error).message,
-      HttpStatus.BAD_REQUEST,
-    );
+      if (error instanceof HttpException) {
+        throw error;
+      }
+
+      if (
+        (error as Error).message.includes('Invalid period') ||
+        (error as Error).message.includes('not closed')
+      ) {
+        throw new HttpException(
+          (error as Error).message,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
+      throw new HttpException(
+        `Error retrieving historical schedules: ${(error as Error).message}`,
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
   }
 
-
-  
-  if ((error as Error).message.includes('Invalid') && 
-      (error as Error).message.includes('date format')) {
-    throw new HttpException(
-      (error as Error).message,
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  
-  if (
-    (error as Error).message.includes('Invalid period') ||
-    (error as Error).message.includes('not closed')
-  ) {
-    throw new HttpException(
-      (error as Error).message,
-      HttpStatus.BAD_REQUEST,
-    );
-  }
-
-  throw new HttpException(
-    'Internal server error',
-    HttpStatus.INTERNAL_SERVER_ERROR,
-  );
-}
-
-
-  }
-
-  /**
-   * Retrieves a specific historical schedule for a closed academic period.
-   * Allows ADMIN and DEAN to query for other students via the userId parameter.
-   *
-   * @param req - The request object containing user authentication info.
-   * @param periodId - The ID of the academic period.
-   * @param queryUserId - (Optional) The ID of the student whose schedule is requested.
-   * @returns The historical schedule for the specified period.
-   * @throws ForbiddenException if unauthorized access is attempted.
-   * @throws HttpException if the period is not closed, does not exist, or an internal error occurs.
-   */
   @Get('historical/:periodId')
   @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({
@@ -336,7 +217,7 @@ export class SchedulesController {
   @ApiResponse({ status: 400, description: 'Period is not closed' })
   async getHistoricalScheduleByPeriod(
     @Request() req: any,
-    @Param('periodId') periodId: string,
+    @Query('periodId') periodId: string,
     @Query('userId') queryUserId?: string,
   ) {
     const authenticatedUserId = req.user?.externalId;
@@ -407,17 +288,6 @@ export class SchedulesController {
     }
   }
 
-  /**
-   * Retrieves the academic traffic light status for the student.
-   * Allows ADMIN and DEAN to query for other students via the userId parameter.
-   *
-   * @param req - The request object containing user authentication info.
-   * @param queryUserId - (Optional) The ID of the student whose status is requested.
-   * @param includeDetails - (Optional) If 'true', includes a detailed breakdown.
-   * @returns The academic traffic light status.
-   * @throws ForbiddenException if unauthorized access is attempted.
-   * @throws HttpException if an internal error occurs.
-   */
   @Get('traffic-light')
   @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({ summary: 'Get academic traffic light status' })

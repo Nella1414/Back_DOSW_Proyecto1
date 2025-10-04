@@ -24,11 +24,6 @@ import {
   ScheduleConflict,
 } from '../interfaces/schedule.interface';
 
-/**
- * Service for validating schedule changes, detecting conflicts, and ensuring academic rules.
- * Provides methods to validate change requests, check for available spots, schedule conflicts,
- * enrollment status, and period status.
- */
 @Injectable()
 export class ScheduleValidationService {
   constructor(
@@ -42,14 +37,6 @@ export class ScheduleValidationService {
     private academicPeriodModel: Model<AcademicPeriodDocument>,
   ) {}
 
-  /**
-   * Validates a student's request to change from one group to another.
-   * Checks active period, available spots, schedule conflicts, enrollment, and course match.
-   * @param studentId - The student's ID.
-   * @param sourceGroupId - The current group ID.
-   * @param targetGroupId - The target group ID.
-   * @returns ValidationResult with errors and warnings if any.
-   */
   async validateChangeRequest(
     studentId: string,
     sourceGroupId: string,
@@ -109,10 +96,6 @@ export class ScheduleValidationService {
     return result;
   }
 
-  /**
-   * Validates if there is an active academic period that allows change requests.
-   * @returns ValidationResult indicating if the period is valid.
-   */
   async validateActivePeriod(): Promise<ValidationResult> {
     const activePeriod = await this.academicPeriodModel
       .findOne({
@@ -136,12 +119,6 @@ export class ScheduleValidationService {
     };
   }
 
-  /**
-   * Validates if the target group has available spots for enrollment.
-   * Adds a warning if the group is near capacity.
-   * @param groupId - The group ID to check.
-   * @returns ValidationResult with errors or warnings.
-   */
   async validateAvailableSpots(groupId: string): Promise<ValidationResult> {
     const group = await this.courseGroupModel.findById(groupId).exec();
     if (!group) {
@@ -179,13 +156,6 @@ export class ScheduleValidationService {
     };
   }
 
-  /**
-   * Validates if moving to the target group would cause schedule conflicts for the student.
-   * @param studentId - The student's ID.
-   * @param sourceGroupId - The current group ID.
-   * @param targetGroupId - The target group ID.
-   * @returns ValidationResult with conflict errors if any.
-   */
   async validateScheduleConflicts(
     studentId: string,
     sourceGroupId: string,
@@ -249,12 +219,6 @@ export class ScheduleValidationService {
     };
   }
 
-  /**
-   * Validates if the student is currently enrolled in the source group.
-   * @param studentId - The student's ID.
-   * @param groupId - The group ID.
-   * @returns ValidationResult indicating enrollment status.
-   */
   async validateStudentEnrollment(
     studentId: string,
     groupId: string,
@@ -282,12 +246,6 @@ export class ScheduleValidationService {
     };
   }
 
-  /**
-   * Validates that both source and target groups belong to the same course and academic period.
-   * @param sourceGroupId - The current group ID.
-   * @param targetGroupId - The target group ID.
-   * @returns ValidationResult with errors if groups do not match.
-   */
   async validateSameCourse(
     sourceGroupId: string,
     targetGroupId: string,
@@ -330,12 +288,6 @@ export class ScheduleValidationService {
     };
   }
 
-  /**
-   * Checks for time conflicts between two sets of time slots.
-   * @param currentSchedules - The student's current time slots.
-   * @param newSchedules - The new group's time slots.
-   * @returns Array of ScheduleConflict objects if conflicts are found.
-   */
   private checkTimeConflicts(
     currentSchedules: TimeSlot[],
     newSchedules: TimeSlot[],
@@ -375,14 +327,6 @@ export class ScheduleValidationService {
     return conflicts;
   }
 
-  /**
-   * Determines if two time intervals overlap.
-   * @param start1 - Start time of the first interval.
-   * @param end1 - End time of the first interval.
-   * @param start2 - Start time of the second interval.
-   * @param end2 - End time of the second interval.
-   * @returns True if intervals overlap, false otherwise.
-   */
   private timeOverlaps(
     start1: string,
     end1: string,
@@ -401,7 +345,6 @@ export class ScheduleValidationService {
 
     return start1Min < end2Min && start2Min < end1Min;
   }
-
 
   async detectScheduleConflicts(
     schedule: Array<{
@@ -456,7 +399,6 @@ export class ScheduleValidationService {
       };
       conflictType: string;
     }> = [];
-
     const daysOfWeek = [
       'Domingo',
       'Lunes',
@@ -511,21 +453,11 @@ export class ScheduleValidationService {
     return conflicts;
   }
 
-  /**
-   * Validates if a given academic period is closed.
-   * @param periodId - The academic period ID.
-   * @returns True if the period is closed, false otherwise.
-   */
   async validateClosedPeriod(periodId: string): Promise<boolean> {
     const period = await this.academicPeriodModel.findById(periodId).exec();
     return period ? period.status === 'CLOSED' : false;
   }
 
-  /**
-   * Retrieves the schedule (time slots) for a specific group.
-   * @param groupId - The group ID.
-   * @returns Array of TimeSlot objects for the group.
-   */
   async getGroupSchedule(groupId: string): Promise<TimeSlot[]> {
     const schedules = await this.groupScheduleModel.find({ groupId }).exec();
     return schedules.map((schedule) => ({

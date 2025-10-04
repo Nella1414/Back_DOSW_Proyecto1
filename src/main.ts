@@ -198,9 +198,7 @@ For API support and documentation issues, please refer to the comprehensive endp
   const corsOrigin = configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
 
   app.enableCors({
-
-    origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-
+    origin: corsOrigin,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
@@ -214,7 +212,7 @@ For API support and documentation issues, please refer to the comprehensive endp
   logger.log(`SIRHA API Server running on: http://localhost:${port}`);
   logger.log(`API Documentation: http://localhost:${port}/doc`);
   logger.log(
-    `CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:5173'}`,
+    `CORS enabled for: ${process.env.FRONTEND_URL || 'http://localhost:3001'}`,
   );
 
   logger.log('Application bootstrap completed successfully');
