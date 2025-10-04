@@ -34,10 +34,12 @@ describe('AcademicPeriodsService', () => {
     findById: jest.fn(),
     findByIdAndUpdate: jest.fn(),
     findByIdAndDelete: jest.fn(),
+    updateMany: jest.fn(),
+    countDocuments: jest.fn(),
     create: jest.fn(),
     new: jest.fn(),
     constructor: jest.fn(),
-  };
+  } as any;
 
   const mockSortChain = {
     exec: jest.fn(),
@@ -237,6 +239,279 @@ describe('AcademicPeriodsService', () => {
       const result = await service.allowsChangeRequests(mockPeriodId);
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('create', () => {
+    it('should verify no existing period before creating', async () => {
+      const createDto: CreateAcademicPeriodDto = {
+        code: '2025-1',
+        name: 'Primer Semestre 2025',
+        startDate: new Date('2025-01-15'),
+        endDate: new Date('2025-06-15'),
+        status: 'ACTIVE',
+        isActive: false,
+        allowChangeRequests: true,
+        isEnrollmentOpen: true,
+      };
+
+      // Mock findOne to return something (existing period)
+      mockModel.findOne.mockReturnValueOnce({
+        exec: jest.fn().mockResolvedValue(mockPeriod),
+      });
+
+      // Should throw because period already exists
+      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
+      expect(mockModel.findOne).toHaveBeenCalledWith({ code: '2025-1' });
+    });
+
+    it('should throw ConflictException when period code already exists', async () => {
+      const createDto: CreateAcademicPeriodDto = {
+        code: '2024-2',
+        name: 'Segundo Semestre 2024',
+        startDate: new Date('2024-07-15'),
+        endDate: new Date('2024-12-15'),
+        status: 'ACTIVE',
+        isActive: false,
+        allowChangeRequests: true,
+        isEnrollmentOpen: true,
+      };
+
+      mockModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(mockPeriod),
+      });
+
+      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw ConflictException when start date is after end date', async () => {
+      const createDto: CreateAcademicPeriodDto = {
+        code: '2025-1',
+        name: 'Primer Semestre 2025',
+        startDate: new Date('2025-06-15'),
+        endDate: new Date('2025-01-15'),
+        status: 'ACTIVE',
+        isActive: false,
+        allowChangeRequests: true,
+        isEnrollmentOpen: true,
+      };
+
+      mockModel.findOne.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(service.create(createDto)).rejects.toThrow(ConflictException);
+    });
+  });
+
+  describe('update', () => {
+    it('should update an academic period successfully', async () => {
+      const updateDto: UpdateAcademicPeriodDto = {
+        name: 'Updated Period Name',
+        allowChangeRequests: false,
+      };
+
+      const updatedPeriod = { ...mockPeriod, ...updateDto };
+      mockExecChain.exec.mockResolvedValue(updatedPeriod);
+      mockModel.findByIdAndUpdate.mockReturnValue(mockExecChain);
+
+      const result = await service.update(mockPeriodId, updateDto);
+
+      expect(mockModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        mockPeriodId,
+        updateDto,
+        { new: true }
+      );
+      expect(result).toEqual(updatedPeriod);
+    });
+
+    it('should throw NotFoundException when period to update is not found', async () => {
+      const updateDto: UpdateAcademicPeriodDto = {
+        name: 'Updated Period Name',
+      };
+
+      mockExecChain.exec.mockResolvedValue(null);
+      mockModel.findByIdAndUpdate.mockReturnValue(mockExecChain);
+
+      await expect(service.update('nonexistent-id', updateDto)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should throw ConflictException when updating with invalid dates', async () => {
+      const updateDto: UpdateAcademicPeriodDto = {
+        startDate: new Date('2025-06-15'),
+        endDate: new Date('2025-01-15'),
+      };
+
+      await expect(service.update(mockPeriodId, updateDto)).rejects.toThrow(
+        ConflictException,
+      );
+    });
+  });
+
+  describe('setActivePeriod', () => {
+    it('should activate a period and deactivate all others', async () => {
+      mockModel.updateMany.mockResolvedValue({ modifiedCount: 2 });
+
+      const activatedPeriod = { ...mockPeriod, isActive: true };
+      mockModel.findByIdAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(activatedPeriod),
+      });
+
+      const result = await service.setActivePeriod(mockPeriodId);
+
+      expect(mockModel.updateMany).toHaveBeenCalledWith({}, { isActive: false });
+      expect(mockModel.findByIdAndUpdate).toHaveBeenCalledWith(
+        mockPeriodId,
+        { isActive: true },
+        { new: true }
+      );
+      expect(result.isActive).toBe(true);
+    });
+
+    it('should throw NotFoundException when period to activate is not found', async () => {
+      mockModel.updateMany.mockResolvedValue({ modifiedCount: 0 });
+      mockModel.findByIdAndUpdate.mockReturnValue({
+        exec: jest.fn().mockResolvedValue(null),
+      });
+
+      await expect(service.setActivePeriod('nonexistent-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('remove', () => {
+    it('should remove an academic period successfully', async () => {
+      mockExecChain.exec.mockResolvedValue(mockPeriod);
+      mockModel.findById.mockReturnValue(mockExecChain);
+      mockModel.findByIdAndDelete.mockReturnValue(mockExecChain);
+
+      await service.remove(mockPeriodId);
+
+      expect(mockModel.findById).toHaveBeenCalledWith(mockPeriodId);
+      expect(mockModel.findByIdAndDelete).toHaveBeenCalledWith(mockPeriodId);
+    });
+
+    it('should throw NotFoundException when period to delete is not found', async () => {
+      mockExecChain.exec.mockResolvedValue(null);
+      mockModel.findById.mockReturnValue(mockExecChain);
+
+      await expect(service.remove('nonexistent-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('validatePeriodDates', () => {
+    it('should not throw error when dates do not overlap', async () => {
+      mockModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      await expect(
+        service.validatePeriodDates(
+          new Date('2025-01-15'),
+          new Date('2025-06-15')
+        )
+      ).resolves.not.toThrow();
+    });
+
+    it('should throw ConflictException when dates overlap with existing period', async () => {
+      mockModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([mockPeriod]),
+      });
+
+      await expect(
+        service.validatePeriodDates(
+          new Date('2024-08-01'),
+          new Date('2024-12-31')
+        )
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should exclude period when excludeId is provided', async () => {
+      mockModel.find.mockReturnValue({
+        exec: jest.fn().mockResolvedValue([]),
+      });
+
+      await expect(
+        service.validatePeriodDates(
+          new Date('2024-07-15'),
+          new Date('2024-12-15'),
+          mockPeriodId
+        )
+      ).resolves.not.toThrow();
+
+      expect(mockModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          _id: { $ne: mockPeriodId },
+        })
+      );
+    });
+  });
+
+  describe('findAllWithFilters', () => {
+    it('should return paginated periods without filters', async () => {
+      const periods = [mockPeriod];
+
+      const mockLimitChain = { exec: jest.fn().mockResolvedValue(periods) };
+      const mockSkipChain = { limit: jest.fn().mockReturnValue(mockLimitChain) };
+      const mockSortChainLocal = { skip: jest.fn().mockReturnValue(mockSkipChain) };
+      const mockFindChain = { sort: jest.fn().mockReturnValue(mockSortChainLocal) };
+
+      mockModel.find.mockReturnValue(mockFindChain);
+      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(1) });
+
+      const result = await service.findAllWithFilters(1, 10);
+
+      expect(result).toBeDefined();
+      expect(result.periods).toEqual(periods);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.totalPages).toBe(1);
+    });
+
+    it('should filter by status when provided', async () => {
+      const periods = [mockPeriod];
+
+      const mockLimitChain = { exec: jest.fn().mockResolvedValue(periods) };
+      const mockSkipChain = { limit: jest.fn().mockReturnValue(mockLimitChain) };
+      const mockSortChainLocal = { skip: jest.fn().mockReturnValue(mockSkipChain) };
+      const mockFindChain = { sort: jest.fn().mockReturnValue(mockSortChainLocal) };
+
+      mockModel.find.mockReturnValue(mockFindChain);
+      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(1) });
+
+      await service.findAllWithFilters(1, 10, 'ACTIVE');
+
+      expect(mockModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({ status: 'ACTIVE' })
+      );
+    });
+
+    it('should filter by year when provided', async () => {
+      const periods = [mockPeriod];
+
+      const mockLimitChain = { exec: jest.fn().mockResolvedValue(periods) };
+      const mockSkipChain = { limit: jest.fn().mockReturnValue(mockLimitChain) };
+      const mockSortChainLocal = { skip: jest.fn().mockReturnValue(mockSkipChain) };
+      const mockFindChain = { sort: jest.fn().mockReturnValue(mockSortChainLocal) };
+
+      mockModel.find.mockReturnValue(mockFindChain);
+      mockModel.countDocuments.mockReturnValue({ exec: jest.fn().mockResolvedValue(1) });
+
+      await service.findAllWithFilters(1, 10, undefined, 2024);
+
+      expect(mockModel.find).toHaveBeenCalledWith(
+        expect.objectContaining({
+          startDate: expect.objectContaining({
+            $gte: expect.any(Date),
+            $lt: expect.any(Date),
+          }),
+        })
+      );
     });
   });
 });
