@@ -20,6 +20,7 @@ import {
 import { StudentsService } from './services/students.service';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { StudentResponseDto } from './dto/student-response.dto';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';
 import { Permission } from '../roles/entities/role.entity';
 
@@ -213,7 +214,7 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.CREATE_USER)
   @Post()
-  create(@Body() createStudentDto: CreateStudentDto) {
+  create(@Body() createStudentDto: CreateStudentDto): Promise<StudentResponseDto> {
     return this.studentsService.create(createStudentDto);
   }
 
@@ -358,7 +359,7 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.READ_USER)
   @Get()
-  findAll() {
+  findAll(): Promise<StudentResponseDto[]> {
     return this.studentsService.findAll();
   }
 
@@ -481,7 +482,7 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.READ_USER)
   @Get(':id')
-  findOne(@Param('id') id: string) {
+  findOne(@Param('id') id: string): Promise<StudentResponseDto> {
     return this.studentsService.findOne(id);
   }
 
@@ -670,7 +671,7 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.UPDATE_USER)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto) {
+  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto): Promise<StudentResponseDto> {
     return this.studentsService.update(id, updateStudentDto);
   }
 
@@ -810,7 +811,7 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.DELETE_USER)
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  remove(@Param('id') id: string): Promise<void> {
     return this.studentsService.remove(id);
   }
 
@@ -829,6 +830,7 @@ export class StudentsController {
   })
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiBearerAuth()
+  @RequirePermissions(Permission.READ_USER)
   @Get(':studentCode/schedule')
   getSchedule(@Param('studentCode') studentCode: string) {
     return this.studentsService.getStudentSchedule(studentCode);
@@ -843,12 +845,16 @@ export class StudentsController {
     description: 'Student identification code',
     example: 'SIS2024001',
   })
-  @ApiResponse({ status: 200, description: 'Student found successfully' })
+  @ApiResponse({
+    status: 200,
+    description: 'Student found successfully',
+    type: StudentResponseDto,
+  })
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiBearerAuth()
   @RequirePermissions(Permission.READ_USER)
   @Get('code/:studentCode')
-  findByCode(@Param('studentCode') studentCode: string) {
+  findByCode(@Param('studentCode') studentCode: string): Promise<StudentResponseDto> {
     return this.studentsService.findByCode(studentCode);
   }
 
@@ -868,6 +874,7 @@ export class StudentsController {
   })
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiBearerAuth()
+  @RequirePermissions(Permission.READ_USER)
   @Get(':studentCode/academic-history')
   getAcademicHistory(@Param('studentCode') studentCode: string) {
     return this.studentsService.getStudentAcademicHistory(studentCode);

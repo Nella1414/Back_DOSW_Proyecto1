@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { SchedulesController } from '../schedules/controllers/schedules.controller';
 import { StudentScheduleService } from '../schedules/services/student-schedule.service';
 import { ScheduleValidationService } from '../schedules/services/schedule-validation.service';
-import { AcademicTrafficLightService } from '../schedules/services/academic-traffic-light.service';
+import { AcademicTrafficLightService } from '../academic-traffic-light/services/academic-traffic-light.service';
 import { HttpException, HttpStatus, ForbiddenException } from '@nestjs/common';
 
 describe('SchedulesController', () => {

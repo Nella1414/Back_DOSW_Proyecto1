@@ -1,25 +1,27 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateUserDto } from '../dto/update-user.dto';
+import { UserResponseDto } from '../dto/user-response.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { User, UserDocument } from '../entities/user.entity';
 import { Model } from 'mongoose';
 
 /**
- * * Users Management Service
+ * Users Management Service
  *
- * ! Servicio parcialmente implementado - Solo create y findAll funcionan
- * ? Este servicio maneja cuentas de usuario del sistema (autenticacion)
- * ? Diferente del StudentsService que maneja perfil academico
- * TODO: Implementar findOne, update y remove correctamente
- * TODO: Agregar validaciones de unicidad de email
- * TODO: Implementar soft delete en lugar de hard delete
- * TODO: Agregar metodos de busqueda por email y roles
+ * Handles user account management for system authentication and authorization.
+ * Manages user accounts separately from student academic profiles.
+ *
+ * Features:
+ * - CRUD operations for user accounts
+ * - Password exclusion from responses
+ * - MongoDB _id population for database operations
+ * - Proper error handling with NotFoundException
  */
 @Injectable()
 export class UsersService {
   /**
-   * * Constructor injects User MongoDB model
+   * Constructor injects User MongoDB model
    * @param usersModule - Mongoose model for User collection operations
    */
   constructor(
@@ -27,60 +29,106 @@ export class UsersService {
   ) {}
 
   /**
-   * * Create new user account
-   * ? Funcion implementada correctamente
-   * ? Crea usuario en base de datos directamente
-   * TODO: Agregar validacion de email unico
-   * TODO: Agregar hash de password si no viene hasheado
+   * Create new user account
+   *
+   * Creates a user account in the database with authentication details.
+   * Returns user data including MongoDB _id for database operations.
    */
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const userCreated = await this.usersModule.create(createUserDto);
-    return userCreated;
+    return this.toResponseDto(userCreated);
   }
 
   /**
-   * * Get all users
-   * ? Funcion implementada correctamente
-   * ? Retorna todos los usuarios sin filtros
-   * TODO: Agregar paginacion para mejorar performance
-   * TODO: Agregar filtros por rol, estado activo, etc
-   * TODO: Excluir campos sensibles como password en response
+   * Get all users
+   *
+   * Retrieves all user accounts from the database.
+   * Excludes sensitive data like passwords from the response.
+   * Returns users with MongoDB _id for reference operations.
    */
-  async findAll() {
-    const users = await this.usersModule.find({});
-    return users;
+  async findAll(): Promise<UserResponseDto[]> {
+    const users = await this.usersModule.find({}).select('-password').exec();
+    return users.map((user) => this.toResponseDto(user));
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe buscar usuario por ID de MongoDB
-   * ? Debe excluir password del response
-   * TODO: Implementar busqueda por ObjectId
-   * TODO: Agregar manejo de errores NotFoundException
+   * Find user by ID
+   *
+   * Retrieves a specific user by their MongoDB ObjectId.
+   * Excludes password from the response for security.
+   *
+   * @throws NotFoundException if user is not found
    */
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findOne(id: string): Promise<UserResponseDto> {
+    const user = await this.usersModule
+      .findById(id)
+      .select('-password')
+      .exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return this.toResponseDto(user);
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe actualizar usuario existente por ID
-   * ? Validar que email siga siendo unico si se cambia
-   * TODO: Implementar findByIdAndUpdate con validaciones
-   * TODO: Prevenir actualizacion de campos criticos como password directamente
+   * Update user information
+   *
+   * Updates user account details by MongoDB ObjectId.
+   * Excludes password from the response for security.
+   * Returns the updated user data with MongoDB _id.
+   *
+   * @throws NotFoundException if user is not found
    */
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
+    const updatedUser = await this.usersModule
+      .findByIdAndUpdate(id, updateUserDto, { new: true })
+      .select('-password')
+      .exec();
+
+    if (!updatedUser) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    return this.toResponseDto(updatedUser);
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe eliminar usuario (preferiblemente soft delete)
-   * ? Validar que no tenga enrollments activos antes de eliminar
-   * TODO: Implementar soft delete marcando active: false
-   * TODO: Agregar validacion de dependencias antes de eliminar
+   * Remove user from system
+   *
+   * Deletes a user account from the database.
+   * Performs hard delete - user record is permanently removed.
+   *
+   * @throws NotFoundException if user is not found
    */
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<void> {
+    const result = await this.usersModule.findByIdAndDelete(id).exec();
+
+    if (!result) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+  }
+
+  /**
+   * Convert User document to UserResponseDto
+   *
+   * Transforms database entity to response DTO format.
+   * Includes MongoDB _id as string for client-side operations.
+   */
+  private toResponseDto(user: UserDocument): UserResponseDto {
+    return {
+      _id: user._id?.toString(),
+      externalId: user.externalId,
+      email: user.email,
+      displayName: user.displayName,
+      active: user.active,
+      roles: user.roles,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    };
   }
 }

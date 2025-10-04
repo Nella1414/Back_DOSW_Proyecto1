@@ -10,6 +10,7 @@ import { Model } from 'mongoose';
 // Import Data Transfer Objects for request/response validation
 import { CreateStudentDto } from '../dto/create-student.dto';
 import { UpdateStudentDto } from '../dto/update-student.dto';
+import { StudentResponseDto } from '../dto/student-response.dto';
 
 // Import Student entity and document type for database operations
 import { Student, StudentDocument } from '../entities/student.entity';
@@ -51,14 +52,14 @@ export class StudentsService {
    * Process:
    * 1. Check if student code already exists (must be unique)
    * 2. Create new student record with provided data
-   * 3. Return the created student object
+   * 3. Return the created student object with MongoDB _id
    *
    * @param createStudentDto - Student data for creation
-   * @returns Promise<Student> - The newly created student
+   * @returns Promise<StudentResponseDto> - The newly created student
    * @throws ConflictException - If student code already exists
    * @throws Error - If creation fails for other reasons
    */
-  async create(createStudentDto: CreateStudentDto): Promise<Student> {
+  async create(createStudentDto: CreateStudentDto): Promise<StudentResponseDto> {
     try {
       // Step 1: Check for existing student with same code
       const existingStudent = await this.studentModel.findOne({
@@ -71,7 +72,8 @@ export class StudentsService {
 
       // Step 2: Create and save new student
       const newStudent = new this.studentModel(createStudentDto);
-      return await newStudent.save();
+      const savedStudent = await newStudent.save();
+      return this.toResponseDto(savedStudent);
     } catch (error) {
       // Re-throw known exceptions
       if (error instanceof ConflictException) {
@@ -85,37 +87,38 @@ export class StudentsService {
   /**
    * Retrieves all students from the database
    *
-   * @returns Promise<Student[]> - Array of all students
+   * @returns Promise<StudentResponseDto[]> - Array of all students with MongoDB _id
    */
-  async findAll(): Promise<Student[]> {
-    return await this.studentModel.find().exec();
+  async findAll(): Promise<StudentResponseDto[]> {
+    const students = await this.studentModel.find().exec();
+    return students.map((student) => this.toResponseDto(student));
   }
 
   /**
    * Finds a specific student by their ID
    *
    * @param id - MongoDB ObjectId of the student
-   * @returns Promise<Student> - The found student
+   * @returns Promise<StudentResponseDto> - The found student with MongoDB _id
    * @throws NotFoundException - If student with given ID doesn't exist
    */
-  async findOne(id: string): Promise<Student> {
+  async findOne(id: string): Promise<StudentResponseDto> {
     const student = await this.studentModel.findById(id).exec();
 
     if (!student) {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
-    return student;
+    return this.toResponseDto(student);
   }
 
-  async findByCode(code: string): Promise<Student> {
+  async findByCode(code: string): Promise<StudentResponseDto> {
     const student = await this.studentModel.findOne({ code }).exec();
 
     if (!student) {
       throw new NotFoundException(`Student with code ${code} not found`);
     }
 
-    return student;
+    return this.toResponseDto(student);
   }
 
   /**
@@ -126,13 +129,13 @@ export class StudentsService {
    *
    * @param id - MongoDB ObjectId of the student to update
    * @param updateStudentDto - Partial student data with updates
-   * @returns Promise<Student> - The updated student
+   * @returns Promise<StudentResponseDto> - The updated student with MongoDB _id
    * @throws NotFoundException - If student with given ID doesn't exist
    */
   async update(
     id: string,
     updateStudentDto: UpdateStudentDto,
-  ): Promise<Student> {
+  ): Promise<StudentResponseDto> {
     const updatedStudent = await this.studentModel
       .findByIdAndUpdate(id, updateStudentDto, { new: true })
       .exec();
@@ -141,7 +144,7 @@ export class StudentsService {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
-    return updatedStudent;
+    return this.toResponseDto(updatedStudent);
   }
 
   /**
@@ -170,5 +173,25 @@ export class StudentsService {
     return await this.studentScheduleService.getStudentAcademicHistory(
       studentCode,
     );
+  }
+
+  /**
+   * Convert Student document to StudentResponseDto
+   *
+   * Transforms database entity to response DTO format.
+   * Includes MongoDB _id as string for client-side operations.
+   */
+  private toResponseDto(student: StudentDocument): StudentResponseDto {
+    return {
+      _id: student._id?.toString(),
+      code: student.code,
+      firstName: student.firstName,
+      lastName: student.lastName,
+      fullName: student.fullName,
+      programId: student.programId,
+      currentSemester: student.currentSemester,
+      createdAt: student.createdAt,
+      updatedAt: student.updatedAt,
+    };
   }
 }

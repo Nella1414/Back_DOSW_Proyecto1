@@ -23,6 +23,20 @@ import { ApiProperty } from '@nestjs/swagger';
  */
 export class ClassScheduleDto {
   /**
+   * Course MongoDB ID
+   *
+   * ? ID de MongoDB del curso
+   */
+  @ApiProperty({
+    description: 'Course MongoDB ID',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  courseId?: string;
+
+  /**
    * Course identification code
    *
    * * Código del curso
@@ -47,6 +61,20 @@ export class ClassScheduleDto {
   @IsString()
   @IsNotEmpty()
   courseName: string;
+
+  /**
+   * Group MongoDB ID
+   *
+   * ? ID de MongoDB del grupo
+   */
+  @ApiProperty({
+    description: 'Group MongoDB ID',
+    example: '507f1f77bcf86cd799439012',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  groupId?: string;
 
   /**
    * Course group identifier
@@ -204,6 +232,20 @@ export class DailyScheduleDto {
  */
 export class StudentScheduleDto {
   /**
+   * Student MongoDB ID
+   *
+   * ? ID de MongoDB del estudiante
+   */
+  @ApiProperty({
+    description: 'Student MongoDB ID',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  _id?: string;
+
+  /**
    * Student identification code
    *
    * * Código único del estudiante
@@ -244,6 +286,20 @@ export class StudentScheduleDto {
   @Min(1)
   @Max(12)
   currentSemester: number;
+
+  /**
+   * Academic period MongoDB ID
+   *
+   * ? ID de MongoDB del periodo académico
+   */
+  @ApiProperty({
+    description: 'Academic period MongoDB ID',
+    example: '507f1f77bcf86cd799439012',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  periodId?: string;
 
   /**
    * Academic period code
@@ -451,4 +507,349 @@ export class CourseHistoryDto {
   @IsString()
   @IsIn(['green', 'blue', 'red'])
   color: 'green' | 'blue' | 'red';
+}
+
+/**
+ * Academic Period Info DTO
+ *
+ * Information about an academic period including dates and status.
+ *
+ * * Información sobre un periodo académico
+ */
+export class AcademicPeriodInfoDto {
+  /**
+   * Period code
+   *
+   * * Código del periodo
+   */
+  @ApiProperty({
+    description: 'Period code',
+    example: '2024-1',
+  })
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  /**
+   * Period name
+   *
+   * * Nombre del periodo
+   */
+  @ApiProperty({
+    description: 'Period name',
+    example: 'Primer Semestre 2024',
+  })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  /**
+   * Period ID
+   *
+   * ? ID del periodo
+   */
+  @ApiProperty({
+    description: 'Period ID',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  id?: string;
+
+  /**
+   * Period start date
+   *
+   * ? Fecha de inicio del periodo
+   */
+  @ApiProperty({
+    description: 'Period start date',
+    example: '2024-01-15T00:00:00.000Z',
+    required: false,
+  })
+  @IsOptional()
+  startDate?: Date;
+
+  /**
+   * Period end date
+   *
+   * ? Fecha de finalización del periodo
+   */
+  @ApiProperty({
+    description: 'Period end date',
+    example: '2024-06-15T00:00:00.000Z',
+    required: false,
+  })
+  @IsOptional()
+  endDate?: Date;
+
+  /**
+   * Period status
+   *
+   * ? Estado del periodo
+   */
+  @ApiProperty({
+    description: 'Period status',
+    example: 'CLOSED',
+    enum: ['ACTIVE', 'CLOSED', 'UPCOMING'],
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  @IsIn(['ACTIVE', 'CLOSED', 'UPCOMING'])
+  status?: string;
+}
+
+/**
+ * Historical Schedule Period DTO
+ *
+ * Historical period information with academic summary.
+ *
+ * * Información de periodo histórico con resumen académico
+ */
+export class HistoricalSchedulePeriodDto {
+  @ApiProperty({
+    description: 'Period MongoDB ID',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  periodId?: string;
+
+  @ApiProperty({
+    description: 'Period code',
+    example: '2024-1',
+  })
+  @IsString()
+  @IsNotEmpty()
+  periodCode: string;
+
+  @ApiProperty({
+    description: 'Period name',
+    example: 'Primer Semestre 2024',
+  })
+  @IsString()
+  @IsNotEmpty()
+  periodName: string;
+
+  @ApiProperty({
+    description: 'Period start date',
+    example: '2024-01-15T00:00:00.000Z',
+  })
+  startDate: Date;
+
+  @ApiProperty({
+    description: 'Period end date',
+    example: '2024-06-15T00:00:00.000Z',
+  })
+  endDate: Date;
+
+  @ApiProperty({
+    description: 'Period status',
+    example: 'CLOSED',
+    enum: ['ACTIVE', 'CLOSED', 'UPCOMING'],
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @ApiProperty({
+    description: 'Number of courses enrolled',
+    example: 6,
+  })
+  @IsNumber()
+  coursesEnrolled: number;
+
+  @ApiProperty({
+    description: 'Number of courses passed',
+    example: 5,
+  })
+  @IsNumber()
+  coursesPassed: number;
+
+  @ApiProperty({
+    description: 'Number of courses failed',
+    example: 1,
+  })
+  @IsNumber()
+  coursesFailed: number;
+
+  @ApiProperty({
+    description: 'Semester GPA',
+    example: 4.2,
+  })
+  @IsNumber()
+  semesterGPA: number;
+}
+
+/**
+ * Historical Schedules Response DTO
+ *
+ * Response with historical schedules for a student.
+ *
+ * * Respuesta con horarios históricos del estudiante
+ */
+export class HistoricalSchedulesResponseDto {
+  @ApiProperty({
+    description: 'Student ID',
+    example: 'CS2024001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+
+  @ApiProperty({
+    description: 'Student name',
+    example: 'Maria Rodriguez',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  studentName?: string;
+
+  @ApiProperty({
+    description: 'Current semester',
+    example: 5,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  currentSemester?: number;
+
+  @ApiProperty({
+    description: 'Historical periods',
+    type: [HistoricalSchedulePeriodDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => HistoricalSchedulePeriodDto)
+  periods: HistoricalSchedulePeriodDto[];
+}
+
+/**
+ * Course With Results DTO
+ *
+ * Course information including final grades and status.
+ *
+ * * Información de curso con resultados finales
+ */
+export class CourseWithResultsDto {
+  @ApiProperty({
+    description: 'Course MongoDB ID',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  courseId?: string;
+
+  @ApiProperty({
+    description: 'Course code',
+    example: 'CS101',
+  })
+  @IsString()
+  @IsNotEmpty()
+  courseCode: string;
+
+  @ApiProperty({
+    description: 'Course name',
+    example: 'Introduction to Computer Science',
+  })
+  @IsString()
+  @IsNotEmpty()
+  courseName: string;
+
+  @ApiProperty({
+    description: 'Course credits',
+    example: 3,
+  })
+  @IsNumber()
+  credits: number;
+
+  @ApiProperty({
+    description: 'Group MongoDB ID',
+    example: '507f1f77bcf86cd799439012',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  groupId?: string;
+
+  @ApiProperty({
+    description: 'Group number',
+    example: 1,
+  })
+  @IsNumber()
+  groupNumber: number;
+
+  @ApiProperty({
+    description: 'Final grade',
+    example: 4.2,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  finalGrade?: number;
+
+  @ApiProperty({
+    description: 'Course status',
+    example: 'PASSED',
+    enum: ['ENROLLED', 'PASSED', 'FAILED'],
+  })
+  @IsString()
+  @IsIn(['ENROLLED', 'PASSED', 'FAILED'])
+  status: string;
+}
+
+/**
+ * Historical Schedule By Period Response DTO
+ *
+ * Detailed historical schedule for a specific period.
+ *
+ * * Horario histórico detallado para un periodo específico
+ */
+export class HistoricalScheduleByPeriodResponseDto {
+  @ApiProperty({
+    description: 'Student ID',
+    example: 'CS2024001',
+  })
+  @IsString()
+  @IsNotEmpty()
+  studentId: string;
+
+  @ApiProperty({
+    description: 'Student name',
+    example: 'Maria Rodriguez',
+  })
+  @IsString()
+  @IsNotEmpty()
+  studentName: string;
+
+  @ApiProperty({
+    description: 'Period information',
+    type: AcademicPeriodInfoDto,
+  })
+  @ValidateNested()
+  @Type(() => AcademicPeriodInfoDto)
+  period: AcademicPeriodInfoDto;
+
+  @ApiProperty({
+    description: 'Daily schedule',
+    type: [DailyScheduleDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => DailyScheduleDto)
+  schedule: DailyScheduleDto[];
+
+  @ApiProperty({
+    description: 'Courses with results',
+    type: [CourseWithResultsDto],
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CourseWithResultsDto)
+  courses: CourseWithResultsDto[];
 }

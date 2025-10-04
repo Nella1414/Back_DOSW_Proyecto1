@@ -29,6 +29,11 @@ import {
   ClassScheduleDto,
   AcademicHistoryDto,
   CourseHistoryDto,
+  HistoricalSchedulesResponseDto,
+  HistoricalSchedulePeriodDto,
+  HistoricalScheduleByPeriodResponseDto,
+  AcademicPeriodInfoDto,
+  CourseWithResultsDto,
 } from '../dto/schedule.dto';
 
 import { AcademicTrafficLightService } from '../../academic-traffic-light/services/academic-traffic-light.service';
@@ -98,9 +103,11 @@ export class StudentScheduleService {
 
     if (currentPeriodEnrollments.length === 0) {
       return {
+        _id: String(student._id),
         studentId: student.code,
         studentName: `${student.firstName} ${student.lastName}`,
         currentSemester: student.currentSemester || 1,
+        periodId: String(activePeriod._id),
         period: activePeriod.code,
         schedule: [],
       };
@@ -128,8 +135,10 @@ export class StudentScheduleService {
         }
 
         scheduleMap.get(schedule.dayOfWeek)?.push({
+          courseId: String(course._id),
           courseCode: course.code,
           courseName: course.name,
+          groupId: String(group._id),
           groupNumber: String(group.groupNumber),
           startTime: schedule.startTime,
           endTime: schedule.endTime,
@@ -166,9 +175,11 @@ export class StudentScheduleService {
     }
 
     return {
+      _id: String(student._id),
       studentId: student.code,
       studentName: `${student.firstName} ${student.lastName}`,
       currentSemester: student.currentSemester || 1,
+      periodId: String(activePeriod._id),
       period: activePeriod.code,
       schedule,
     };
@@ -299,21 +310,7 @@ export class StudentScheduleService {
     studentId: string,
     fromDate?: string,
     toDate?: string,
-  ): Promise<{
-    studentId: string;
-    studentName: string;
-    currentSemester: number;
-    periods: Array<{
-      periodCode: string;
-      periodName: string;
-      startDate: Date;
-      endDate: Date;
-      coursesEnrolled: number;
-      coursesPassed: number;
-      coursesFailed: number;
-      semesterGPA: number;
-    }>;
-  }> {
+  ): Promise<HistoricalSchedulesResponseDto> {
     const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
       throw new NotFoundException(`Student with ID ${studentId} not found`);
@@ -346,16 +343,7 @@ export class StudentScheduleService {
       .sort({ startDate: -1 })
       .exec();
 
-    const periodsWithEnrollments: Array<{
-      periodCode: string;
-      periodName: string;
-      startDate: Date;
-      endDate: Date;
-      coursesEnrolled: number;
-      coursesPassed: number;
-      coursesFailed: number;
-      semesterGPA: number;
-    }> = [];
+    const periodsWithEnrollments: HistoricalSchedulePeriodDto[] = [];
 
     for (const period of closedPeriods) {
       const enrollments = await this.enrollmentModel
@@ -400,18 +388,16 @@ export class StudentScheduleService {
             : 0;
 
         periodsWithEnrollments.push({
+          periodId: String(period._id),
           periodCode: period.code,
           periodName: period.name,
           startDate: period.startDate,
           endDate: period.endDate,
-
-          status: period.status,
-          
           coursesEnrolled: validEnrollments.length,
           coursesPassed: passedCount,
           coursesFailed: failedCount,
           semesterGPA,
-
+          status: period.status,
         });
       }
     }
@@ -420,9 +406,6 @@ export class StudentScheduleService {
     return {
       studentId: student.code,
       periods: [],
-      emptyHistory: true,
-      message: 'No historical academic records found',
-      filters: { from: fromDate, to: toDate }
     };
   }
 
@@ -431,9 +414,6 @@ export class StudentScheduleService {
       studentName: `${student.firstName} ${student.lastName}`,
       currentSemester: student.currentSemester || 1,
       periods: periodsWithEnrollments,
-      emptyHistory: false, 
-      total: periodsWithEnrollments.length, 
-      filters: { from: fromDate, to: toDate }
     };
   }
 
@@ -447,20 +427,7 @@ export class StudentScheduleService {
   async getHistoricalScheduleByPeriod(
     studentId: string,
     periodId: string,
-  ): Promise<{
-    studentId: string;
-    studentName: string;
-    period: { code: string; name: string };
-    schedule: DailyScheduleDto[];
-    courses: Array<{
-      courseCode: string;
-      courseName: string;
-      credits: number;
-      groupNumber: number;
-      finalGrade?: number;
-      status: string;
-    }>;
-  }> {
+  ): Promise<HistoricalScheduleByPeriodResponseDto> {
     const student = await this.studentModel.findOne({ externalId: studentId }).exec();
     if (!student) {
       throw new NotFoundException(`Student with ID ${studentId} not found`);
@@ -500,7 +467,7 @@ export class StudentScheduleService {
       studentId: student.code,
       studentName: `${student.firstName} ${student.lastName}`,
       period: {
-        id: period._id,
+        id: String(period._id),
         code: period.code,
         name: period.name,
         startDate: period.startDate,
@@ -508,9 +475,7 @@ export class StudentScheduleService {
         status: period.status,
       },
       schedule: [],
-      coursesWithResults: [],
-      emptyHistory: true, 
-      message: 'No enrollments found for this period' // AGREGAR
+      courses: [],
     };
   }
     
@@ -530,9 +495,11 @@ export class StudentScheduleService {
       const course = group.courseId;
 
       coursesWithResults.push({
+        courseId: String(course._id),
         courseCode: course.code,
         courseName: course.name,
         credits: course.credits,
+        groupId: String(group._id),
         groupNumber: group.groupNumber,
         finalGrade: enrollment.grade,
         status: enrollment.status,
@@ -589,11 +556,7 @@ export class StudentScheduleService {
         name: period.name,
       },
       schedule,
-
-      coursesWithResults,
-      emptyHistory: false,
-      isHistorical: true
-
+      courses: coursesWithResults,
     };
   }
 }
