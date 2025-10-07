@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CacheModule } from '@nestjs/cache-manager';
 import { AcademicTrafficLightService } from './services/academic-traffic-light.service';
 import { AcademicTrafficLightController } from './academic-traffic-light.controller';
 import { Student, StudentSchema } from '../students/entities/student.entity';
@@ -16,6 +17,7 @@ import {
   AcademicPeriod,
   AcademicPeriodSchema,
 } from '../academic-periods/entities/academic-period.entity';
+import { RolesModule } from '../roles/roles.module';
 
 @Module({
   imports: [
@@ -26,6 +28,12 @@ import {
       { name: Course.name, schema: CourseSchema },
       { name: AcademicPeriod.name, schema: AcademicPeriodSchema },
     ]),
+    RolesModule,
+    // Cache configuration for academic traffic light reports
+    CacheModule.register({
+      ttl: 300, // Time to live: 5 minutes (300 seconds)
+      max: 100, // Maximum number of items in cache
+    }),
   ],
   controllers: [AcademicTrafficLightController],
   providers: [AcademicTrafficLightService],

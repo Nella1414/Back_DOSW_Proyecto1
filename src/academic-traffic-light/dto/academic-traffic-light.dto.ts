@@ -236,22 +236,22 @@ export class AcademicStatisticsDto {
   greenStudents: number;
 
   /**
-   * Number of students with yellow status (attention needed)
-   * ? Estudiantes con estado amarillo (requieren atención)
+   * Number of students with blue status (medium risk - attention needed)
+   * ? Estudiantes con estado azul (riesgo medio - requieren atención)
    */
   @ApiProperty({
-    description: 'Number of students with yellow status (attention needed)',
+    description: 'Number of students with blue status (medium risk - attention needed)',
     example: 250,
     minimum: 0,
   })
-  yellowStudents: number;
+  blueStudents: number;
 
   /**
-   * Number of students with red status (intervention required)
-   * ! Estudiantes con estado rojo (requieren intervención)
+   * Number of students with red status (high risk - intervention required)
+   * ! Estudiantes con estado rojo (alto riesgo - requieren intervención)
    */
   @ApiProperty({
-    description: 'Number of students with red status (intervention required)',
+    description: 'Number of students with red status (high risk - intervention required)',
     example: 125,
     minimum: 0,
   })
@@ -282,16 +282,16 @@ export class AcademicStatisticsDto {
   greenPercentage: number;
 
   /**
-   * Percentage of students with yellow status
-   * ? Porcentaje de estudiantes en amarillo
+   * Percentage of students with blue status
+   * ? Porcentaje de estudiantes en azul
    */
   @ApiProperty({
-    description: 'Percentage of students with yellow status',
+    description: 'Percentage of students with blue status',
     example: 20,
     minimum: 0,
     maximum: 100,
   })
-  yellowPercentage: number;
+  bluePercentage: number;
 
   /**
    * Percentage of students with red status
