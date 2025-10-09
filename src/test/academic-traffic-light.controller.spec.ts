@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AcademicTrafficLightController } from '../academic-traffic-light/academic-traffic-light.controller';
 import { AcademicTrafficLightService } from '../academic-traffic-light/services/academic-traffic-light.service';
+import { RolesService } from '../roles/services/roles.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('AcademicTrafficLightController', () => {
   let controller: AcademicTrafficLightController;
@@ -10,6 +12,19 @@ describe('AcademicTrafficLightController', () => {
     getAcademicStatistics: jest.fn(),
     getStudentAcademicStatus: jest.fn(),
     getStudentTrafficLightReport: jest.fn(),
+  };
+
+  const mockRolesService = {
+    findAll: jest.fn(),
+    findOne: jest.fn(),
+    findByName: jest.fn(),
+  };
+
+  const mockCacheManager = {
+    get: jest.fn(),
+    set: jest.fn(),
+    del: jest.fn(),
+    reset: jest.fn(),
   };
 
   const mockStatistics = {
@@ -44,6 +59,14 @@ describe('AcademicTrafficLightController', () => {
     },
   };
 
+  const mockRequest = {
+    user: {
+      sub: 'user123',
+      externalId: 'STU001',
+      roles: ['STUDENT'],
+    },
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       controllers: [AcademicTrafficLightController],
@@ -51,6 +74,14 @@ describe('AcademicTrafficLightController', () => {
         {
           provide: AcademicTrafficLightService,
           useValue: mockAcademicTrafficLightService,
+        },
+        {
+          provide: RolesService,
+          useValue: mockRolesService,
+        },
+        {
+          provide: CACHE_MANAGER,
+          useValue: mockCacheManager,
         },
       ],
     }).compile();
@@ -100,7 +131,10 @@ describe('AcademicTrafficLightController', () => {
         mockStudentStatus,
       );
 
-      const result = await controller.getStudentAcademicStatus('STU001');
+      const result = await controller.getStudentAcademicStatus(
+        { studentId: 'STU001' },
+        mockRequest,
+      );
 
       expect(service.getStudentAcademicStatus).toHaveBeenCalledWith('STU001');
       expect(result).toEqual(mockStudentStatus);
@@ -111,7 +145,10 @@ describe('AcademicTrafficLightController', () => {
         mockStudentStatus,
       );
 
-      await controller.getStudentAcademicStatus('STU001');
+      await controller.getStudentAcademicStatus(
+        { studentId: 'STU001' },
+        mockRequest,
+      );
 
       expect(service.getStudentAcademicStatus).toHaveBeenCalledWith('STU001');
     });
@@ -123,7 +160,10 @@ describe('AcademicTrafficLightController', () => {
         mockStudentReport,
       );
 
-      const result = await controller.getStudentTrafficLightReport('STU001');
+      const result = await controller.getStudentTrafficLightReport(
+        { studentId: 'STU001' },
+        mockRequest,
+      );
 
       expect(service.getStudentTrafficLightReport).toHaveBeenCalledWith(
         'STU001',
@@ -136,7 +176,10 @@ describe('AcademicTrafficLightController', () => {
         mockStudentReport,
       );
 
-      const result = await controller.getStudentTrafficLightReport('STU001');
+      const result = await controller.getStudentTrafficLightReport(
+        { studentId: 'STU001' },
+        mockRequest,
+      );
 
       expect(result).toHaveProperty('studentInfo');
       expect(result).toHaveProperty('courseStatuses');
@@ -162,7 +205,10 @@ describe('AcademicTrafficLightController', () => {
         mockStudentReport,
       );
 
-      const result = await controller.findOne('STU001');
+      const result = await controller.findOne(
+        { studentId: 'STU001' },
+        mockRequest,
+      );
 
       expect(service.getStudentTrafficLightReport).toHaveBeenCalledWith(
         'STU001',

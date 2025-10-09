@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -46,12 +46,19 @@ import {
  * - Risk assessment and recommendations
  * - Academic statistics aggregation
  *
+ * Traffic Light Colors Logic:
+ * - 🟢 GREEN: Course passed with grade >= 3.0
+ * - 🔵 BLUE: Course currently enrolled (in progress)
+ * - 🔴 RED: Course failed with grade < 3.0
+ *
  * ! IMPORTANTE: Este servicio contiene la lógica principal del sistema
  * ! de semáforo académico y debe ser la única fuente de verdad para
  * ! los cálculos de rendimiento académico
  */
 @Injectable()
 export class AcademicTrafficLightService {
+  private readonly logger = new Logger(AcademicTrafficLightService.name);
+
   constructor(
     @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
     @InjectModel(Enrollment.name)
@@ -64,46 +71,75 @@ export class AcademicTrafficLightService {
   ) {}
 
   /**
-   * Determine traffic light color based on enrollment status and grade
+   * Helper method to find student by external ID or student code
+   * This centralizes the search logic used across multiple methods
+   *
+   * @param studentId - Can be either externalId (from auth) or student code
+   * @returns Student document
+   * @throws NotFoundException if student not found
    */
-  getTrafficLightColor(
-    status: EnrollmentStatus,
-    _grade?: number,
-  ): TrafficLightColor {
-    switch (status) {
-      case EnrollmentStatus.PASSED:
-        return 'green';
-      case EnrollmentStatus.ENROLLED:
-        return 'blue';
-      case EnrollmentStatus.FAILED:
-        return 'red';
-      default:
-        return 'blue';
+  private async findStudentByIdOrCode(
+    studentId: string,
+  ): Promise<StudentDocument> {
+    // Try to find by externalId first (for authenticated users)
+    let student = await this.studentModel
+      .findOne({ externalId: studentId })
+      .exec();
+
+    // If not found, try by code (for direct lookups)
+    if (!student) {
+      student = await this.studentModel.findOne({ code: studentId }).exec();
     }
+
+    // If still not found, throw exception
+    if (!student) {
+      this.logger.warn(`Student with ID ${studentId} not found`);
+      throw new NotFoundException(`Student with ID ${studentId} not found`);
+    }
+
+    return student;
   }
 
   /**
-   * Enhanced traffic light color considering grade thresholds
+   * Determine traffic light color based on enrollment status and grade
+   *
+   * Color Logic:
+   * - 🟢 GREEN: Course PASSED with grade >= 3.0
+   * - 🔵 BLUE: Course currently ENROLLED (in progress)
+   * - 🔴 RED: Course FAILED (grade < 3.0 or explicitly marked as failed)
+   *
+   * @param status - Enrollment status (PASSED, ENROLLED, FAILED)
+   * @param grade - Optional grade value (0-5 scale)
+   * @returns Traffic light color
    */
-  getEnhancedTrafficLightColor(
+  getTrafficLightColor(
     status: EnrollmentStatus,
     grade?: number,
   ): TrafficLightColor {
-    if (status === EnrollmentStatus.PASSED) {
-      if (grade && grade >= 4.0) return 'green';
-      if (grade && grade >= 3.0) return 'green';
-      return 'green';
-    }
+    switch (status) {
+      case EnrollmentStatus.PASSED:
+        // For passed courses, verify grade is actually passing
+        if (grade !== undefined && grade < 3.0) {
+          this.logger.warn(
+            `Course marked as PASSED but grade is ${grade} (below 3.0)`,
+          );
+          return 'red'; // Inconsistency: marked as passed but grade is failing
+        }
+        return 'green';
 
-    if (status === EnrollmentStatus.ENROLLED) {
-      return 'blue';
-    }
+      case EnrollmentStatus.ENROLLED:
+        // Currently taking the course
+        return 'blue';
 
-    if (status === EnrollmentStatus.FAILED) {
-      return 'red';
-    }
+      case EnrollmentStatus.FAILED:
+        // Failed course
+        return 'red';
 
-    return 'blue';
+      default:
+        // Default to blue for unknown statuses
+        this.logger.warn(`Unknown enrollment status: ${status}`);
+        return 'blue';
+    }
   }
 
   /**
@@ -113,14 +149,7 @@ export class AcademicTrafficLightService {
   async getStudentAcademicStatus(
     studentId: string,
   ): Promise<StudentAcademicStatus> {
-    // Try to find by externalId first (for authenticated users), then by code (for direct lookups)
-    let student = await this.studentModel.findOne({ externalId: studentId }).exec();
-    if (!student) {
-      student = await this.studentModel.findOne({ code: studentId }).exec();
-    }
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${studentId} not found`);
-    }
+    const student = await this.findStudentByIdOrCode(studentId);
 
     const allEnrollments = await this.enrollmentModel
       .find({ studentId: student._id })
@@ -215,14 +244,7 @@ export class AcademicTrafficLightService {
     currentCourses: CourseStatus[];
     failedCourses: CourseStatus[];
   }> {
-    // Try to find by externalId first, then by code
-    let student = await this.studentModel.findOne({ externalId: studentId }).exec();
-    if (!student) {
-      student = await this.studentModel.findOne({ code: studentId }).exec();
-    }
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${studentId} not found`);
-    }
+    const student = await this.findStudentByIdOrCode(studentId);
 
     const allEnrollments = await this.enrollmentModel
       .find({ studentId: student._id })
@@ -253,10 +275,7 @@ export class AcademicTrafficLightService {
         credits: course.credits,
         grade: enrollment.grade,
         status: enrollment.status,
-        color: this.getEnhancedTrafficLightColor(
-          enrollment.status,
-          enrollment.grade,
-        ),
+        color: this.getTrafficLightColor(enrollment.status, enrollment.grade),
       };
 
       switch (enrollment.status) {
@@ -322,14 +341,7 @@ export class AcademicTrafficLightService {
       };
     };
   }> {
-    // Try to find by externalId first, then by code
-    let student = await this.studentModel.findOne({ externalId: studentId }).exec();
-    if (!student) {
-      student = await this.studentModel.findOne({ code: studentId }).exec();
-    }
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${studentId} not found`);
-    }
+    const student = await this.findStudentByIdOrCode(studentId);
 
     const academicStatus = await this.getStudentAcademicStatus(studentId);
 
@@ -400,79 +412,116 @@ export class AcademicTrafficLightService {
    */
   async detectInconsistencies(studentId: string): Promise<string[]> {
     const inconsistencies: string[] = [];
-    // Try to find by externalId first, then by code
-    let student = await this.studentModel.findOne({ externalId: studentId }).exec();
-    if (!student) {
-      student = await this.studentModel.findOne({ code: studentId }).exec();
-    }
 
-    if (!student) {
-      return ['Student data not found'];
-    }
+    try {
+      const student = await this.findStudentByIdOrCode(studentId);
 
-    const allEnrollments = await this.enrollmentModel
-      .find({ studentId: student._id })
-      .populate({
-        path: 'groupId',
-        populate: [{ path: 'courseId' }, { path: 'periodId' }],
-      })
-      .exec();
+      const allEnrollments = await this.enrollmentModel
+        .find({ studentId: student._id })
+        .populate({
+          path: 'groupId',
+          populate: [{ path: 'courseId' }, { path: 'periodId' }],
+        })
+        .exec();
 
-    for (const enrollment of allEnrollments) {
-      const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
-      const group = populatedEnrollment.groupId;
+      for (const enrollment of allEnrollments) {
+        const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+        const group = populatedEnrollment.groupId;
 
-      if (!group) {
-        inconsistencies.push('Enrollment with missing group information');
-        continue;
+        if (!group) {
+          inconsistencies.push('Enrollment with missing group information');
+          continue;
+        }
+
+        const course = group.courseId;
+        const period = group.periodId;
+
+        if (!course) {
+          inconsistencies.push('Group with missing course information');
+          continue;
+        }
+
+        if (!period) {
+          inconsistencies.push('Group with missing period information');
+          continue;
+        }
+
+        if (!course.credits || course.credits <= 0) {
+          inconsistencies.push(`Course ${course.code} has invalid credit value`);
+        }
+
+        // Check for passed courses without grades
+        if (enrollment.status === EnrollmentStatus.PASSED && !enrollment.grade) {
+          inconsistencies.push(`Passed course ${course.code} missing grade`);
+        }
+
+        // Check for failed courses without grades
+        if (enrollment.status === EnrollmentStatus.FAILED && !enrollment.grade) {
+          inconsistencies.push(
+            `Failed course ${course.code} missing grade (should have grade < 3.0)`,
+          );
+        }
+
+        // Check for enrolled courses WITH grades (shouldn't have grades yet)
+        if (
+          enrollment.status === EnrollmentStatus.ENROLLED &&
+          enrollment.grade !== undefined &&
+          enrollment.grade !== null
+        ) {
+          inconsistencies.push(
+            `Enrolled course ${course.code} has grade ${enrollment.grade} (should not have grade yet)`,
+          );
+        }
+
+        // Check for invalid grade ranges
+        if (
+          enrollment.grade !== undefined &&
+          enrollment.grade !== null &&
+          (enrollment.grade < 0 || enrollment.grade > 5)
+        ) {
+          inconsistencies.push(
+            `Course ${course.code} has invalid grade: ${enrollment.grade} (must be 0-5)`,
+          );
+        }
+
+        // Check for passed courses with failing grades
+        if (
+          enrollment.status === EnrollmentStatus.PASSED &&
+          enrollment.grade &&
+          enrollment.grade < 3.0
+        ) {
+          inconsistencies.push(
+            `Course ${course.code} marked as PASSED but grade ${enrollment.grade} is below passing threshold (3.0)`,
+          );
+        }
+
+        // Check for failed courses with passing grades
+        if (
+          enrollment.status === EnrollmentStatus.FAILED &&
+          enrollment.grade &&
+          enrollment.grade >= 3.0
+        ) {
+          inconsistencies.push(
+            `Course ${course.code} marked as FAILED but grade ${enrollment.grade} is above failing threshold (3.0)`,
+          );
+        }
       }
 
-      const course = group.courseId;
-      const period = group.periodId;
-
-      if (!course) {
-        inconsistencies.push('Group with missing course information');
-        continue;
-      }
-
-      if (!period) {
-        inconsistencies.push('Group with missing period information');
-        continue;
-      }
-
-      if (!course.credits || course.credits <= 0) {
-        inconsistencies.push(`Course ${course.code} has invalid credit value`);
-      }
-
-      if (enrollment.status === EnrollmentStatus.PASSED && !enrollment.grade) {
-        inconsistencies.push(`Passed course ${course.code} missing grade`);
-      }
-
-      if (enrollment.grade && (enrollment.grade < 0 || enrollment.grade > 5)) {
+      const duplicateCourses = this.findDuplicatePassedCourses(allEnrollments);
+      if (duplicateCourses.length > 0) {
         inconsistencies.push(
-          `Course ${course.code} has invalid grade: ${enrollment.grade}`,
+          `Duplicate passed courses detected: ${duplicateCourses.join(', ')}`,
         );
       }
 
-      if (
-        enrollment.status === EnrollmentStatus.PASSED &&
-        enrollment.grade &&
-        enrollment.grade < 3.0
-      ) {
-        inconsistencies.push(
-          `Course ${course.code} marked as passed but grade is below passing threshold`,
-        );
-      }
-    }
-
-    const duplicateCourses = this.findDuplicatePassedCourses(allEnrollments);
-    if (duplicateCourses.length > 0) {
-      inconsistencies.push(
-        `Duplicate passed courses detected: ${duplicateCourses.join(', ')}`,
+      return inconsistencies;
+    } catch (error) {
+      this.logger.error(
+        `Error detecting inconsistencies for student ${studentId}:`,
+        error,
       );
+      return ['Error detecting inconsistencies: ' + error.message];
     }
-
-    return inconsistencies;
   }
 
   /**
@@ -517,14 +566,7 @@ export class AcademicTrafficLightService {
       courseCount: number;
     }>
   > {
-    // Try to find by externalId first, then by code
-    let student = await this.studentModel.findOne({ externalId: studentId }).exec();
-    if (!student) {
-      student = await this.studentModel.findOne({ code: studentId }).exec();
-    }
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${studentId} not found`);
-    }
+    const student = await this.findStudentByIdOrCode(studentId);
 
     const allEnrollments = await this.enrollmentModel
       .find({
@@ -585,10 +627,11 @@ export class AcademicTrafficLightService {
     const students = await this.studentModel.find().exec();
 
     let greenCount = 0;
-    let yellowCount = 0;
+    let blueCount = 0;
     let redCount = 0;
     let totalGPA = 0;
     let studentsWithGPA = 0;
+    let errorCount = 0;
 
     for (const student of students) {
       try {
@@ -599,7 +642,7 @@ export class AcademicTrafficLightService {
             greenCount++;
             break;
           case 'blue':
-            yellowCount++;
+            blueCount++;
             break;
           case 'red':
             redCount++;
@@ -611,15 +654,25 @@ export class AcademicTrafficLightService {
           studentsWithGPA++;
         }
       } catch (error) {
-        // Continue processing other students if one fails
+        // Log error and continue processing other students
+        errorCount++;
+        this.logger.warn(
+          `Failed to calculate status for student ${student.code}: ${error.message}`,
+        );
         continue;
       }
+    }
+
+    if (errorCount > 0) {
+      this.logger.warn(
+        `Statistics calculation completed with ${errorCount} errors out of ${students.length} students`,
+      );
     }
 
     return {
       totalStudents: students.length,
       greenStudents: greenCount,
-      yellowStudents: yellowCount,
+      blueStudents: blueCount,
       redStudents: redCount,
       averageGPA:
         studentsWithGPA > 0
@@ -629,9 +682,9 @@ export class AcademicTrafficLightService {
         students.length > 0
           ? Math.round((greenCount / students.length) * 100)
           : 0,
-      yellowPercentage:
+      bluePercentage:
         students.length > 0
-          ? Math.round((yellowCount / students.length) * 100)
+          ? Math.round((blueCount / students.length) * 100)
           : 0,
       redPercentage:
         students.length > 0 ? Math.round((redCount / students.length) * 100) : 0,

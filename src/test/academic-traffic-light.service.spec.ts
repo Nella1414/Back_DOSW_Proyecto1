@@ -123,9 +123,19 @@ describe('AcademicTrafficLightService', () => {
   });
 
   describe('getTrafficLightColor', () => {
-    it('should return green for passed status', () => {
+    it('should return green for passed status with valid grade', () => {
       const result = service.getTrafficLightColor(EnrollmentStatus.PASSED, 4.5);
       expect(result).toBe('green');
+    });
+
+    it('should return green for passed status with passing grade', () => {
+      const result = service.getTrafficLightColor(EnrollmentStatus.PASSED, 3.0);
+      expect(result).toBe('green');
+    });
+
+    it('should return red for passed status with failing grade (inconsistency)', () => {
+      const result = service.getTrafficLightColor(EnrollmentStatus.PASSED, 2.5);
+      expect(result).toBe('red');
     });
 
     it('should return blue for enrolled status', () => {
@@ -144,32 +154,6 @@ describe('AcademicTrafficLightService', () => {
     });
   });
 
-  describe('getEnhancedTrafficLightColor', () => {
-    it('should return green for passed with high grade', () => {
-      const result = service.getEnhancedTrafficLightColor(EnrollmentStatus.PASSED, 4.5);
-      expect(result).toBe('green');
-    });
-
-    it('should return green for passed with medium grade', () => {
-      const result = service.getEnhancedTrafficLightColor(EnrollmentStatus.PASSED, 3.5);
-      expect(result).toBe('green');
-    });
-
-    it('should return green for passed without grade', () => {
-      const result = service.getEnhancedTrafficLightColor(EnrollmentStatus.PASSED);
-      expect(result).toBe('green');
-    });
-
-    it('should return blue for enrolled', () => {
-      const result = service.getEnhancedTrafficLightColor(EnrollmentStatus.ENROLLED);
-      expect(result).toBe('blue');
-    });
-
-    it('should return red for failed', () => {
-      const result = service.getEnhancedTrafficLightColor(EnrollmentStatus.FAILED);
-      expect(result).toBe('red');
-    });
-  });
 
   describe('getStudentAcademicStatus', () => {
     it('should return academic status with green color for excellent student', async () => {
@@ -633,16 +617,88 @@ describe('AcademicTrafficLightService', () => {
       expect(result).toEqual([]);
     });
 
-    it('should return error when student not found', async () => {
+    it('should detect enrolled course with grade (inconsistency)', async () => {
       // Arrange
-      mockExecChain.exec.mockResolvedValue(null);
+      mockExecChain.exec.mockResolvedValueOnce(mockStudent);
+      (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
+
+      const enrollments = [
+        {
+          groupId: mockGroup,
+          status: EnrollmentStatus.ENROLLED,
+          grade: 4.0,
+        },
+      ];
+
+      mockPopulateChain.exec.mockResolvedValue(enrollments);
+      mockPopulateChain.populate.mockReturnValue(mockPopulateChain);
+      (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
+
+      // Act
+      const result = await service.detectInconsistencies('student123');
+
+      // Assert
+      expect(result.some(msg => msg.includes('should not have grade yet'))).toBe(true);
+    });
+
+    it('should detect failed course without grade', async () => {
+      // Arrange
+      mockExecChain.exec.mockResolvedValueOnce(mockStudent);
+      (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
+
+      const enrollments = [
+        {
+          groupId: mockGroup,
+          status: EnrollmentStatus.FAILED,
+          grade: null,
+        },
+      ];
+
+      mockPopulateChain.exec.mockResolvedValue(enrollments);
+      mockPopulateChain.populate.mockReturnValue(mockPopulateChain);
+      (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
+
+      // Act
+      const result = await service.detectInconsistencies('student123');
+
+      // Assert
+      expect(result.some(msg => msg.includes('missing grade'))).toBe(true);
+    });
+
+    it('should detect failed course with passing grade', async () => {
+      // Arrange
+      mockExecChain.exec.mockResolvedValueOnce(mockStudent);
+      (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
+
+      const enrollments = [
+        {
+          groupId: mockGroup,
+          status: EnrollmentStatus.FAILED,
+          grade: 4.0,
+        },
+      ];
+
+      mockPopulateChain.exec.mockResolvedValue(enrollments);
+      mockPopulateChain.populate.mockReturnValue(mockPopulateChain);
+      (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
+
+      // Act
+      const result = await service.detectInconsistencies('student123');
+
+      // Assert
+      expect(result.some(msg => msg.includes('marked as FAILED but grade'))).toBe(true);
+    });
+
+    it('should handle error and return error message', async () => {
+      // Arrange
+      mockExecChain.exec.mockRejectedValue(new Error('Database error'));
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act
-      const result = await service.detectInconsistencies('nonexistent');
+      const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result).toContain('Student data not found');
+      expect(result.some(msg => msg.includes('Error detecting inconsistencies'))).toBe(true);
     });
   });
 
@@ -726,7 +782,7 @@ describe('AcademicTrafficLightService', () => {
       expect(result).toBeDefined();
       expect(result.totalStudents).toBe(1);
       expect(result).toHaveProperty('greenStudents');
-      expect(result).toHaveProperty('yellowStudents');
+      expect(result).toHaveProperty('blueStudents');
       expect(result).toHaveProperty('redStudents');
       expect(result).toHaveProperty('averageGPA');
     });
