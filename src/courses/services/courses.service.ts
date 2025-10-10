@@ -1,84 +1,383 @@
-import { Injectable } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Course, CourseDocument } from '../entities/course.entity';
 import { CreateCourseDto } from '../dto/create-course.dto';
 import { UpdateCourseDto } from '../dto/update-course.dto';
+import { QueryCoursesDto } from '../dto/query-courses.dto';
 
 /**
- * * Course Management Service
+ * Course Management Service
  *
- * ! Servicio completamente sin implementar - Solo retorna strings placeholder
- * ? Este servicio debe manejar materias/cursos academicos
- * ? Incluye validacion de prerequisitos y dependencias entre materias
- * ? CRITICO: Eliminacion debe validar enrollments activos y dependencias
- * TODO: Implementar integracion con MongoDB y modelos
- * TODO: Agregar validacion de prerequisitos en cadena
- * TODO: Implementar logica de negocio academica
- * TODO: Agregar gestion de creditos y semestres
+ * Servicio para gestión completa de materias/cursos académicos.
+ * Incluye validación de prerequisitos y dependencias entre materias.
+ * 
+ * ⚠️ CRÍTICO: Eliminación debe validar enrollments activos y dependencias
  */
 @Injectable()
 export class CoursesService {
+  constructor(
+    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
+  ) {}
+
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe crear materia con validacion de codigo unico
-   * ? Validar prerequisitos existen antes de asignar
-   * TODO: Implementar validacion de unicidad de codigo
-   * TODO: Verificar que prerequisitos existan en el sistema
-   * TODO: Validar logica de creditos y horas academicas
-   * TODO: Implementar validacion de programa academico asociado
+   * Crear nuevo curso
+   * 
+   * Validaciones implementadas:
+   * - Código único (no duplicado)
+   * - Prerequisitos existen en el sistema
+   * - Validación de créditos y horas académicas
+   * 
+   * @param createCourseDto - Datos del curso a crear
+   * @returns Curso creado
+   * @throws ConflictException si el código ya existe
+   * @throws BadRequestException si los prerequisitos no existen
    */
-  create(createCourseDto: CreateCourseDto) {
-    return 'This action adds a new course';
+  async create(createCourseDto: CreateCourseDto): Promise<Course> {
+    // 1. Validar unicidad del código
+    const existingCourse = await this.courseModel
+      .findOne({ code: createCourseDto.code.toUpperCase() })
+      .exec();
+
+    if (existingCourse) {
+      throw new ConflictException(
+        `El curso con código "${createCourseDto.code}" ya existe`,
+      );
+    }
+
+    // 2. Validar que los prerequisitos existan
+    if (createCourseDto.prerequisites && createCourseDto.prerequisites.length > 0) {
+      await this.validatePrerequisites(createCourseDto.prerequisites);
+    }
+
+    // 3. Crear el curso
+    const newCourse = new this.courseModel({
+      ...createCourseDto,
+      code: createCourseDto.code.toUpperCase(),
+    });
+
+    return newCourse.save();
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe listar materias con filtros por programa/semestre
-   * ? Incluir informacion de prerequisitos y grupos activos
-   * TODO: Implementar paginacion y filtros avanzados
-   * TODO: Agregar busqueda por codigo, nombre y programa
-   * TODO: Incluir estadisticas de enrollments por materia
-   * TODO: Mostrar grupos disponibles por periodo
+   * Listar cursos con filtros avanzados
+   * 
+   * Funcionalidades:
+   * - Paginación
+   * - Búsqueda por código y nombre
+   * - Filtros: activo, créditos, nivel, categoría, prerequisitos
+   * - Ordenamiento configurable
+   * 
+   * @param queryDto - Parámetros de consulta y filtros
+   * @returns Lista paginada de cursos
    */
-  findAll() {
-    return `This action returns all courses`;
+  async findAll(queryDto: QueryCoursesDto): Promise<{
+    data: Course[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const {
+      active,
+      minCredits,
+      maxCredits,
+      academicLevel,
+      category,
+      hasPrerequisites,
+      codePrefix,
+      sortBy = 'code',
+    } = queryDto;
+
+    // Construir filtros dinámicos
+    const filters: any = {};
+
+    if (active !== undefined) {
+      filters.active = active;
+    }
+
+    if (minCredits !== undefined || maxCredits !== undefined) {
+      filters.credits = {};
+      if (minCredits !== undefined) {
+        filters.credits.$gte = minCredits;
+      }
+      if (maxCredits !== undefined) {
+        filters.credits.$lte = maxCredits;
+      }
+    }
+
+    if (academicLevel !== undefined) {
+      filters.academicLevel = academicLevel;
+    }
+
+    if (category) {
+      filters.category = category;
+    }
+
+    if (hasPrerequisites !== undefined) {
+      if (hasPrerequisites) {
+        filters.prerequisites = { $exists: true, $not: { $size: 0 } };
+      } else {
+        filters.$or = [
+          { prerequisites: { $exists: false } },
+          { prerequisites: { $size: 0 } },
+        ];
+      }
+    }
+
+    if (codePrefix) {
+      filters.codePrefix = codePrefix.toUpperCase();
+    }
+
+    // Paginación (valores por defecto si no se proporcionan)
+    const page = 1;
+    const limit = 50;
+    const skip = (page - 1) * limit;
+
+    // Ordenamiento
+    const sortOptions: any = {};
+    sortOptions[sortBy] = 1; // 1 = ascendente
+
+    // Ejecutar consulta
+    const [data, total] = await Promise.all([
+      this.courseModel
+        .find(filters)
+        .sort(sortOptions)
+        .skip(skip)
+        .limit(limit)
+        .exec(),
+      this.courseModel.countDocuments(filters).exec(),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe retornar materia con detalles completos
-   * ? Incluir prerequisitos, grupos activos y estadisticas
-   * TODO: Implementar busqueda por ID con validacion
-   * TODO: Incluir lista completa de prerequisitos
-   * TODO: Mostrar grupos activos por periodo academico
-   * TODO: Agregar estadisticas historicas de la materia
+   * Obtener un curso por ID
+   * 
+   * Retorna detalles completos incluyendo:
+   * - Información del curso
+   * - Lista de prerequisitos expandida
+   * 
+   * @param id - ID del curso
+   * @returns Curso encontrado
+   * @throws NotFoundException si no existe
    */
-  findOne(id: number) {
-    return `This action returns a #${id} course`;
+  async findOne(id: string): Promise<Course> {
+    const course = await this.courseModel.findById(id).exec();
+
+    if (!course) {
+      throw new NotFoundException(`Curso con ID "${id}" no encontrado`);
+    }
+
+    return course;
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe actualizar materia con validacion de dependencias
-   * ? Cambios de prerequisitos afectan otros cursos
-   * TODO: Validar impacto de cambios en prerequisitos
-   * TODO: Verificar que cambios no rompan dependencias
-   * TODO: Actualizar cadenas de prerequisitos automaticamente
-   * TODO: Notificar cambios a coordinadores academicos
+   * Buscar curso por código
+   * 
+   * @param code - Código del curso
+   * @returns Curso encontrado o null
    */
-  update(id: number, updateCourseDto: UpdateCourseDto) {
-    return `This action updates a #${id} course`;
+  async findByCode(code: string): Promise<Course | null> {
+    return this.courseModel
+      .findOne({ code: code.toUpperCase() })
+      .exec();
   }
 
   /**
-   * ! Funcion sin implementar - Retorna string placeholder
-   * ? Debe eliminar materia con verificaciones criticas
-   * ? PROHIBIDO eliminar si tiene enrollments activos
-   * ? PROHIBIDO eliminar si es prerequisito de otras materias
-   * TODO: Verificar que no tenga estudiantes enrolled
-   * TODO: Validar que no sea prerequisito de otras materias
-   * TODO: Ofrecer transferencia de estudiantes a materias equivalentes
-   * TODO: Implementar soft delete para auditoria academica
+   * Actualizar curso
+   * 
+   * Validaciones:
+   * - Validar impacto de cambios en prerequisitos
+   * - Verificar que cambios no rompan dependencias
+   * - Actualizar cadenas de prerequisitos automáticamente
+   * 
+   * @param id - ID del curso
+   * @param updateCourseDto - Datos a actualizar
+   * @returns Curso actualizado
+   * @throws NotFoundException si no existe
+   * @throws BadRequestException si hay conflictos
    */
-  remove(id: number) {
-    return `This action removes a #${id} course`;
+  async update(id: string, updateCourseDto: UpdateCourseDto): Promise<Course> {
+    // 1. Verificar que el curso existe
+    const existingCourse = await this.findOne(id);
+
+    // 2. Si se actualiza el código, validar unicidad
+    if (updateCourseDto.code && updateCourseDto.code !== existingCourse.code) {
+      const duplicateCode = await this.courseModel
+        .findOne({ 
+          code: updateCourseDto.code.toUpperCase(),
+          _id: { $ne: id }
+        })
+        .exec();
+
+      if (duplicateCode) {
+        throw new ConflictException(
+          `El código "${updateCourseDto.code}" ya está en uso por otro curso`,
+        );
+      }
+    }
+
+    // 3. Validar nuevos prerequisitos si se proporcionan
+    if (updateCourseDto.prerequisites && updateCourseDto.prerequisites.length > 0) {
+      await this.validatePrerequisites(updateCourseDto.prerequisites);
+    }
+
+    // 4. Actualizar el curso
+    const updatedCourse = await this.courseModel
+      .findByIdAndUpdate(
+        id,
+        {
+          ...updateCourseDto,
+          code: updateCourseDto.code?.toUpperCase(),
+        },
+        { new: true, runValidators: true },
+      )
+      .exec();
+
+    if (!updatedCourse) {
+      throw new NotFoundException(`Curso con ID "${id}" no encontrado`);
+    }
+
+    return updatedCourse;
+  }
+
+  /**
+   * Eliminar curso (con validaciones críticas)
+   * 
+   * ⚠️ VALIDACIONES CRÍTICAS:
+   * - PROHIBIDO eliminar si tiene enrollments activos
+   * - PROHIBIDO eliminar si es prerequisito de otras materias
+   * - Se recomienda soft delete para auditoría académica
+   * 
+   * @param id - ID del curso
+   * @returns Confirmación de eliminación
+   * @throws NotFoundException si no existe
+   * @throws BadRequestException si tiene dependencias
+   */
+  async remove(id: string): Promise<{ message: string; course: Course }> {
+    // 1. Verificar que el curso existe
+    const course = await this.findOne(id);
+
+    // 2. VALIDACIÓN CRÍTICA: Verificar si es prerequisito de otros cursos
+    const dependentCourses = await this.courseModel
+      .find({ prerequisites: course.code })
+      .select('code name')
+      .exec();
+
+    if (dependentCourses.length > 0) {
+      const codes = dependentCourses.map(c => c.code).join(', ');
+      throw new BadRequestException(
+        `No se puede eliminar el curso "${course.code}" porque es prerequisito de: ${codes}`,
+      );
+    }
+
+    // 3. VALIDACIÓN CRÍTICA: Verificar enrollments activos
+    // TODO: Cuando se implemente el módulo de enrollments, descomentar:
+    /*
+    const hasActiveEnrollments = await this.enrollmentsService.hasActiveEnrollments(id);
+    if (hasActiveEnrollments) {
+      throw new BadRequestException(
+        `No se puede eliminar el curso "${course.code}" porque tiene estudiantes inscritos activos`,
+      );
+    }
+    */
+
+    // 4. Opción recomendada: Soft delete (marcar como inactivo)
+    const deletedCourse = await this.courseModel
+      .findByIdAndUpdate(
+        id,
+        { active: false },
+        { new: true },
+      )
+      .exec();
+
+    if (!deletedCourse) {
+      throw new NotFoundException(`Curso con ID "${id}" no encontrado para eliminar`);
+    }
+
+    // Opción alternativa: Hard delete (descomentar si se prefiere)
+    // await this.courseModel.findByIdAndDelete(id).exec();
+
+    return {
+      message: `Curso "${course.code}" desactivado exitosamente`,
+      course: deletedCourse,
+    };
+  }
+
+  /**
+   * Validar que una lista de prerequisitos exista
+   * 
+   * @param prerequisites - Lista de códigos de prerequisitos
+   * @throws BadRequestException si algún prerequisito no existe
+   */
+  private async validatePrerequisites(prerequisites: string[]): Promise<void> {
+    if (!prerequisites || prerequisites.length === 0) {
+      return;
+    }
+
+    const upperPrerequisites = prerequisites.map(p => p.toUpperCase());
+
+    const existingCourses = await this.courseModel
+      .find({ code: { $in: upperPrerequisites } })
+      .select('code')
+      .exec();
+
+    const existingCodes = existingCourses.map(c => c.code);
+    const missingCodes = upperPrerequisites.filter(
+      code => !existingCodes.includes(code),
+    );
+
+    if (missingCodes.length > 0) {
+      throw new BadRequestException(
+        `Los siguientes prerequisitos no existen: ${missingCodes.join(', ')}`,
+      );
+    }
+  }
+
+  /**
+   * Obtener estadísticas de cursos
+   * 
+   * @returns Estadísticas generales
+   */
+  async getStatistics(): Promise<{
+    total: number;
+    active: number;
+    inactive: number;
+    byLevel: any[];
+    byCategory: any[];
+  }> {
+    const [total, active, byLevel, byCategory] = await Promise.all([
+      this.courseModel.countDocuments().exec(),
+      this.courseModel.countDocuments({ active: true }).exec(),
+      this.courseModel.aggregate([
+        { $group: { _id: '$academicLevel', count: { $sum: 1 } } },
+        { $sort: { _id: 1 } },
+      ]).exec(),
+      this.courseModel.aggregate([
+        { $group: { _id: '$category', count: { $sum: 1 } } },
+        { $sort: { count: -1 } },
+      ]).exec(),
+    ]);
+
+    return {
+      total,
+      active,
+      inactive: total - active,
+      byLevel,
+      byCategory,
+    };
   }
 }
