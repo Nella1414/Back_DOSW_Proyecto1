@@ -14,10 +14,8 @@ import { QueryCoursesDto } from '../dto/query-courses.dto';
 /**
  * Course Management Service
  *
- * Servicio para gestión completa de materias/cursos académicos.
- * Incluye validación de prerequisitos y dependencias entre materias.
- * 
- * ⚠️ CRÍTICO: Eliminación debe validar enrollments activos y dependencias
+ * Provides full management of academic courses, including validation of prerequisites and dependencies.
+ * All critical operations (such as deletion) validate active enrollments and course dependencies.
  */
 @Injectable()
 export class CoursesService {
@@ -26,17 +24,17 @@ export class CoursesService {
   ) {}
 
   /**
-   * Crear nuevo curso
-   * 
-   * Validaciones implementadas:
-   * - Código único (no duplicado)
-   * - Prerequisitos existen en el sistema
-   * - Validación de créditos y horas académicas
-   * 
-   * @param createCourseDto - Datos del curso a crear
-   * @returns Curso creado
-   * @throws ConflictException si el código ya existe
-   * @throws BadRequestException si los prerequisitos no existen
+   * Create a new course
+   *
+   * Validations:
+   * - Unique code (no duplicates)
+   * - Prerequisites must exist in the system
+   * - Credits and academic hours validation
+   *
+   * @param createCourseDto - Data for the new course
+   * @returns The created course
+   * @throws ConflictException if the code already exists
+   * @throws BadRequestException if prerequisites do not exist
    */
   async create(createCourseDto: CreateCourseDto): Promise<Course> {
     // 1. Validar unicidad del código
@@ -65,16 +63,16 @@ export class CoursesService {
   }
 
   /**
-   * Listar cursos con filtros avanzados
-   * 
-   * Funcionalidades:
-   * - Paginación
-   * - Búsqueda por código y nombre
-   * - Filtros: activo, créditos, nivel, categoría, prerequisitos
-   * - Ordenamiento configurable
-   * 
-   * @param queryDto - Parámetros de consulta y filtros
-   * @returns Lista paginada de cursos
+   * List courses with advanced filters
+   *
+   * Features:
+   * - Pagination
+   * - Search by code and name
+   * - Filters: active status, credits, level, category, prerequisites
+   * - Configurable sorting
+   *
+   * @param queryDto - Query parameters and filters
+   * @returns Paginated list of courses
    */
   async findAll(queryDto: QueryCoursesDto): Promise<{
     data: Course[];
@@ -165,11 +163,11 @@ export class CoursesService {
 
   /**
    * Obtener un curso por ID
-   * 
+   *
    * Retorna detalles completos incluyendo:
    * - Información del curso
    * - Lista de prerequisitos expandida
-   * 
+   *
    * @param id - ID del curso
    * @returns Curso encontrado
    * @throws NotFoundException si no existe
@@ -186,7 +184,7 @@ export class CoursesService {
 
   /**
    * Buscar curso por código
-   * 
+   *
    * @param code - Código del curso
    * @returns Curso encontrado o null
    */
@@ -198,12 +196,12 @@ export class CoursesService {
 
   /**
    * Actualizar curso
-   * 
+   *
    * Validaciones:
    * - Validar impacto de cambios en prerequisitos
    * - Verificar que cambios no rompan dependencias
    * - Actualizar cadenas de prerequisitos automáticamente
-   * 
+   *
    * @param id - ID del curso
    * @param updateCourseDto - Datos a actualizar
    * @returns Curso actualizado
@@ -255,17 +253,17 @@ export class CoursesService {
   }
 
   /**
-   * Eliminar curso (con validaciones críticas)
-   * 
-   * ⚠️ VALIDACIONES CRÍTICAS:
-   * - PROHIBIDO eliminar si tiene enrollments activos
-   * - PROHIBIDO eliminar si es prerequisito de otras materias
-   * - Se recomienda soft delete para auditoría académica
-   * 
-   * @param id - ID del curso
-   * @returns Confirmación de eliminación
-   * @throws NotFoundException si no existe
-   * @throws BadRequestException si tiene dependencias
+   * Delete (deactivate) a course (with critical validations)
+   *
+   * Critical validations:
+   * - Forbidden to delete if there are active enrollments
+   * - Forbidden to delete if it is a prerequisite for other courses
+   * - Soft delete is recommended for academic audit purposes
+   *
+   * @param id - Course ID
+   * @returns Confirmation of deletion
+   * @throws NotFoundException if not found
+   * @throws BadRequestException if there are dependencies
    */
   async remove(id: string): Promise<{ message: string; course: Course }> {
     // 1. Verificar que el curso existe
@@ -318,10 +316,10 @@ export class CoursesService {
   }
 
   /**
-   * Validar que una lista de prerequisitos exista
-   * 
-   * @param prerequisites - Lista de códigos de prerequisitos
-   * @throws BadRequestException si algún prerequisito no existe
+   * Validate that a list of prerequisites exists
+   *
+   * @param prerequisites - List of prerequisite codes
+   * @throws BadRequestException if any prerequisite does not exist
    */
   private async validatePrerequisites(prerequisites: string[]): Promise<void> {
     if (!prerequisites || prerequisites.length === 0) {
@@ -348,9 +346,9 @@ export class CoursesService {
   }
 
   /**
-   * Obtener estadísticas de cursos
-   * 
-   * @returns Estadísticas generales
+   * Get course statistics
+   *
+   * @returns General statistics about courses
    */
   async getStatistics(): Promise<{
     total: number;
