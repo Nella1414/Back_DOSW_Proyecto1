@@ -9,6 +9,22 @@ import {
   CourseGroupSchema,
 } from '../course-groups/entities/course-group.entity';
 
+/**
+ * Enrollments Module
+ * 
+ * Módulo completo para gestión de inscripciones académicas.
+ * 
+ * **Funcionalidades:**
+ * - CRUD completo de inscripciones
+ * - Validación de cupos y duplicados
+ * - Calificación de estudiantes
+ * - Cancelación con motivos
+ * - Estadísticas y reportes
+ * 
+ * **Exports:**
+ * - MongooseModule: Para usar Enrollment en otros módulos
+ * - EnrollmentsService: Para inyección de dependencias
+ */
 @Module({
   imports: [
     MongooseModule.forFeature([
@@ -19,6 +35,9 @@ import {
   ],
   controllers: [EnrollmentsController],
   providers: [EnrollmentsService],
-  exports: [MongooseModule, EnrollmentsService],
+  exports: [
+    MongooseModule, // Permite usar Enrollment en otros módulos
+    EnrollmentsService, // Permite inyectar EnrollmentsService en otros módulos
+  ],
 })
 export class EnrollmentsModule {}
