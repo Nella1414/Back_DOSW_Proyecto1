@@ -9,8 +9,12 @@ import {
   Max,
   Length,
   Matches,
+  IsInt,
+  ArrayMinSize,
+  ArrayMaxSize,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsValidName } from '../../common/validators/custom-validators';
 
 /**
  * Create Course DTO
@@ -30,18 +34,17 @@ export class CreateCourseDto {
    * ? Formato sugerido: [AREA][LEVEL] (ej: CS101, MATH201)
    */
   @ApiProperty({
-    description: 'Unique course identification code',
+    description: 'Código único de identificación del curso',
     example: 'CS101',
-    minLength: 3,
-    maxLength: 15,
+    minLength: 5,
+    maxLength: 10,
     pattern: '^[A-Z]{2,4}[0-9]{3,4}$',
   })
-  @IsString()
-  @IsNotEmpty()
-  @Length(3, 15)
+  @IsString({ message: 'El código del curso debe ser texto' })
+  @IsNotEmpty({ message: 'El código del curso es obligatorio' })
+  @Length(5, 10, { message: 'El código debe tener entre 5 y 10 caracteres' })
   @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, {
-    message:
-      'Course code must follow format: 2-4 letters + 3-4 numbers (e.g., CS101, MATH1001)',
+    message: 'El código debe seguir el formato: 2-4 letras + 3-4 números (ej: CS101, MATH1001)',
   })
   code: string;
 
@@ -51,14 +54,15 @@ export class CreateCourseDto {
    * * Nombre descriptivo y completo del curso
    */
   @ApiProperty({
-    description: 'Complete course name',
-    example: 'Introduction to Computer Science',
+    description: 'Nombre completo del curso',
+    example: 'Introducción a las Ciencias de la Computación',
     minLength: 5,
     maxLength: 100,
   })
-  @IsString()
-  @IsNotEmpty()
-  @Length(5, 100)
+  @IsString({ message: 'El nombre del curso debe ser texto' })
+  @IsNotEmpty({ message: 'El nombre del curso es obligatorio' })
+  @Length(5, 100, { message: 'El nombre debe tener entre 5 y 100 caracteres' })
+  @IsValidName({ message: 'El nombre solo puede contener letras, números, espacios y acentos' })
   name: string;
 
   /**
@@ -67,16 +71,14 @@ export class CreateCourseDto {
    * * Descripción completa del contenido y objetivos del curso
    */
   @ApiProperty({
-    description:
-      'Detailed course description including objectives and content overview',
-    example:
-      'Fundamental concepts of computer science including programming principles, data structures, and problem-solving techniques.',
+    description: 'Descripción detallada del curso incluyendo objetivos y contenido',
+    example: 'Conceptos fundamentales de ciencias de la computación incluyendo principios de programación, estructuras de datos y técnicas de resolución de problemas.',
     minLength: 20,
     maxLength: 1000,
   })
-  @IsString()
-  @IsNotEmpty()
-  @Length(20, 1000)
+  @IsString({ message: 'La descripción debe ser texto' })
+  @IsNotEmpty({ message: 'La descripción del curso es obligatoria' })
+  @Length(20, 1000, { message: 'La descripción debe tener entre 20 y 1000 caracteres' })
   description: string;
 
   /**
@@ -86,14 +88,14 @@ export class CreateCourseDto {
    * ! Debe estar entre 1 y 10 créditos
    */
   @ApiProperty({
-    description: 'Number of academic credits for this course',
+    description: 'Número de créditos académicos del curso',
     example: 3,
     minimum: 1,
     maximum: 10,
   })
-  @IsNumber()
-  @Min(1)
-  @Max(10)
+  @IsInt({ message: 'Los créditos deben ser un número entero' })
+  @Min(1, { message: 'El curso debe tener al menos 1 crédito' })
+  @Max(10, { message: 'El curso no puede tener más de 10 créditos' })
   credits: number;
 
   /**
@@ -103,15 +105,16 @@ export class CreateCourseDto {
    * * Opcional - algunos cursos no tienen prerrequisitos
    */
   @ApiProperty({
-    description:
-      'List of prerequisite course codes that must be completed before taking this course',
+    description: 'Lista de códigos de cursos prerrequisitos que deben completarse antes de tomar este curso',
     example: ['MATH101', 'CS100'],
     type: [String],
     required: false,
   })
-  @IsArray()
-  @IsString({ each: true })
   @IsOptional()
+  @IsArray({ message: 'Los prerrequisitos deben ser una lista' })
+  @ArrayMaxSize(10, { message: 'No puede tener más de 10 prerrequisitos' })
+  @IsString({ each: true, message: 'Cada prerrequisito debe ser texto' })
+  @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, { each: true, message: 'Cada prerrequisito debe tener formato válido (ej: CS101)' })
   prerequisites?: string[];
 
   /**
@@ -121,14 +124,13 @@ export class CreateCourseDto {
    * * Por defecto: true
    */
   @ApiProperty({
-    description:
-      'Whether the course is currently active and available for enrollment',
+    description: 'Si el curso está activo y disponible para matrícula',
     example: true,
     default: true,
     required: false,
   })
-  @IsBoolean()
   @IsOptional()
+  @IsBoolean({ message: 'El estado activo debe ser verdadero o falso' })
   isActive?: boolean;
 
   /**
@@ -137,17 +139,16 @@ export class CreateCourseDto {
    * ? Nivel académico del curso (1-4 para pregrado, 5+ para posgrado)
    */
   @ApiProperty({
-    description:
-      'Academic level or year of the course (1-4 for undergraduate, 5+ for graduate)',
+    description: 'Nivel académico del curso (1-4 pregrado, 5-8 posgrado)',
     example: 1,
     minimum: 1,
     maximum: 8,
     required: false,
   })
-  @IsNumber()
   @IsOptional()
-  @Min(1)
-  @Max(8)
+  @IsInt({ message: 'El nivel académico debe ser un número entero' })
+  @Min(1, { message: 'El nivel académico debe ser mínimo 1' })
+  @Max(8, { message: 'El nivel académico no puede ser mayor a 8' })
   academicLevel?: number;
 
   /**
@@ -156,15 +157,15 @@ export class CreateCourseDto {
    * ? Categoría o área académica del curso
    */
   @ApiProperty({
-    description:
-      'Course category or academic area (e.g., "Core", "Elective", "Laboratory")',
-    example: 'Core',
+    description: 'Categoría o área académica del curso (ej: "Núcleo", "Electiva", "Laboratorio")',
+    example: 'Núcleo',
     maxLength: 50,
     required: false,
   })
-  @IsString()
   @IsOptional()
-  @Length(0, 50)
+  @IsString({ message: 'La categoría debe ser texto' })
+  @Length(2, 50, { message: 'La categoría debe tener entre 2 y 50 caracteres' })
+  @IsValidName({ message: 'La categoría solo puede contener letras, espacios y acentos' })
   category?: string;
 
   /**
@@ -173,17 +174,20 @@ export class CreateCourseDto {
    * ? Objetivos de aprendizaje específicos del curso
    */
   @ApiProperty({
-    description: 'Specific learning objectives for the course',
+    description: 'Objetivos de aprendizaje específicos del curso',
     example: [
-      'Understand basic programming concepts',
-      'Apply problem-solving techniques',
-      'Develop algorithmic thinking',
+      'Comprender conceptos básicos de programación',
+      'Aplicar técnicas de resolución de problemas',
+      'Desarrollar pensamiento algorítmico',
     ],
     type: [String],
     required: false,
   })
-  @IsArray()
-  @IsString({ each: true })
   @IsOptional()
+  @IsArray({ message: 'Los objetivos de aprendizaje deben ser una lista' })
+  @ArrayMinSize(1, { message: 'Debe tener al menos 1 objetivo de aprendizaje' })
+  @ArrayMaxSize(10, { message: 'No puede tener más de 10 objetivos de aprendizaje' })
+  @IsString({ each: true, message: 'Cada objetivo debe ser texto' })
+  @Length(10, 200, { each: true, message: 'Cada objetivo debe tener entre 10 y 200 caracteres' })
   learningObjectives?: string[];
 }

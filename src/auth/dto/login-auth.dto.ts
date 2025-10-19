@@ -1,5 +1,5 @@
 // Import validation decorators for email and string length validation
-import { IsEmail, MaxLength, MinLength } from 'class-validator';
+import { IsEmail, MaxLength, MinLength, IsNotEmpty, IsString } from 'class-validator';
 // Import Swagger decorator for API documentation
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -26,11 +26,13 @@ export class LoginAuthDto {
    * Used as the primary identifier for user accounts.
    */
   @ApiProperty({
-    description: 'User email address for authentication',
-    example: 'user@example.com',
+    description: 'Correo electrónico del usuario para autenticación',
+    example: 'usuario@ejemplo.com',
     format: 'email',
   })
-  @IsEmail({}, { message: 'Invalid email format' })
+  @IsNotEmpty({ message: 'El correo electrónico es obligatorio' })
+  @IsString({ message: 'El correo electrónico debe ser texto' })
+  @IsEmail({}, { message: 'Debe ser un correo electrónico válido (ej: usuario@dominio.com)' })
   email: string;
 
   /**
@@ -42,12 +44,14 @@ export class LoginAuthDto {
    * - Will be compared against hashed password in database
    */
   @ApiProperty({
-    description: 'User password for authentication',
-    example: 'SecurePassword123',
+    description: 'Contraseña del usuario para autenticación',
+    example: 'MiContraseña123',
     minLength: 6,
     maxLength: 100,
   })
-  @MinLength(6, { message: 'Password must be at least 6 characters long' })
-  @MaxLength(100, { message: 'Password must be at most 100 characters long' })
+  @IsNotEmpty({ message: 'La contraseña es obligatoria' })
+  @IsString({ message: 'La contraseña debe ser texto' })
+  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
+  @MaxLength(100, { message: 'La contraseña no puede tener más de 100 caracteres' })
   password: string;
 }
