@@ -1,0 +1,262 @@
+### SIRHA API - Casos de Prueba de Validaciones
+### Archivo para probar las validaciones implementadas con respuestas 422 detalladas
+
+### Variables
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ===========================================
+### 1. VALIDACIÓN DE ESTUDIANTES
+### ===========================================
+
+### 1.1 Estudiante Válido (Debe retornar 200)
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "Juan Carlos",
+  "lastName": "Pérez García",
+  "programId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "email": "juan.perez@universidad.edu",
+  "phone": "+57 300 123 4567",
+  "currentSemester": 3
+}
+
+### 1.2 Estudiante Inválido - Múltiples Errores (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "abc",
+  "firstName": "Juan123",
+  "lastName": "",
+  "programId": "123",
+  "email": "correo-malo",
+  "phone": "123abc",
+  "currentSemester": 15
+}
+
+### 1.3 Estudiante - Solo Código Inválido (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "E1",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "programId": "60d5ecb8b0a7c4b4b8b9b1a1"
+}
+
+### 1.4 Estudiante - Email Inválido (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "programId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "email": "no-es-email"
+}
+
+### ===========================================
+### 2. VALIDACIÓN DE CURSOS
+### ===========================================
+
+### 2.1 Curso Válido (Debe retornar 200)
+POST {{baseUrl}}/validation-examples/course
+Content-Type: {{contentType}}
+
+{
+  "code": "CS101",
+  "name": "Introducción a las Ciencias de la Computación",
+  "description": "Curso introductorio que cubre los conceptos fundamentales de programación, algoritmos y estructuras de datos básicas para estudiantes de primer año.",
+  "credits": 3,
+  "prerequisites": ["MATH101", "PHYS100"],
+  "isActive": true,
+  "academicLevel": 1,
+  "category": "Núcleo",
+  "learningObjectives": [
+    "Comprender los conceptos básicos de programación",
+    "Aplicar técnicas de resolución de problemas algorítmicos",
+    "Desarrollar habilidades de pensamiento computacional"
+  ]
+}
+
+### 2.2 Curso Inválido - Múltiples Errores (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/course
+Content-Type: {{contentType}}
+
+{
+  "code": "CS",
+  "name": "CS",
+  "description": "Curso",
+  "credits": 15,
+  "prerequisites": ["ABC", "XYZ123"],
+  "academicLevel": 10,
+  "learningObjectives": []
+}
+
+### 2.3 Curso - Código Inválido (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/course
+Content-Type: {{contentType}}
+
+{
+  "code": "COMPUTER123456",
+  "name": "Curso de Computación",
+  "description": "Descripción válida del curso con suficientes caracteres para pasar la validación mínima.",
+  "credits": 3
+}
+
+### 2.4 Curso - Prerrequisitos Inválidos (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/course
+Content-Type: {{contentType}}
+
+{
+  "code": "CS101",
+  "name": "Curso de Computación",
+  "description": "Descripción válida del curso con suficientes caracteres para pasar la validación mínima.",
+  "credits": 3,
+  "prerequisites": ["MATH", "INVALID_CODE", "ABC123DEF"]
+}
+
+### ===========================================
+### 3. VALIDACIÓN DE LOGIN
+### ===========================================
+
+### 3.1 Login Válido (Debe retornar 200)
+POST {{baseUrl}}/validation-examples/login
+Content-Type: {{contentType}}
+
+{
+  "email": "usuario@ejemplo.com",
+  "password": "MiContraseña123"
+}
+
+### 3.2 Login Inválido - Email y Contraseña (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/login
+Content-Type: {{contentType}}
+
+{
+  "email": "no-es-email",
+  "password": "123"
+}
+
+### 3.3 Login - Campos Vacíos (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/login
+Content-Type: {{contentType}}
+
+{
+  "email": "",
+  "password": ""
+}
+
+### 3.4 Login - Solo Email Inválido (Debe retornar 422)
+POST {{baseUrl}}/validation-examples/login
+Content-Type: {{contentType}}
+
+{
+  "email": "usuario@",
+  "password": "ContraseñaVálida123"
+}
+
+### ===========================================
+### 4. CASOS EDGE ESPECÍFICOS
+### ===========================================
+
+### 4.1 Estudiante - Teléfono con Formatos Diferentes
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "programId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "phone": "300-123-4567"
+}
+
+### 4.2 Estudiante - Nombres con Caracteres Especiales
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "José María",
+  "lastName": "Rodríguez-Pérez",
+  "programId": "60d5ecb8b0a7c4b4b8b9b1a1"
+}
+
+### 4.3 Curso - Créditos en el Límite
+POST {{baseUrl}}/validation-examples/course
+Content-Type: {{contentType}}
+
+{
+  "code": "CS101",
+  "name": "Curso de Prueba",
+  "description": "Descripción mínima válida para el curso de prueba con exactamente veinte caracteres.",
+  "credits": 0
+}
+
+### 4.4 Curso - Demasiados Prerrequisitos
+POST {{baseUrl}}/validation-examples/course
+Content-Type: {{contentType}}
+
+{
+  "code": "CS101",
+  "name": "Curso Avanzado",
+  "description": "Curso con muchos prerrequisitos para probar el límite máximo de la validación.",
+  "credits": 3,
+  "prerequisites": [
+    "MATH101", "MATH102", "PHYS101", "PHYS102", "CS100",
+    "CS200", "STAT101", "CALC101", "ALGE101", "GEOM101", "EXTRA101"
+  ]
+}
+
+### ===========================================
+### 5. PRUEBAS DE CAMPOS ANIDADOS
+### ===========================================
+
+### 5.1 Estudiante - ObjectId Inválido con Diferentes Formatos
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "programId": "invalid-object-id"
+}
+
+### 5.2 Estudiante - ObjectId Muy Corto
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "programId": "60d5ecb8"
+}
+
+### 5.3 Estudiante - ObjectId Muy Largo
+POST {{baseUrl}}/validation-examples/student
+Content-Type: {{contentType}}
+
+{
+  "code": "EST001",
+  "firstName": "Juan",
+  "lastName": "Pérez",
+  "programId": "60d5ecb8b0a7c4b4b8b9b1a1extra"
+}
+
+### ===========================================
+### NOTAS DE PRUEBA:
+### 
+### 1. Ejecutar con el servidor corriendo: npm run start:dev
+### 2. Verificar que cada caso retorne el código de estado esperado
+### 3. Revisar que los errores 422 incluyan detalles específicos por campo
+### 4. Confirmar que los mensajes sean claros y accionables
+### 5. Probar en Swagger UI: http://localhost:3000/doc
+### ===========================================
