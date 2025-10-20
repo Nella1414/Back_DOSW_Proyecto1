@@ -149,6 +149,34 @@ export class ChangeRequestsService {
       );
     }
 
+    // Registrar evento ROUTE_ASSIGNED con información completa para troubleshooting
+    await this.auditService.logRouteAssignedEvent(
+      savedRequest._id.toString(),
+      validationResult.assignedProgramId,
+      {
+        originalRule: routingDecision.rule,
+        originalReason: routingDecision.reason,
+        originalProgramId: routingDecision.assignedProgramId,
+      },
+      {
+        validationPassed: validationResult.isValid,
+        fallbackUsed: validationResult.fallbackUsed,
+        fallbackReason: validationResult.reason,
+        finalProgramId: validationResult.assignedProgramId,
+      },
+      {
+        userId,
+        sourceSubjectId: createDto.sourceSubjectId,
+        targetSubjectId: createDto.targetSubjectId,
+        sourceSubjectProgram: await this.getSubjectProgram(createDto.sourceSubjectId),
+        targetSubjectProgram: await this.getSubjectProgram(createDto.targetSubjectId),
+        studentProgramId: routingContext.studentProgramId,
+        routingTimestamp: new Date(),
+        radicado: savedRequest.radicado,
+        priority: savedRequest.priority,
+      },
+    );
+
     return savedRequest;
   }
 
@@ -213,5 +241,26 @@ export class ChangeRequestsService {
     
     const programs = ['PROG-CS', 'PROG-ING', 'PROG-MAT', 'PROG-FIS', 'PROG-ADMIN'];
     return programs[programIndex];
+  }
+
+  /**
+   * Obtiene el programa de una materia (simulación)
+   */
+  private async getSubjectProgram(subjectId: string): Promise<string | null> {
+    // Simulación - en implementación real consultar base de datos
+    const lastChar = subjectId.slice(-1);
+    const lastDigit = parseInt(lastChar);
+    
+    if (isNaN(lastDigit)) return null;
+    
+    const programMap = {
+      0: 'PROG-CS', 1: 'PROG-CS',
+      2: 'PROG-ING', 3: 'PROG-ING',
+      4: 'PROG-MAT', 5: 'PROG-MAT',
+      6: 'PROG-FIS', 7: 'PROG-FIS',
+      8: 'PROG-ADMIN', 9: 'PROG-ADMIN'
+    };
+
+    return programMap[lastDigit] || null;
   }
 }

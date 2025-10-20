@@ -5,7 +5,7 @@ import { AuditRequest, AuditRequestDocument } from '../entities/audit-request.en
 
 export interface AuditEventData {
   requestId: string;
-  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE' | 'ROUTE' | 'FALLBACK';
+  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE' | 'ROUTE' | 'FALLBACK' | 'ROUTE_ASSIGNED';
   actorId: string;
   requestDetails?: Record<string, any>;
   ipAddress?: string;
@@ -115,6 +115,31 @@ export class AuditService {
         originalProgramId,
         fallbackProgramId,
         reason,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * Registra evento ROUTE_ASSIGNED con detalles completos
+   */
+  async logRouteAssignedEvent(
+    requestId: string,
+    finalProgramId: string,
+    routingDecision: Record<string, any>,
+    validationResult: Record<string, any>,
+    troubleshootingInfo: Record<string, any>,
+  ): Promise<AuditRequestDocument> {
+    return this.logEvent({
+      requestId,
+      eventType: 'ROUTE_ASSIGNED',
+      actorId: 'system',
+      requestDetails: {
+        entityType: 'route_assignment',
+        finalProgramId,
+        routingDecision,
+        validationResult,
+        troubleshootingInfo,
         timestamp: new Date().toISOString(),
       },
     });
