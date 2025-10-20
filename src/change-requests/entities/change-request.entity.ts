@@ -29,6 +29,9 @@ export class ChangeRequest {
   @Prop({ required: true, unique: true })
   requestHash: string;
 
+  @Prop({ unique: true, sparse: true })
+  radicado: string;
+
   @Prop()
   reason: string;
 
