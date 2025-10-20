@@ -5,7 +5,7 @@ import { AuditRequest, AuditRequestDocument } from '../entities/audit-request.en
 
 export interface AuditEventData {
   requestId: string;
-  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT';
+  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE';
   actorId: string;
   requestDetails?: Record<string, any>;
   ipAddress?: string;
@@ -50,6 +50,29 @@ export class AuditService {
       requestDetails,
       ipAddress,
       userAgent,
+    });
+  }
+
+  /**
+   * Registra evento RADICATE automáticamente
+   */
+  async logRadicateEvent(
+    requestId: string,
+    radicado: string,
+    priority: string,
+    priorityCriteria: Record<string, any>,
+  ): Promise<AuditRequestDocument> {
+    return this.logEvent({
+      requestId,
+      eventType: 'RADICATE',
+      actorId: 'system',
+      requestDetails: {
+        entityType: 'radicado_assignment',
+        radicado,
+        priority,
+        priorityCriteria,
+        timestamp: new Date().toISOString(),
+      },
     });
   }
 
