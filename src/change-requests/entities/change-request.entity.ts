@@ -1,70 +1,44 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
 
-export enum RequestState {
-  PENDING = 'pending',
-  IN_REVIEW = 'in_review',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-}
-
 export type ChangeRequestDocument = ChangeRequest & Document;
 
-@Schema()
+@Schema({ timestamps: true })
 export class ChangeRequest {
-  @Prop({ required: true, unique: true })
-  radicado: string;
+  @Prop({ required: true })
+  userId: string;
 
-  @Prop({ type: String, ref: 'Student', required: true })
-  studentId: string;
+  @Prop({ required: true })
+  sourceSubjectId: string;
 
-  @Prop({ type: String, ref: 'Program', required: true })
-  programId: string;
-
-  @Prop({ type: String, ref: 'AcademicPeriod', required: true })
-  periodId: string;
-
-  @Prop({ type: String, ref: 'Course', required: true })
-  sourceCourseId: string;
-
-  @Prop({ type: String, ref: 'CourseGroup', required: true })
+  @Prop({ required: true })
   sourceGroupId: string;
 
-  @Prop({ type: String, ref: 'Course' })
-  targetCourseId?: string;
-
-  @Prop({ type: String, ref: 'CourseGroup' })
-  targetGroupId?: string;
-
-  @Prop({ required: true, enum: RequestState })
-  state: RequestState;
+  @Prop({ required: true })
+  targetSubjectId: string;
 
   @Prop({ required: true })
-  priority: number;
+  targetGroupId: string;
+
+  @Prop({ required: true, enum: ['PENDING', 'APPROVED', 'REJECTED'] })
+  status: string;
+
+  @Prop({ required: true, unique: true })
+  requestHash: string;
 
   @Prop()
-  observations?: string;
-
-  @Prop({ default: false })
-  exceptional: boolean;
-
-  @Prop({ type: String, ref: 'User' })
-  assignedToUserId?: string;
+  reason: string;
 
   @Prop()
-  dueAt?: Date;
+  observations: string;
 
-  @Prop()
-  resolvedAt?: Date;
-
-  @Prop()
-  resolutionReason?: string;
-
-  @Prop({ required: true })
-  createdAt: Date;
-
-  @Prop({ required: true })
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const ChangeRequestSchema = SchemaFactory.createForClass(ChangeRequest);
+
+// Índices para performance
+ChangeRequestSchema.index({ requestHash: 1 });
+ChangeRequestSchema.index({ userId: 1, status: 1 });
+ChangeRequestSchema.index({ createdAt: -1 });

@@ -22,10 +22,12 @@ import {
 } from '../academic-periods/entities/academic-period.entity';
 import { Program, ProgramSchema } from '../programs/entities/program.entity';
 import { SchedulesModule } from '../schedules/schedules.module';
+import { AuditModule } from '../common/audit.module';
 
 @Module({
   imports: [
     SchedulesModule,
+    AuditModule,
     MongooseModule.forFeature([
       { name: ChangeRequest.name, schema: ChangeRequestSchema },
       { name: Student.name, schema: StudentSchema },
