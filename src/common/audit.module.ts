@@ -6,6 +6,7 @@ import { AuditService } from './services/audit.service';
 import { RadicadoService } from './services/radicado.service';
 import { PriorityCalculatorService } from './services/priority-calculator.service';
 import { RoutingService } from './services/routing.service';
+import { RoutingValidatorService } from './services/routing-validator.service';
 import { AuditInterceptor } from './interceptors/audit.interceptor';
 
 @Module({
@@ -15,7 +16,7 @@ import { AuditInterceptor } from './interceptors/audit.interceptor';
       { name: RadicadoCounter.name, schema: RadicadoCounterSchema },
     ]),
   ],
-  providers: [AuditService, RadicadoService, PriorityCalculatorService, RoutingService, AuditInterceptor],
-  exports: [AuditService, RadicadoService, PriorityCalculatorService, RoutingService, AuditInterceptor],
+  providers: [AuditService, RadicadoService, PriorityCalculatorService, RoutingService, RoutingValidatorService, AuditInterceptor],
+  exports: [AuditService, RadicadoService, PriorityCalculatorService, RoutingService, RoutingValidatorService, AuditInterceptor],
 })
 export class AuditModule {}
