@@ -23,6 +23,9 @@ export class ChangeRequest {
   @Prop({ required: true, enum: ['PENDING', 'APPROVED', 'REJECTED'] })
   status: string;
 
+  @Prop({ required: true, enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'] })
+  priority: string;
+
   @Prop({ required: true, unique: true })
   requestHash: string;
 

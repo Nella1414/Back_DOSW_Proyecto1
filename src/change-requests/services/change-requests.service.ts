@@ -6,6 +6,7 @@ import { ChangeRequest, ChangeRequestDocument } from '../entities/change-request
 import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
 import { AuditService } from '../../common/services/audit.service';
 import { RadicadoService } from '../../common/services/radicado.service';
+import { PriorityCalculatorService, PriorityContext } from '../../common/services/priority-calculator.service';
 
 @Injectable()
 export class ChangeRequestsService {
@@ -14,6 +15,7 @@ export class ChangeRequestsService {
     private changeRequestModel: Model<ChangeRequestDocument>,
     private auditService: AuditService,
     private radicadoService: RadicadoService,
+    private priorityCalculatorService: PriorityCalculatorService,
   ) {}
 
   /**
@@ -42,11 +44,25 @@ export class ChangeRequestsService {
     // Generar radicado único
     const radicado = await this.radicadoService.generateRadicado();
 
+    // Calcular prioridad automáticamente
+    const priorityContext: PriorityContext = {
+      userId,
+      sourceSubjectId: createDto.sourceSubjectId,
+      targetSubjectId: createDto.targetSubjectId,
+      studentSemester: await this.getStudentSemester(userId),
+      isTargetMandatory: await this.isSubjectMandatory(createDto.targetSubjectId),
+      isAddDropPeriod: this.priorityCalculatorService.isAddDropPeriod(),
+      requestDate: new Date(),
+    };
+
+    const priority = this.priorityCalculatorService.calculatePriority(priorityContext);
+
     // Crear nueva solicitud
     const changeRequest = new this.changeRequestModel({
       userId,
       ...createDto,
       status: 'PENDING',
+      priority,
       requestHash,
       radicado,
     });
@@ -98,5 +114,25 @@ export class ChangeRequestsService {
       throw new BadRequestException('Solicitud no encontrada');
     }
     return request;
+  }
+
+  /**
+   * Obtiene el semestre actual del estudiante (simulación)
+   */
+  private async getStudentSemester(userId: string): Promise<number> {
+    // Simulación - en implementación real consultar base de datos
+    // Retornar semestre aleatorio entre 1-12 para pruebas
+    return Math.floor(Math.random() * 12) + 1;
+  }
+
+  /**
+   * Verifica si una materia es obligatoria (simulación)
+   */
+  private async isSubjectMandatory(subjectId: string): Promise<boolean> {
+    // Simulación - en implementación real consultar base de datos
+    // Considerar obligatorias las materias que terminan en números pares
+    const lastChar = subjectId.slice(-1);
+    const lastDigit = parseInt(lastChar);
+    return !isNaN(lastDigit) && lastDigit % 2 === 0;
   }
 }
