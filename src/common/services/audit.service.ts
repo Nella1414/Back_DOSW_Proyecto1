@@ -5,7 +5,7 @@ import { AuditRequest, AuditRequestDocument } from '../entities/audit-request.en
 
 export interface AuditEventData {
   requestId: string;
-  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE' | 'ROUTE';
+  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE' | 'ROUTE' | 'FALLBACK';
   actorId: string;
   requestDetails?: Record<string, any>;
   ipAddress?: string;
@@ -92,6 +92,29 @@ export class AuditService {
         entityType: 'program_assignment',
         assignedProgramId,
         routingDecision,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * Registra evento FALLBACK cuando se usa programa por defecto
+   */
+  async logFallbackEvent(
+    requestId: string,
+    originalProgramId: string,
+    fallbackProgramId: string,
+    reason: string,
+  ): Promise<AuditRequestDocument> {
+    return this.logEvent({
+      requestId,
+      eventType: 'FALLBACK',
+      actorId: 'system',
+      requestDetails: {
+        entityType: 'program_fallback',
+        originalProgramId,
+        fallbackProgramId,
+        reason,
         timestamp: new Date().toISOString(),
       },
     });

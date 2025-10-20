@@ -8,6 +8,7 @@ import { AuditService } from '../../common/services/audit.service';
 import { RadicadoService } from '../../common/services/radicado.service';
 import { PriorityCalculatorService, PriorityContext } from '../../common/services/priority-calculator.service';
 import { RoutingService, RoutingContext } from '../../common/services/routing.service';
+import { RoutingValidatorService } from '../../common/services/routing-validator.service';
 
 @Injectable()
 export class ChangeRequestsService {
@@ -18,6 +19,7 @@ export class ChangeRequestsService {
     private radicadoService: RadicadoService,
     private priorityCalculatorService: PriorityCalculatorService,
     private routingService: RoutingService,
+    private routingValidatorService: RoutingValidatorService,
   ) {}
 
   /**
@@ -69,13 +71,25 @@ export class ChangeRequestsService {
 
     const routingDecision = await this.routingService.determineProgram(routingContext);
 
+    // Validar y garantizar programa válido
+    const validationResult = await this.routingValidatorService.validateAndEnsureProgram(
+      routingDecision.assignedProgramId,
+      radicado, // Usar radicado como ID temporal
+      {
+        userId,
+        sourceSubjectId: createDto.sourceSubjectId,
+        targetSubjectId: createDto.targetSubjectId,
+        originalRule: routingDecision.rule,
+      }
+    );
+
     // Crear nueva solicitud
     const changeRequest = new this.changeRequestModel({
       userId,
       ...createDto,
       status: 'PENDING',
       priority,
-      assignedProgramId: routingDecision.assignedProgramId,
+      assignedProgramId: validationResult.assignedProgramId,
       requestHash,
       radicado,
     });
@@ -124,6 +138,16 @@ export class ChangeRequestsService {
         routingDate: new Date(),
       },
     );
+
+    // Registrar evento FALLBACK si se usó programa por defecto
+    if (validationResult.fallbackUsed) {
+      await this.auditService.logFallbackEvent(
+        savedRequest._id.toString(),
+        routingDecision.assignedProgramId,
+        validationResult.assignedProgramId,
+        validationResult.reason || 'Programa original inválido',
+      );
+    }
 
     return savedRequest;
   }
