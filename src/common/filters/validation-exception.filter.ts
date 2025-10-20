@@ -47,7 +47,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
    * Formatea errores de class-validator en estructura detallada
    */
   private formatValidationErrors(validationErrors: any[]): any[] {
-    const errors = [];
+    const errors: any[] = [];
 
     for (const error of validationErrors) {
       if (error.constraints) {
@@ -76,7 +76,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
    * Maneja errores de validación en objetos anidados
    */
   private formatNestedErrors(children: any[], parentProperty: string): any[] {
-    const errors = [];
+    const errors: any[] = [];
 
     for (const child of children) {
       const fieldPath = `${parentProperty}.${child.property}`;

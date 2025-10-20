@@ -14,6 +14,8 @@ import {
 import { ApiProperty } from '@nestjs/swagger';
 // Import custom validators
 import { IsStudentCode, IsValidName, IsMongoId } from '../../common/validators/custom-validators';
+import { IsValidObservations } from '../../common/validators/observations.validator';
+import { SanitizeObservations } from '../../common/decorators/sanitize-observations.decorator';
 
 /**
  * CreateStudentDto - Data Transfer Object for creating new students
@@ -149,4 +151,22 @@ export class CreateStudentDto {
   @Min(1, { message: 'El semestre debe ser mínimo 1' })
   @Max(12, { message: 'El semestre no puede ser mayor a 12' })
   currentSemester?: number;
+
+  /**
+   * Student observations (optional)
+   *
+   * Additional notes or comments about the student.
+   * Automatically sanitized to remove dangerous content.
+   */
+  @ApiProperty({
+    description: 'Observaciones adicionales sobre el estudiante',
+    example: 'Estudiante destacado en matemáticas.\nRequiere apoyo en inglés.',
+    required: false,
+    maxLength: 2000,
+  })
+  @IsOptional()
+  @IsString({ message: 'Las observaciones deben ser texto' })
+  @IsValidObservations(2000, { message: 'Las observaciones no pueden exceder 2000 caracteres' })
+  @SanitizeObservations()
+  observations?: string | null;
 }
