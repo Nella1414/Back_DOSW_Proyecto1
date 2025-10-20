@@ -105,7 +105,7 @@ export class PriorityExamplesController {
         studentSemester: dto.studentSemester,
         isTargetMandatory: dto.isTargetMandatory,
         isAddDropPeriod: dto.isAddDropPeriod,
-        isLastSemester: dto.studentSemester >= 10,
+        isLastSemester: (dto.studentSemester || 0) >= 10,
       }
     };
   }

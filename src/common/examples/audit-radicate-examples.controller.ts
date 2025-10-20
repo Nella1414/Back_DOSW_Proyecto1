@@ -63,7 +63,7 @@ export class AuditRadicateExamplesController {
     );
 
     // Obtener historial de auditoría
-    const auditHistory = await this.auditService.getAuditHistory(request._id.toString());
+    const auditHistory = await this.auditService.getAuditHistory((request._id as any).toString());
 
     return {
       request: {

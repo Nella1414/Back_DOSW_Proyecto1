@@ -26,10 +26,10 @@ export class AuditRequest {
   @Prop()
   userAgent: string;
 
-  @Prop()
+  @Prop({ type: Object })
   sourceData: Record<string, any>;
 
-  @Prop()
+  @Prop({ type: Object })
   targetData: Record<string, any>;
 
   createdAt?: Date;

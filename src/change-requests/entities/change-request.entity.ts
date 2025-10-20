@@ -3,6 +3,12 @@ import { Document } from 'mongoose';
 
 export type ChangeRequestDocument = ChangeRequest & Document;
 
+export enum RequestState {
+  PENDING = 'PENDING',
+  APPROVED = 'APPROVED',
+  REJECTED = 'REJECTED'
+}
+
 @Schema({ timestamps: true })
 export class ChangeRequest {
   @Prop({ required: true })

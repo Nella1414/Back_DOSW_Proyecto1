@@ -64,7 +64,7 @@ export class RouteAssignedExamplesController {
     );
 
     // Obtener historial completo de auditoría
-    const auditHistory = await this.auditService.getAuditHistory(request._id.toString());
+    const auditHistory = await this.auditService.getAuditHistory((request._id as any).toString());
 
     // Encontrar evento ROUTE_ASSIGNED específico
     const routeAssignedEvent = auditHistory.find(event => event.eventType === 'ROUTE_ASSIGNED');

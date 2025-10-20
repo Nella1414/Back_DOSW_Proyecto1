@@ -98,7 +98,7 @@ export class ChangeRequestsService {
 
     // Registrar evento CREATE en auditoría
     await this.auditService.logCreateEvent(
-      savedRequest._id.toString(),
+      (savedRequest._id as any).toString(),
       userId,
       {
         entityType: 'change_request',
@@ -112,7 +112,7 @@ export class ChangeRequestsService {
 
     // Registrar evento RADICATE en auditoría
     await this.auditService.logRadicateEvent(
-      savedRequest._id.toString(),
+      (savedRequest._id as any).toString(),
       radicado,
       priority,
       {
@@ -127,7 +127,7 @@ export class ChangeRequestsService {
 
     // Registrar evento ROUTE en auditoría
     await this.auditService.logRouteEvent(
-      savedRequest._id.toString(),
+      (savedRequest._id as any).toString(),
       routingDecision.assignedProgramId,
       {
         rule: routingDecision.rule,
@@ -142,7 +142,7 @@ export class ChangeRequestsService {
     // Registrar evento FALLBACK si se usó programa por defecto
     if (validationResult.fallbackUsed) {
       await this.auditService.logFallbackEvent(
-        savedRequest._id.toString(),
+        (savedRequest._id as any).toString(),
         routingDecision.assignedProgramId,
         validationResult.assignedProgramId,
         validationResult.reason || 'Programa original inválido',
@@ -151,7 +151,7 @@ export class ChangeRequestsService {
 
     // Registrar evento ROUTE_ASSIGNED con información completa para troubleshooting
     await this.auditService.logRouteAssignedEvent(
-      savedRequest._id.toString(),
+      (savedRequest._id as any).toString(),
       validationResult.assignedProgramId,
       {
         originalRule: routingDecision.rule,
@@ -262,5 +262,64 @@ export class ChangeRequestsService {
     };
 
     return programMap[lastDigit] || null;
+  }
+
+  /**
+   * Obtiene solicitudes por facultad
+   */
+  async getRequestsByFaculty(facultyId: string, filters: any): Promise<ChangeRequestDocument[]> {
+    const query: any = { assignedProgramId: facultyId };
+    
+    if (filters.status) {
+      query.status = filters.status;
+    }
+    if (filters.studentId) {
+      query.userId = filters.studentId;
+    }
+    
+    return this.changeRequestModel.find(query).sort({ createdAt: -1 }).exec();
+  }
+
+  /**
+   * Obtiene detalles de una solicitud
+   */
+  async getRequestDetails(id: string): Promise<ChangeRequestDocument> {
+    return this.findOne(id);
+  }
+
+  /**
+   * Aprueba una solicitud de cambio
+   */
+  async approveChangeRequest(id: string, approveDto: any): Promise<ChangeRequestDocument> {
+    const request = await this.findOne(id);
+    
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Solo se pueden aprobar solicitudes pendientes');
+    }
+
+    request.status = 'APPROVED';
+    if (approveDto.observations) {
+      request.observations = approveDto.observations;
+    }
+
+    return request.save();
+  }
+
+  /**
+   * Rechaza una solicitud de cambio
+   */
+  async rejectChangeRequest(id: string, rejectDto: any): Promise<ChangeRequestDocument> {
+    const request = await this.findOne(id);
+    
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Solo se pueden rechazar solicitudes pendientes');
+    }
+
+    request.status = 'REJECTED';
+    if (rejectDto.observations) {
+      request.observations = rejectDto.observations;
+    }
+
+    return request.save();
   }
 }

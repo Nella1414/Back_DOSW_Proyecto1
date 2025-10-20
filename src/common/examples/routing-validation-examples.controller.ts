@@ -153,7 +153,7 @@ export class RoutingValidationExamplesController {
 
     // Obtener historial de auditoría para verificar eventos
     const auditHistory = await this.changeRequestsService['auditService'].getAuditHistory(
-      request._id.toString()
+      (request._id as any).toString()
     );
 
     const fallbackEvent = auditHistory.find(event => event.eventType === 'FALLBACK');
