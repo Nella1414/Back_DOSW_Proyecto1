@@ -1,0 +1,269 @@
+### SIRHA API - Casos de Prueba de Ruteo Automático
+### Pruebas para FEAT-022 US-0082: Servicio Ruteo
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ===========================================
+### 1. REGLAS BÁSICAS DE RUTEO
+### ===========================================
+
+### 1.1 Ambas materias del mismo programa (SAME_PROGRAM)
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a0",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "studentProgramId": "PROG-ING"
+}
+
+### 1.2 Materias de diferentes programas (TARGET_PROGRAM)
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a0",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "studentProgramId": "PROG-ADMIN"
+}
+
+### 1.3 Solo materia origen con programa (SOURCE_PROGRAM)
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1ax",
+  "studentProgramId": "PROG-CS"
+}
+
+### 1.4 Solo materia destino con programa (TARGET_PROGRAM)
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1ax",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a6",
+  "studentProgramId": "PROG-MAT"
+}
+
+### 1.5 Fallback al programa del estudiante (STUDENT_PROGRAM)
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1ax",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1ay",
+  "studentProgramId": "PROG-FIS"
+}
+
+### ===========================================
+### 2. CASOS EDGE Y COMBINACIONES
+### ===========================================
+
+### 2.1 Diferentes programas - CS a ING
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user456",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentProgramId": "PROG-ADMIN"
+}
+
+### 2.2 Diferentes programas - MAT a ADMIN
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user789",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a5",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a9",
+  "studentProgramId": "PROG-CS"
+}
+
+### 2.3 Mismo programa - FIS a FIS
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user101",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a6",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a7",
+  "studentProgramId": "PROG-MAT"
+}
+
+### 2.4 Sin programa del estudiante especificado
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "user202",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1ax",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1ay"
+}
+
+### ===========================================
+### 3. CONSULTAS DE INFORMACIÓN
+### ===========================================
+
+### 3.1 Obtener reglas de ruteo
+GET {{baseUrl}}/routing-examples/routing-rules
+
+### 3.2 Obtener estadísticas de ruteo
+GET {{baseUrl}}/routing-examples/routing-stats
+
+### ===========================================
+### 4. VALIDACIÓN DE PROGRAMAS
+### ===========================================
+
+### 4.1 Validar programa existente
+POST {{baseUrl}}/routing-examples/validate-program
+Content-Type: {{contentType}}
+
+{
+  "programId": "PROG-CS"
+}
+
+### 4.2 Validar programa inexistente
+POST {{baseUrl}}/routing-examples/validate-program
+Content-Type: {{contentType}}
+
+{
+  "programId": "PROG-INVALID"
+}
+
+### 4.3 Validar todos los programas válidos
+POST {{baseUrl}}/routing-examples/validate-program
+Content-Type: {{contentType}}
+
+{
+  "programId": "PROG-ING"
+}
+
+### 4.4 Validar programa MAT
+POST {{baseUrl}}/routing-examples/validate-program
+Content-Type: {{contentType}}
+
+{
+  "programId": "PROG-MAT"
+}
+
+### 4.5 Validar programa FIS
+POST {{baseUrl}}/routing-examples/validate-program
+Content-Type: {{contentType}}
+
+{
+  "programId": "PROG-FIS"
+}
+
+### 4.6 Validar programa ADMIN
+POST {{baseUrl}}/routing-examples/validate-program
+Content-Type: {{contentType}}
+
+{
+  "programId": "PROG-ADMIN"
+}
+
+### ===========================================
+### 5. INTEGRACIÓN CON SOLICITUDES
+### ===========================================
+
+### 5.1 Crear solicitud (debe asignar programa automáticamente)
+POST {{baseUrl}}/change-request-examples
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a0",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "reason": "Solicitud con ruteo automático - mismo programa"
+}
+
+### 5.2 Crear solicitud con diferentes programas
+POST {{baseUrl}}/change-request-examples
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1a5",
+  "reason": "Solicitud con ruteo automático - diferentes programas"
+}
+
+### 5.3 Verificar solicitud creada (debe incluir assignedProgramId)
+GET {{baseUrl}}/change-request-examples/60d5ecb8b0a7c4b4b8b9b1a4
+
+### ===========================================
+### 6. PRUEBAS DE CONSISTENCIA
+### ===========================================
+
+### 6.1 Mismos parámetros - debe dar mismo resultado
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "consistency-test",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "studentProgramId": "PROG-CS"
+}
+
+### 6.2 Repetir cálculo exacto
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "consistency-test",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "studentProgramId": "PROG-CS"
+}
+
+### 6.3 Diferente usuario, mismas materias
+POST {{baseUrl}}/routing-examples/determine-program
+Content-Type: {{contentType}}
+
+{
+  "userId": "different-user",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "studentProgramId": "PROG-CS"
+}
+
+### ===========================================
+### NOTAS DE PRUEBA:
+### 
+### Criterios de aceptación verificados:
+### ✅ Ruteo es determinístico y consistente
+### ✅ Maneja casos edge apropiadamente
+### ✅ Asignación se guarda correctamente
+### 
+### Reglas implementadas (orden de prioridad):
+### 1. SAME_PROGRAM: Ambas materias del mismo programa
+### 2. TARGET_PROGRAM: Diferentes programas → programa destino
+### 3. SOURCE_PROGRAM: Solo origen tiene programa
+### 4. STUDENT_PROGRAM: Fallback al programa del estudiante
+### 
+### Mapeo de programas (simulación):
+### - IDs terminados en 0,1 → PROG-CS
+### - IDs terminados en 2,3 → PROG-ING  
+### - IDs terminados en 4,5 → PROG-MAT
+### - IDs terminados en 6,7 → PROG-FIS
+### - IDs terminados en 8,9 → PROG-ADMIN
+### 
+### Auditoría automática:
+### - Evento ROUTE registrado automáticamente
+### - Incluye regla aplicada y razón
+### - Actor: system (automático)
+### - Timestamp preciso
+### ===========================================

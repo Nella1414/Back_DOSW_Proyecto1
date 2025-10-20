@@ -7,6 +7,7 @@ import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
 import { AuditService } from '../../common/services/audit.service';
 import { RadicadoService } from '../../common/services/radicado.service';
 import { PriorityCalculatorService, PriorityContext } from '../../common/services/priority-calculator.service';
+import { RoutingService, RoutingContext } from '../../common/services/routing.service';
 
 @Injectable()
 export class ChangeRequestsService {
@@ -16,6 +17,7 @@ export class ChangeRequestsService {
     private auditService: AuditService,
     private radicadoService: RadicadoService,
     private priorityCalculatorService: PriorityCalculatorService,
+    private routingService: RoutingService,
   ) {}
 
   /**
@@ -57,12 +59,23 @@ export class ChangeRequestsService {
 
     const priority = this.priorityCalculatorService.calculatePriority(priorityContext);
 
+    // Determinar programa automáticamente
+    const routingContext: RoutingContext = {
+      userId,
+      sourceSubjectId: createDto.sourceSubjectId,
+      targetSubjectId: createDto.targetSubjectId,
+      studentProgramId: await this.getStudentProgramId(userId),
+    };
+
+    const routingDecision = await this.routingService.determineProgram(routingContext);
+
     // Crear nueva solicitud
     const changeRequest = new this.changeRequestModel({
       userId,
       ...createDto,
       status: 'PENDING',
       priority,
+      assignedProgramId: routingDecision.assignedProgramId,
       requestHash,
       radicado,
     });
@@ -95,6 +108,20 @@ export class ChangeRequestsService {
         calculationDate: priorityContext.requestDate,
         priorityDescription: this.priorityCalculatorService.getPriorityDescription(priority),
         priorityWeight: this.priorityCalculatorService.getPriorityWeight(priority),
+      },
+    );
+
+    // Registrar evento ROUTE en auditoría
+    await this.auditService.logRouteEvent(
+      savedRequest._id.toString(),
+      routingDecision.assignedProgramId,
+      {
+        rule: routingDecision.rule,
+        reason: routingDecision.reason,
+        sourceSubjectId: createDto.sourceSubjectId,
+        targetSubjectId: createDto.targetSubjectId,
+        studentProgramId: routingContext.studentProgramId,
+        routingDate: new Date(),
       },
     );
 
@@ -149,5 +176,18 @@ export class ChangeRequestsService {
     const lastChar = subjectId.slice(-1);
     const lastDigit = parseInt(lastChar);
     return !isNaN(lastDigit) && lastDigit % 2 === 0;
+  }
+
+  /**
+   * Obtiene el programa del estudiante (simulación)
+   */
+  private async getStudentProgramId(userId: string): Promise<string> {
+    // Simulación - en implementación real consultar base de datos
+    // Usar hash simple del userId para asignar programa
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const programIndex = hash % 5;
+    
+    const programs = ['PROG-CS', 'PROG-ING', 'PROG-MAT', 'PROG-FIS', 'PROG-ADMIN'];
+    return programs[programIndex];
   }
 }
