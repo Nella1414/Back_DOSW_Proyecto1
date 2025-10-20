@@ -5,6 +5,7 @@ import { createHash } from 'crypto';
 import { ChangeRequest, ChangeRequestDocument } from '../entities/change-request.entity';
 import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
 import { AuditService } from '../../common/services/audit.service';
+import { RadicadoService } from '../../common/services/radicado.service';
 
 @Injectable()
 export class ChangeRequestsService {
@@ -12,6 +13,7 @@ export class ChangeRequestsService {
     @InjectModel(ChangeRequest.name)
     private changeRequestModel: Model<ChangeRequestDocument>,
     private auditService: AuditService,
+    private radicadoService: RadicadoService,
   ) {}
 
   /**
@@ -37,12 +39,16 @@ export class ChangeRequestsService {
       return existingRequest; // Retornar existente sin error
     }
 
+    // Generar radicado único
+    const radicado = await this.radicadoService.generateRadicado();
+
     // Crear nueva solicitud
     const changeRequest = new this.changeRequestModel({
       userId,
       ...createDto,
       status: 'PENDING',
       requestHash,
+      radicado,
     });
 
     const savedRequest = await changeRequest.save();
