@@ -8,7 +8,7 @@ export class AuditRequest {
   @Prop({ required: true })
   requestId: string;
 
-  @Prop({ required: true, enum: ['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT'] })
+  @Prop({ required: true, enum: ['CREATE', 'UPDATE', 'DELETE', 'APPROVE', 'REJECT', 'RADICATE'] })
   eventType: string;
 
   @Prop({ required: true })

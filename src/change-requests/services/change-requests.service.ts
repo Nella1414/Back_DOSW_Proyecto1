@@ -69,7 +69,7 @@ export class ChangeRequestsService {
 
     const savedRequest = await changeRequest.save();
 
-    // Registrar en auditoría
+    // Registrar evento CREATE en auditoría
     await this.auditService.logCreateEvent(
       savedRequest._id.toString(),
       userId,
@@ -81,6 +81,21 @@ export class ChangeRequestsService {
       },
       ipAddress,
       userAgent,
+    );
+
+    // Registrar evento RADICATE en auditoría
+    await this.auditService.logRadicateEvent(
+      savedRequest._id.toString(),
+      radicado,
+      priority,
+      {
+        studentSemester: priorityContext.studentSemester,
+        isTargetMandatory: priorityContext.isTargetMandatory,
+        isAddDropPeriod: priorityContext.isAddDropPeriod,
+        calculationDate: priorityContext.requestDate,
+        priorityDescription: this.priorityCalculatorService.getPriorityDescription(priority),
+        priorityWeight: this.priorityCalculatorService.getPriorityWeight(priority),
+      },
     );
 
     return savedRequest;
