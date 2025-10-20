@@ -5,7 +5,7 @@ import { AuditRequest, AuditRequestDocument } from '../entities/audit-request.en
 
 export interface AuditEventData {
   requestId: string;
-  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE';
+  eventType: 'CREATE' | 'UPDATE' | 'DELETE' | 'APPROVE' | 'REJECT' | 'RADICATE' | 'ROUTE';
   actorId: string;
   requestDetails?: Record<string, any>;
   ipAddress?: string;
@@ -71,6 +71,27 @@ export class AuditService {
         radicado,
         priority,
         priorityCriteria,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }
+
+  /**
+   * Registra evento ROUTE automáticamente
+   */
+  async logRouteEvent(
+    requestId: string,
+    assignedProgramId: string,
+    routingDecision: Record<string, any>,
+  ): Promise<AuditRequestDocument> {
+    return this.logEvent({
+      requestId,
+      eventType: 'ROUTE',
+      actorId: 'system',
+      requestDetails: {
+        entityType: 'program_assignment',
+        assignedProgramId,
+        routingDecision,
         timestamp: new Date().toISOString(),
       },
     });

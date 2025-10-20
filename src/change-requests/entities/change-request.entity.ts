@@ -32,6 +32,9 @@ export class ChangeRequest {
   @Prop({ unique: true, sparse: true })
   radicado: string;
 
+  @Prop({ required: true })
+  assignedProgramId: string;
+
   @Prop()
   reason: string;
 
