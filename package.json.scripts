@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "test:setup": "node scripts/setup-test-environment.js",
+    "test:seed": "npx ts-node src/seeds/test-data.seed.ts",
+    "test:student": "bash test-commands.sh",
+    "test:clean": "mongosh university_test --eval \"db.dropDatabase()\"",
+    "test:full": "npm run test:setup && npm run start:dev"
+  }
+}
