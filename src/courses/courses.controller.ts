@@ -7,6 +7,8 @@ import {
   Param,
   Delete,
   Query,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -16,703 +18,507 @@ import {
   ApiParam,
   ApiBody,
   ApiQuery,
-  ApiConsumes,
-  ApiProduces,
 } from '@nestjs/swagger';
 import { CoursesService } from './services/courses.service';
 import { CreateCourseDto } from './dto/create-course.dto';
 import { UpdateCourseDto } from './dto/update-course.dto';
+import { QueryCoursesDto } from './dto/query-courses.dto';
 
 /**
- * Course Management Controller
- *
- * Handles all course-related operations including course catalog management,
- * curriculum definition, prerequisite tracking, and academic content organization.
- * Provides comprehensive CRUD operations for educational content management.
- *
- * ! Funcion aun no implementada - Service layer requires implementation
+ * Courses Controller
+ * 
+ * Gestión completa de materias/cursos académicos.
+ * Incluye operaciones CRUD y consultas avanzadas con filtros.
+ * 
+ * @tag Courses
  */
 @ApiTags('Courses')
-@Controller('courses')
 @ApiBearerAuth()
-@ApiConsumes('application/json')
-@ApiProduces('application/json')
+@Controller('courses')
 export class CoursesController {
   constructor(private readonly coursesService: CoursesService) {}
 
   /**
-   * Create New Course
-   *
-   * Creates a new course in the academic catalog with comprehensive
-   * metadata including prerequisites, credit hours, and curriculum details.
-   * Only administrators and deans can create courses.
+   * Crear nuevo curso
+   * 
+   * Endpoint para registrar una nueva materia en el catálogo académico.
+   * Valida unicidad del código y existencia de prerequisitos.
+   * 
+   * @route POST /courses
+   * @access Admin, Decanatura
    */
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
-    summary: 'Create new course',
+    summary: 'Crear nuevo curso',
     description: `
-    Creates a new course in the academic catalog system.
-
-    **Features:**
-    - Course metadata management
-    - Credit hour assignment
-    - Prerequisite course dependencies
-    - Course description and objectives
-    - Active status management
-
-    **Authorization:**
-    - Requires ADMIN or DEAN role
-    - Must have CREATE_COURSE permission
-
-    **Validation:**
-    - Course code must be unique
-    - Credit hours must be positive
-    - Prerequisites must exist in system
-    - Required fields validation
-
-    **! Funcion aun no implementada** - Requires service implementation
+      Registra una nueva materia/curso en el sistema académico.
+      
+      **Validaciones aplicadas:**
+      - Código único (no duplicado)
+      - Prerequisitos deben existir en el sistema
+      - Créditos entre 1-10
+      - Nivel académico entre 1-8
+      
+      **Reglas de negocio:**
+      - El código se convierte automáticamente a mayúsculas
+      - Se extrae el prefijo del código automáticamente
+      - Los prerequisitos se validan contra cursos existentes
     `,
-    operationId: 'createCourse',
   })
   @ApiBody({
     type: CreateCourseDto,
-    description: 'Course creation data',
+    description: 'Datos del curso a crear',
     examples: {
       basicCourse: {
-        summary: 'Basic Course',
-        description: 'Simple course without prerequisites',
+        summary: 'Curso básico sin prerequisitos',
         value: {
           code: 'CS101',
           name: 'Introduction to Computer Science',
           credits: 3,
-          description:
-            'Fundamental concepts of computer science and programming',
-          isActive: true,
+          academicLevel: 1,
+          category: 'Core',
+          active: true,
+          description: 'Fundamental concepts of computer science',
         },
       },
       advancedCourse: {
-        summary: 'Advanced Course with Prerequisites',
-        description: 'Course with prerequisite requirements',
+        summary: 'Curso avanzado con prerequisitos',
         value: {
           code: 'CS301',
-          name: 'Advanced Programming',
+          name: 'Data Structures and Algorithms',
           credits: 4,
-          description:
-            'Advanced programming concepts including data structures and algorithms',
+          academicLevel: 3,
+          category: 'Core',
           prerequisites: ['CS101', 'CS201'],
-          isActive: true,
+          active: true,
+          description: 'Advanced data structures and algorithm design',
         },
       },
     },
   })
   @ApiResponse({
     status: 201,
-    description: 'Course created successfully',
+    description: 'Curso creado exitosamente',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
-            code: { type: 'string', example: 'CS101' },
-            name: {
-              type: 'string',
-              example: 'Introduction to Computer Science',
-            },
-            credits: { type: 'number', example: 3 },
-            description: {
-              type: 'string',
-              example: 'Fundamental concepts of computer science',
-            },
-            prerequisites: {
-              type: 'array',
-              items: { type: 'string' },
-              example: [],
-            },
-            isActive: { type: 'boolean', example: true },
-            createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-          },
-        },
-        message: { type: 'string', example: 'Course created successfully' },
+      example: {
+        _id: '507f1f77bcf86cd799439011',
+        code: 'CS101',
+        name: 'Introduction to Computer Science',
+        credits: 3,
+        academicLevel: 1,
+        category: 'Core',
+        prerequisites: [],
+        active: true,
+        codePrefix: 'CS',
+        createdAt: '2025-10-09T10:30:00.000Z',
+        updatedAt: '2025-10-09T10:30:00.000Z',
       },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid course data or validation errors',
+    description: 'Datos inválidos o prerequisitos no existen',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: {
-          type: 'object',
-          properties: {
-            code: { type: 'string', example: 'VALIDATION_ERROR' },
-            message: { type: 'string', example: 'Course validation failed' },
-            details: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  field: { type: 'string', example: 'code' },
-                  message: {
-                    type: 'string',
-                    example: 'Course code must be unique',
-                  },
-                },
-              },
-            },
-          },
-        },
+      example: {
+        statusCode: 400,
+        message: 'Los siguientes prerequisitos no existen: CS999',
+        error: 'Bad Request',
       },
     },
   })
   @ApiResponse({
     status: 409,
-    description: 'Course code already exists',
+    description: 'El código del curso ya existe',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: {
-          type: 'object',
-          properties: {
-            code: { type: 'string', example: 'COURSE_CODE_EXISTS' },
-            message: {
-              type: 'string',
-              example: 'Course with this code already exists',
-            },
-          },
-        },
+      example: {
+        statusCode: 409,
+        message: 'El curso con código "CS101" ya existe',
+        error: 'Conflict',
       },
     },
   })
-  @Post()
   create(@Body() createCourseDto: CreateCourseDto) {
     return this.coursesService.create(createCourseDto);
   }
 
   /**
-   * Get All Courses
-   *
-   * Retrieves a paginated list of all courses in the academic catalog.
-   * Supports filtering by various criteria including active status,
-   * credit hours, and search functionality.
+   * Listar todos los cursos con filtros
+   * 
+   * Endpoint para consultar cursos con paginación y filtros avanzados.
+   * 
+   * @route GET /courses
+   * @access Public, Student, Decanatura, Admin
    */
+  @Get()
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Get all courses',
+    summary: 'Listar cursos con filtros',
     description: `
-    Retrieves a comprehensive list of courses from the academic catalog.
-
-    **Features:**
-    - Pagination support for large catalogs
-    - Filter by active status
-    - Filter by credit hour range
-    - Search by course name or description
-    - Sort by code, name, or credits
-    - Include/exclude prerequisite information
-
-    **Query Parameters:**
-    - page: Page number (default: 1)
-    - limit: Results per page (default: 20, max: 100)
-    - active: Filter by active status (true/false)
-    - minCredits: Minimum credit hours
-    - maxCredits: Maximum credit hours
-    - search: Search term for name/description
-    - sortBy: Sort field (code, name, credits, createdAt)
-    - sortOrder: Sort direction (asc, desc)
-
-    **! Funcion aun no implementada** - Requires service implementation
+      Obtiene una lista paginada de cursos con filtros opcionales.
+      
+      **Filtros disponibles:**
+      - Estado activo/inactivo
+      - Rango de créditos (mínimo y máximo)
+      - Nivel académico
+      - Categoría del curso
+      - Presencia de prerequisitos
+      - Prefijo del código
+      
+      **Ordenamiento:**
+      - Por código, nombre, créditos, nivel académico, o fecha
+      
+      **Paginación:**
+      - Página por defecto: 1
+      - Límite por defecto: 50 cursos
     `,
-    operationId: 'getAllCourses',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Page number',
-    example: 1,
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Results per page',
-    example: 20,
   })
   @ApiQuery({
     name: 'active',
     required: false,
     type: Boolean,
-    description: 'Filter by active status',
+    description: 'Filtrar por estado activo',
+    example: true,
   })
   @ApiQuery({
     name: 'minCredits',
     required: false,
     type: Number,
-    description: 'Minimum credit hours',
+    description: 'Créditos mínimos',
+    example: 2,
   })
   @ApiQuery({
     name: 'maxCredits',
     required: false,
     type: Number,
-    description: 'Maximum credit hours',
+    description: 'Créditos máximos',
+    example: 4,
   })
   @ApiQuery({
-    name: 'search',
+    name: 'academicLevel',
+    required: false,
+    type: Number,
+    description: 'Nivel académico (1-8)',
+    example: 1,
+  })
+  @ApiQuery({
+    name: 'category',
+    required: false,
+    enum: ['Core', 'Elective', 'Laboratory', 'Seminar', 'Workshop', 'Thesis'],
+    description: 'Categoría del curso',
+  })
+  @ApiQuery({
+    name: 'hasPrerequisites',
+    required: false,
+    type: Boolean,
+    description: 'Filtrar cursos con/sin prerequisitos',
+  })
+  @ApiQuery({
+    name: 'codePrefix',
     required: false,
     type: String,
-    description: 'Search term',
+    description: 'Prefijo del código (ej: CS, MATH)',
+    example: 'CS',
   })
   @ApiQuery({
     name: 'sortBy',
     required: false,
-    enum: ['code', 'name', 'credits', 'createdAt'],
-    description: 'Sort field',
-  })
-  @ApiQuery({
-    name: 'sortOrder',
-    required: false,
-    enum: ['asc', 'desc'],
-    description: 'Sort direction',
+    enum: ['code', 'name', 'credits', 'academicLevel', 'createdAt', 'updatedAt'],
+    description: 'Campo de ordenamiento',
+    example: 'code',
   })
   @ApiResponse({
     status: 200,
-    description: 'Courses retrieved successfully',
+    description: 'Lista de cursos obtenida exitosamente',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            courses: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
-                  code: { type: 'string', example: 'CS101' },
-                  name: {
-                    type: 'string',
-                    example: 'Introduction to Computer Science',
-                  },
-                  credits: { type: 'number', example: 3 },
-                  description: {
-                    type: 'string',
-                    example: 'Fundamental concepts',
-                  },
-                  prerequisites: { type: 'array', items: { type: 'string' } },
-                  isActive: { type: 'boolean', example: true },
-                  groupCount: { type: 'number', example: 2 },
-                  enrollmentCount: { type: 'number', example: 45 },
-                },
-              },
-            },
-            pagination: {
-              type: 'object',
-              properties: {
-                total: { type: 'number', example: 150 },
-                page: { type: 'number', example: 1 },
-                limit: { type: 'number', example: 20 },
-                totalPages: { type: 'number', example: 8 },
-              },
-            },
+      example: {
+        data: [
+          {
+            _id: '507f1f77bcf86cd799439011',
+            code: 'CS101',
+            name: 'Introduction to Computer Science',
+            credits: 3,
+            academicLevel: 1,
+            category: 'Core',
+            prerequisites: [],
+            active: true,
+            codePrefix: 'CS',
+            createdAt: '2025-10-09T10:30:00.000Z',
+            updatedAt: '2025-10-09T10:30:00.000Z',
           },
-        },
-        message: { type: 'string', example: 'Courses retrieved successfully' },
+        ],
+        total: 45,
+        page: 1,
+        limit: 50,
+        totalPages: 1,
       },
     },
   })
-  @Get()
-  findAll(
-    @Query('page') page?: number,
-    @Query('limit') limit?: number,
-    @Query('active') active?: boolean,
-    @Query('minCredits') minCredits?: number,
-    @Query('maxCredits') maxCredits?: number,
-    @Query('search') search?: string,
-    @Query('sortBy') sortBy?: string,
-    @Query('sortOrder') sortOrder?: 'asc' | 'desc',
-  ) {
-    return this.coursesService.findAll();
+  @ApiResponse({
+    status: 400,
+    description: 'Parámetros de consulta inválidos',
+  })
+  findAll(@Query() query: QueryCoursesDto) {
+    return this.coursesService.findAll(query);
   }
 
   /**
-   * Get Course by ID
-   *
-   * Retrieves detailed information about a specific course including
-   * its metadata, prerequisites, available groups, and enrollment statistics.
+   * Obtener estadísticas de cursos
+   * 
+   * @route GET /courses/statistics
+   * @access Admin, Decanatura
    */
+  @Get('statistics')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Get course by ID',
+    summary: 'Obtener estadísticas de cursos',
     description: `
-    Retrieves comprehensive details about a specific course.
-
-    **Returned Information:**
-    - Complete course metadata
-    - Prerequisite course details
-    - Available course groups for current period
-    - Enrollment statistics and capacity
-    - Historical enrollment data
-    - Related courses and sequences
-
-    **Access Control:**
-    - Public endpoint for course information
-    - Detailed statistics require authentication
-    - Administrative data requires appropriate permissions
-
-    **! Funcion aun no implementada** - Requires service implementation
+      Obtiene estadísticas generales sobre los cursos del sistema.
+      
+      **Incluye:**
+      - Total de cursos
+      - Cursos activos e inactivos
+      - Distribución por nivel académico
+      - Distribución por categoría
     `,
-    operationId: 'getCourseById',
-  })
-  @ApiParam({
-    name: 'id',
-    type: 'string',
-    description: 'Course unique identifier',
-    example: '674a1b2c3d4e5f6g7h8i9j0k',
   })
   @ApiResponse({
     status: 200,
-    description: 'Course details retrieved successfully',
+    description: 'Estadísticas obtenidas exitosamente',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
-            code: { type: 'string', example: 'CS101' },
-            name: {
-              type: 'string',
-              example: 'Introduction to Computer Science',
-            },
-            credits: { type: 'number', example: 3 },
-            description: {
-              type: 'string',
-              example:
-                'Comprehensive introduction to computer science fundamentals',
-            },
-            prerequisites: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  code: { type: 'string', example: 'MATH101' },
-                  name: { type: 'string', example: 'College Mathematics' },
-                },
-              },
-            },
-            isActive: { type: 'boolean', example: true },
-            groups: {
-              type: 'array',
-              items: {
-                type: 'object',
-                properties: {
-                  id: { type: 'string', example: '675b2c3d4e5f6g7h8i9j0k1l' },
-                  groupNumber: { type: 'string', example: 'A' },
-                  instructor: { type: 'string', example: 'Dr. Smith' },
-                  schedule: { type: 'string', example: 'Mon/Wed 10:00-11:30' },
-                  capacity: { type: 'number', example: 30 },
-                  enrolled: { type: 'number', example: 25 },
-                  available: { type: 'number', example: 5 },
-                },
-              },
-            },
-            statistics: {
-              type: 'object',
-              properties: {
-                totalEnrollments: { type: 'number', example: 245 },
-                averageGrade: { type: 'number', example: 3.7 },
-                passRate: { type: 'number', example: 0.92 },
-                popularityRank: { type: 'number', example: 15 },
-              },
-            },
-            createdAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-            updatedAt: { type: 'string', example: '2024-01-15T10:30:00Z' },
-          },
-        },
-        message: {
-          type: 'string',
-          example: 'Course details retrieved successfully',
-        },
+      example: {
+        total: 120,
+        active: 115,
+        inactive: 5,
+        byLevel: [
+          { _id: 1, count: 30 },
+          { _id: 2, count: 28 },
+          { _id: 3, count: 25 },
+          { _id: 4, count: 20 },
+        ],
+        byCategory: [
+          { _id: 'Core', count: 60 },
+          { _id: 'Elective', count: 40 },
+          { _id: 'Laboratory', count: 15 },
+          { _id: 'Seminar', count: 5 },
+        ],
+      },
+    },
+  })
+  getStatistics() {
+    return this.coursesService.getStatistics();
+  }
+
+  /**
+   * Obtener un curso por ID
+   * 
+   * @route GET /courses/:id
+   * @access Public, Student, Decanatura, Admin
+   */
+  @Get(':id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Obtener curso por ID',
+    description: `
+      Obtiene los detalles completos de un curso específico.
+      
+      **Incluye:**
+      - Información completa del curso
+      - Lista de prerequisitos
+      - Metadata de creación y actualización
+    `,
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'ID del curso (MongoDB ObjectId)',
+    example: '507f1f77bcf86cd799439011',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Curso encontrado exitosamente',
+    schema: {
+      example: {
+        _id: '507f1f77bcf86cd799439011',
+        code: 'CS101',
+        name: 'Introduction to Computer Science',
+        credits: 3,
+        academicLevel: 1,
+        category: 'Core',
+        prerequisites: [],
+        active: true,
+        description: 'Fundamental concepts of computer science',
+        codePrefix: 'CS',
+        createdAt: '2025-10-09T10:30:00.000Z',
+        updatedAt: '2025-10-09T10:30:00.000Z',
       },
     },
   })
   @ApiResponse({
     status: 404,
-    description: 'Course not found',
+    description: 'Curso no encontrado',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: {
-          type: 'object',
-          properties: {
-            code: { type: 'string', example: 'COURSE_NOT_FOUND' },
-            message: {
-              type: 'string',
-              example: 'Course with specified ID not found',
-            },
-          },
-        },
+      example: {
+        statusCode: 404,
+        message: 'Curso con ID "507f1f77bcf86cd799439011" no encontrado',
+        error: 'Not Found',
       },
     },
   })
-  @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.coursesService.findOne(+id);
+    return this.coursesService.findOne(id);
   }
 
   /**
-   * Update Course
-   *
-   * Updates course information including metadata, prerequisites,
-   * and status. Maintains data integrity and validates all changes
-   * against business rules and academic constraints.
+   * Actualizar curso
+   * 
+   * @route PATCH /courses/:id
+   * @access Admin, Decanatura
    */
+  @Patch(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Update course',
+    summary: 'Actualizar curso',
     description: `
-    Updates an existing course with new information or modifications.
-
-    **Updateable Fields:**
-    - Course name and description
-    - Credit hours (with enrollment validation)
-    - Prerequisites (with dependency validation)
-    - Active status
-    - Course metadata
-
-    **Business Rules:**
-    - Cannot modify courses with active enrollments significantly
-    - Credit hour changes require administrative approval
-    - Prerequisite changes validate dependency chains
-    - Status changes affect course group availability
-
-    **Authorization:**
-    - Requires ADMIN or DEAN role
-    - Must have UPDATE_COURSE permission
-
-    **! Funcion aun no implementada** - Requires service implementation
+      Actualiza la información de un curso existente.
+      
+      **Validaciones aplicadas:**
+      - Si se cambia el código, verifica que no exista duplicado
+      - Si se modifican prerequisitos, valida que existan
+      - Todos los campos son opcionales
+      
+      **Nota:** Los cambios en prerequisitos pueden afectar otros cursos
+      que dependen de este curso.
     `,
-    operationId: 'updateCourse',
   })
   @ApiParam({
     name: 'id',
-    type: 'string',
-    description: 'Course unique identifier to update',
-    example: '674a1b2c3d4e5f6g7h8i9j0k',
+    description: 'ID del curso a actualizar',
+    example: '507f1f77bcf86cd799439011',
   })
   @ApiBody({
     type: UpdateCourseDto,
-    description: 'Course update data',
+    description: 'Campos a actualizar (todos opcionales)',
     examples: {
-      nameUpdate: {
-        summary: 'Update Course Name',
-        description: 'Change course name and description',
+      updateName: {
+        summary: 'Actualizar solo el nombre',
         value: {
-          name: 'Advanced Computer Science Concepts',
-          description:
-            'Updated comprehensive introduction with advanced topics',
+          name: 'Advanced Computer Science',
         },
       },
-      prerequisiteUpdate: {
-        summary: 'Update Prerequisites',
-        description: 'Modify course prerequisite requirements',
+      updateMultiple: {
+        summary: 'Actualizar varios campos',
         value: {
-          prerequisites: ['MATH101', 'CS100'],
-          description: 'Added mathematics prerequisite for better preparation',
+          credits: 4,
+          description: 'Updated course description',
+          prerequisites: ['CS100'],
         },
       },
-      statusUpdate: {
-        summary: 'Deactivate Course',
-        description: 'Mark course as inactive',
+      deactivate: {
+        summary: 'Desactivar curso',
         value: {
-          isActive: false,
-          reason: 'Course content outdated, replaced by CS102',
+          active: false,
         },
       },
     },
   })
   @ApiResponse({
     status: 200,
-    description: 'Course updated successfully',
+    description: 'Curso actualizado exitosamente',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
-            code: { type: 'string', example: 'CS101' },
-            name: {
-              type: 'string',
-              example: 'Advanced Computer Science Concepts',
-            },
-            credits: { type: 'number', example: 3 },
-            description: {
-              type: 'string',
-              example: 'Updated comprehensive introduction',
-            },
-            prerequisites: {
-              type: 'array',
-              items: { type: 'string' },
-              example: ['MATH101', 'CS100'],
-            },
-            isActive: { type: 'boolean', example: true },
-            updatedAt: { type: 'string', example: '2024-01-15T10:45:00Z' },
-          },
-        },
-        message: { type: 'string', example: 'Course updated successfully' },
+      example: {
+        _id: '507f1f77bcf86cd799439011',
+        code: 'CS101',
+        name: 'Advanced Computer Science',
+        credits: 4,
+        academicLevel: 1,
+        category: 'Core',
+        prerequisites: ['CS100'],
+        active: true,
+        codePrefix: 'CS',
+        createdAt: '2025-10-09T10:30:00.000Z',
+        updatedAt: '2025-10-09T15:45:00.000Z',
       },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid update data or business rule violation',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: {
-          type: 'object',
-          properties: {
-            code: { type: 'string', example: 'INVALID_PREREQUISITE' },
-            message: {
-              type: 'string',
-              example:
-                'Cannot add prerequisite that creates circular dependency',
-            },
-          },
-        },
-      },
-    },
+    description: 'Datos inválidos o prerequisitos no existen',
   })
-  @Patch(':id')
+  @ApiResponse({
+    status: 404,
+    description: 'Curso no encontrado',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflicto al actualizar (código duplicado)',
+  })
   update(@Param('id') id: string, @Body() updateCourseDto: UpdateCourseDto) {
-    return this.coursesService.update(+id, updateCourseDto);
+    return this.coursesService.update(id, updateCourseDto);
   }
 
   /**
-   * Delete Course
-   *
-   * Removes a course from the academic catalog. This operation has
-   * strict business rules to maintain academic integrity and
-   * prevent data inconsistencies.
+   * Eliminar curso (con validaciones críticas)
+   * 
+   * @route DELETE /courses/:id
+   * @access Admin
    */
+  @Delete(':id')
+  @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Delete course',
+    summary: 'Eliminar/Desactivar curso',
     description: `
-    Permanently removes a course from the academic catalog.
-
-    **Deletion Rules:**
-    - Cannot delete courses with active enrollments
-    - Cannot delete courses that are prerequisites for other courses
-    - Cannot delete courses with historical grade data (archive instead)
-    - Must be explicitly confirmed for safety
-
-    **Safety Measures:**
-    - Validates no dependent courses exist
-    - Checks for active enrollments
-    - Requires administrative confirmation
-    - Provides soft delete option for audit purposes
-
-    **Alternative Options:**
-    - Consider marking as inactive instead of deletion
-    - Archive course for historical reference
-    - Transfer enrollments to replacement course
-
-    **! Funcion aun no implementada** - Requires service implementation
+      Desactiva un curso del sistema (soft delete).
+      
+      ⚠️ **VALIDACIONES CRÍTICAS:**
+      - NO se puede eliminar si es prerequisito de otros cursos
+      - NO se puede eliminar si tiene estudiantes inscritos activos
+      
+      **Comportamiento:**
+      - Por defecto, el curso se marca como "active: false" (soft delete)
+      - El curso permanece en la base de datos para auditoría
+      - Si se necesita eliminación física, contactar con soporte
+      
+      **Reglas de negocio (según US-0051):**
+      - Impedir eliminar materia con grupos activos
+      - Mantener integridad referencial del sistema
     `,
-    operationId: 'deleteCourse',
   })
   @ApiParam({
     name: 'id',
-    type: 'string',
-    description: 'Course unique identifier to delete',
-    example: '674a1b2c3d4e5f6g7h8i9j0k',
+    description: 'ID del curso a eliminar',
+    example: '507f1f77bcf86cd799439011',
   })
   @ApiResponse({
     status: 200,
-    description: 'Course deleted successfully',
+    description: 'Curso desactivado exitosamente',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: true },
-        data: {
-          type: 'object',
-          properties: {
-            id: { type: 'string', example: '674a1b2c3d4e5f6g7h8i9j0k' },
-            code: { type: 'string', example: 'CS101' },
-            name: {
-              type: 'string',
-              example: 'Introduction to Computer Science',
-            },
-            deletedAt: { type: 'string', example: '2024-01-15T10:50:00Z' },
-          },
+      example: {
+        message: 'Curso "CS101" desactivado exitosamente',
+        course: {
+          _id: '507f1f77bcf86cd799439011',
+          code: 'CS101',
+          name: 'Introduction to Computer Science',
+          active: false,
         },
-        message: { type: 'string', example: 'Course deleted successfully' },
       },
     },
   })
   @ApiResponse({
     status: 400,
-    description: 'Cannot delete course due to business constraints',
+    description: 'No se puede eliminar el curso por dependencias',
     schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: {
-          type: 'object',
-          properties: {
-            code: { type: 'string', example: 'COURSE_HAS_DEPENDENCIES' },
-            message: {
-              type: 'string',
-              example:
-                'Cannot delete course: 3 other courses list this as prerequisite',
-            },
-            details: {
-              type: 'object',
-              properties: {
-                dependentCourses: {
-                  type: 'array',
-                  items: { type: 'string' },
-                  example: ['CS201', 'CS301', 'IT150'],
-                },
-                activeEnrollments: { type: 'number', example: 0 },
-                historicalEnrollments: { type: 'number', example: 245 },
-              },
-            },
-          },
-        },
+      example: {
+        statusCode: 400,
+        message: 'No se puede eliminar el curso "CS101" porque es prerequisito de: CS201, CS301',
+        error: 'Bad Request',
       },
     },
   })
   @ApiResponse({
     status: 404,
-    description: 'Course not found',
-    schema: {
-      type: 'object',
-      properties: {
-        success: { type: 'boolean', example: false },
-        error: {
-          type: 'object',
-          properties: {
-            code: { type: 'string', example: 'COURSE_NOT_FOUND' },
-            message: {
-              type: 'string',
-              example: 'Course with specified ID not found',
-            },
-          },
-        },
-      },
-    },
+    description: 'Curso no encontrado',
   })
-  @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.coursesService.remove(+id);
+    return this.coursesService.remove(id);
   }
 }

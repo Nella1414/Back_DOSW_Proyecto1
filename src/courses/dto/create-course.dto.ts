@@ -9,181 +9,174 @@ import {
   Max,
   Length,
   Matches,
+  IsIn,
+  ArrayMaxSize,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 
 /**
  * Create Course DTO
  *
- * Data Transfer Object for creating new courses in the academic catalog.
- * This DTO validates and structures the input data required to establish
- * a new course with comprehensive metadata, prerequisites, and academic details.
- *
- * ! IMPORTANTE: Los cursos son fundamentales para el sistema académico
- * ! y deben ser creados con validación exhaustiva
+ * Data Transfer Object for creating new courses in the academic system.
+ * Includes comprehensive business validations and formatting rules.
  */
 export class CreateCourseDto {
   /**
-   * Unique course identification code
+   * Unique course code.
+   * Format: Uppercase letters followed by optional numbers.
+   * Examples: "CS101", "MATH", "ENG2000"
    *
-   * * Debe ser único en todo el sistema académico
-   * ? Formato sugerido: [AREA][LEVEL] (ej: CS101, MATH201)
+   * @example "CS101"
    */
   @ApiProperty({
-    description: 'Unique course identification code',
+    description: 'Unique course code (uppercase letters and numbers)',
     example: 'CS101',
-    minLength: 3,
-    maxLength: 15,
-    pattern: '^[A-Z]{2,4}[0-9]{3,4}$',
+    minLength: 2,
+    maxLength: 10,
+    pattern: '^[A-Z][A-Z0-9]*$',
   })
-  @IsString()
-  @IsNotEmpty()
-  @Length(3, 15)
-  @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, {
-    message:
-      'Course code must follow format: 2-4 letters + 3-4 numbers (e.g., CS101, MATH1001)',
+  @IsNotEmpty({ message: 'Course code is required' })
+  @IsString({ message: 'Course code must be a string' })
+  @Length(2, 10, { message: 'Course code must be between 2 and 10 characters' })
+  @Matches(/^[A-Z][A-Z0-9]*$/, {
+    message: 'Course code must start with an uppercase letter and contain only uppercase letters and numbers',
   })
+  @Transform(({ value }) => value?.toUpperCase().trim())
   code: string;
 
   /**
-   * Complete course name
+   * Full name of the course.
    *
-   * * Nombre descriptivo y completo del curso
+   * @example "Introduction to Computer Science"
    */
   @ApiProperty({
-    description: 'Complete course name',
+    description: 'Full descriptive name of the course',
     example: 'Introduction to Computer Science',
-    minLength: 5,
-    maxLength: 100,
+    minLength: 3,
+    maxLength: 200,
   })
-  @IsString()
-  @IsNotEmpty()
-  @Length(5, 100)
+  @IsNotEmpty({ message: 'Course name is required' })
+  @IsString({ message: 'Course name must be a string' })
+  @Length(3, 200, { message: 'Course name must be between 3 and 200 characters' })
+  @Transform(({ value }) => value?.trim())
   name: string;
 
   /**
-   * Detailed course description
+   * Number of academic credits.
+   * Valid range: 1-10.
    *
-   * * Descripción completa del contenido y objetivos del curso
+   * @example 3
    */
   @ApiProperty({
-    description:
-      'Detailed course description including objectives and content overview',
-    example:
-      'Fundamental concepts of computer science including programming principles, data structures, and problem-solving techniques.',
-    minLength: 20,
-    maxLength: 1000,
-  })
-  @IsString()
-  @IsNotEmpty()
-  @Length(20, 1000)
-  description: string;
-
-  /**
-   * Number of academic credits
-   *
-   * * Número de créditos académicos del curso
-   * ! Debe estar entre 1 y 10 créditos
-   */
-  @ApiProperty({
-    description: 'Number of academic credits for this course',
+    description: 'Number of academic credits',
     example: 3,
     minimum: 1,
     maximum: 10,
   })
-  @IsNumber()
-  @Min(1)
-  @Max(10)
+  @IsNotEmpty({ message: 'Credits are required' })
+  @IsNumber({}, { message: 'Credits must be a number' })
+  @Min(1, { message: 'Minimum credits is 1' })
+  @Max(10, { message: 'Maximum credits is 10' })
   credits: number;
 
   /**
-   * Course prerequisites
+   * Academic level.
+   * 1-4: Undergraduate
+   * 5-8: Graduate
    *
-   * ? Lista de códigos de cursos que son prerrequisitos
-   * * Opcional - algunos cursos no tienen prerrequisitos
+   * @example 1
    */
   @ApiProperty({
-    description:
-      'List of prerequisite course codes that must be completed before taking this course',
-    example: ['MATH101', 'CS100'],
-    type: [String],
-    required: false,
-  })
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  prerequisites?: string[];
-
-  /**
-   * Whether the course is currently active
-   *
-   * * Controla si el curso está disponible para matrícula
-   * * Por defecto: true
-   */
-  @ApiProperty({
-    description:
-      'Whether the course is currently active and available for enrollment',
-    example: true,
-    default: true,
-    required: false,
-  })
-  @IsBoolean()
-  @IsOptional()
-  isActive?: boolean;
-
-  /**
-   * Academic level or year
-   *
-   * ? Nivel académico del curso (1-4 para pregrado, 5+ para posgrado)
-   */
-  @ApiProperty({
-    description:
-      'Academic level or year of the course (1-4 for undergraduate, 5+ for graduate)',
+    description: 'Academic level (1-4 undergraduate, 5-8 graduate)',
     example: 1,
     minimum: 1,
     maximum: 8,
-    required: false,
   })
-  @IsNumber()
-  @IsOptional()
-  @Min(1)
-  @Max(8)
-  academicLevel?: number;
+  @IsNotEmpty({ message: 'Academic level is required' })
+  @IsNumber({}, { message: 'Academic level must be a number' })
+  @Min(1, { message: 'Minimum academic level is 1' })
+  @Max(8, { message: 'Maximum academic level is 8' })
+  academicLevel: number;
 
   /**
-   * Course category or area
+   * Course category.
+   * Allowed values: Core, Elective, Laboratory, Seminar, Workshop, Thesis.
    *
-   * ? Categoría o área académica del curso
+   * @example "Core"
    */
   @ApiProperty({
-    description:
-      'Course category or academic area (e.g., "Core", "Elective", "Laboratory")',
+    description: 'Course category',
     example: 'Core',
-    maxLength: 50,
-    required: false,
+    enum: ['Core', 'Elective', 'Laboratory', 'Seminar', 'Workshop', 'Thesis'],
   })
-  @IsString()
-  @IsOptional()
-  @Length(0, 50)
-  category?: string;
+  @IsNotEmpty({ message: 'Category is required' })
+  @IsString({ message: 'Category must be a string' })
+  @IsIn(['Core', 'Elective', 'Laboratory', 'Seminar', 'Workshop', 'Thesis'], {
+    message: 'Invalid category. Allowed values: Core, Elective, Laboratory, Seminar, Workshop, Thesis',
+  })
+  category: string;
 
   /**
-   * Learning objectives
+   * List of prerequisite course codes.
+   * Must be valid course codes.
    *
-   * ? Objetivos de aprendizaje específicos del curso
+   * @example ["CS100", "MATH101"]
    */
   @ApiProperty({
-    description: 'Specific learning objectives for the course',
-    example: [
-      'Understand basic programming concepts',
-      'Apply problem-solving techniques',
-      'Develop algorithmic thinking',
-    ],
-    type: [String],
+    description: 'List of prerequisite course codes',
+    example: ['CS100', 'MATH101'],
     required: false,
+    type: [String],
+    maxItems: 10,
   })
-  @IsArray()
-  @IsString({ each: true })
   @IsOptional()
-  learningObjectives?: string[];
+  @IsArray({ message: 'Prerequisites must be an array' })
+  @ArrayMaxSize(10, { message: 'Maximum 10 prerequisites allowed' })
+  @IsString({ each: true, message: 'Each prerequisite must be a string' })
+  @Matches(/^[A-Z][A-Z0-9]*$/, {
+    each: true,
+    message: 'Each prerequisite code must be valid (uppercase letters and numbers)',
+  })
+  @Transform(({ value }) => 
+    Array.isArray(value) 
+      ? value.map(v => v?.toUpperCase().trim()).filter(Boolean)
+      : []
+  )
+  prerequisites?: string[];
+
+  /**
+   * Indicates if the course is active.
+   * true: Active and available
+   * false: Inactive or discontinued
+   *
+   * @example true
+   */
+  @ApiProperty({
+    description: 'Indicates if the course is active',
+    example: true,
+    required: false,
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean({ message: 'Active status must be true or false' })
+  active?: boolean;
+
+  /**
+   * Detailed course description (optional).
+   * Includes content, objectives, and additional details.
+   *
+   * @example "This course introduces fundamental concepts of computer science..."
+   */
+  @ApiProperty({
+    description: 'Detailed course description',
+    example: 'This course introduces fundamental concepts of computer science including algorithms, data structures, and programming paradigms.',
+    required: false,
+    maxLength: 1000,
+  })
+  @IsOptional()
+  @IsString({ message: 'Description must be a string' })
+  @Length(0, 1000, { message: 'Description cannot exceed 1000 characters' })
+  @Transform(({ value }) => value?.trim())
+  description?: string;
 }
