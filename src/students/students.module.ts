@@ -4,6 +4,9 @@ import { StudentsService } from './services/students.service';
 import { StudentsController } from './students.controller';
 import { Student, StudentSchema } from './entities/student.entity';
 import { SchedulesModule } from '../schedules/schedules.module';
+import { AuditModule } from '../common/audit.module';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { AuditInterceptor } from '../common/interceptors/audit.interceptor';
 
 /**
  * Students Module
@@ -32,9 +35,17 @@ import { SchedulesModule } from '../schedules/schedules.module';
     MongooseModule.forFeature([{ name: Student.name, schema: StudentSchema }]),
     // * Integración con módulo de horarios para funcionalidad académica
     SchedulesModule,
+    // * Módulo de auditoría para trazabilidad
+    AuditModule,
   ],
   controllers: [StudentsController],
-  providers: [StudentsService],
+  providers: [
+    StudentsService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: AuditInterceptor,
+    },
+  ],
   exports: [MongooseModule, StudentsService],
 })
 export class StudentsModule {}

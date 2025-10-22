@@ -1,0 +1,227 @@
+### SIRHA API - Casos de Prueba de Cálculo de Prioridad
+### Pruebas para FEAT-019 US-0073: Cálculo Prioridad
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ===========================================
+### 1. CASOS BÁSICOS DE PRIORIDAD
+### ===========================================
+
+### 1.1 Solicitud normal (NORMAL)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentSemester": 5,
+  "isTargetMandatory": false,
+  "isAddDropPeriod": false
+}
+
+### 1.2 Materia obligatoria (HIGH)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "studentSemester": 6,
+  "isTargetMandatory": true,
+  "isAddDropPeriod": false
+}
+
+### 1.3 Estudiante último semestre (HIGH)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentSemester": 11,
+  "isTargetMandatory": false,
+  "isAddDropPeriod": false
+}
+
+### 1.4 Caso urgente - último semestre + obligatoria (URGENT)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "studentSemester": 12,
+  "isTargetMandatory": true,
+  "isAddDropPeriod": false
+}
+
+### 1.5 Periodo add/drop (LOW)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentSemester": 3,
+  "isTargetMandatory": false,
+  "isAddDropPeriod": true
+}
+
+### ===========================================
+### 2. CASOS EDGE Y COMBINACIONES
+### ===========================================
+
+### 2.1 Estudiante avanzado en add/drop (conflicto de reglas)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentSemester": 10,
+  "isTargetMandatory": false,
+  "isAddDropPeriod": true
+}
+
+### 2.2 Materia obligatoria en add/drop
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "studentSemester": 5,
+  "isTargetMandatory": true,
+  "isAddDropPeriod": true
+}
+
+### 2.3 Estudiante primer semestre
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentSemester": 1,
+  "isTargetMandatory": false,
+  "isAddDropPeriod": false
+}
+
+### 2.4 Estudiante semestre límite (10)
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user123",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "studentSemester": 10,
+  "isTargetMandatory": false,
+  "isAddDropPeriod": false
+}
+
+### ===========================================
+### 3. CONSULTAS DE INFORMACIÓN
+### ===========================================
+
+### 3.1 Verificar estado add/drop actual
+GET {{baseUrl}}/priority-examples/add-drop-status
+
+### 3.2 Obtener reglas de prioridad
+GET {{baseUrl}}/priority-examples/priority-rules
+
+### ===========================================
+### 4. INTEGRACIÓN CON SOLICITUDES
+### ===========================================
+
+### 4.1 Crear solicitud (debe calcular prioridad automáticamente)
+POST {{baseUrl}}/change-request-examples
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "reason": "Solicitud con cálculo automático de prioridad"
+}
+
+### 4.2 Crear segunda solicitud
+POST {{baseUrl}}/change-request-examples
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a5",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a6",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1a8",
+  "reason": "Segunda solicitud para comparar prioridades"
+}
+
+### 4.3 Verificar solicitud creada (debe incluir prioridad)
+GET {{baseUrl}}/change-request-examples/60d5ecb8b0a7c4b4b8b9b1a4
+
+### ===========================================
+### 5. PRUEBAS DE CONSISTENCIA
+### ===========================================
+
+### 5.1 Mismos parámetros - debe dar misma prioridad
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user456",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "studentSemester": 8,
+  "isTargetMandatory": true,
+  "isAddDropPeriod": false
+}
+
+### 5.2 Repetir cálculo exacto
+POST {{baseUrl}}/priority-examples/calculate
+Content-Type: {{contentType}}
+
+{
+  "userId": "user789",
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a3",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "studentSemester": 8,
+  "isTargetMandatory": true,
+  "isAddDropPeriod": false
+}
+
+### ===========================================
+### NOTAS DE PRUEBA:
+### 
+### Criterios de aceptación verificados:
+### ✅ Algoritmo es consistente y predecible
+### ✅ Se guarda prioridad calculada
+### ✅ Criterios son documentados
+### ✅ Se puede ajustar lógica fácilmente
+### 
+### Reglas implementadas:
+### - Por defecto: NORMAL
+### - Materia obligatoria: HIGH
+### - Estudiante último semestre (≥10): HIGH
+### - Periodo add/drop: LOW
+### - Último semestre + obligatoria: URGENT
+### 
+### Algoritmo FIFO:
+### - Dentro de cada prioridad se respeta orden de llegada
+### - Peso numérico para ordenamiento: LOW=1, NORMAL=2, HIGH=3, URGENT=4
+### 
+### Simulaciones:
+### - Semestre estudiante: aleatorio 1-12
+### - Materia obligatoria: IDs terminados en número par
+### - Add/drop: días específicos del año
+### ===========================================

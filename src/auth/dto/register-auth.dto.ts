@@ -7,8 +7,11 @@ import {
   IsBoolean,
   IsString,
   IsUrl,
+  IsNotEmpty,
+  Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsValidName, IsStrongPassword } from '../../common/validators/custom-validators';
 
 /**
  * RegisterAuthDto - Data Transfer Object for user registration
@@ -37,15 +40,17 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * Required for all registration types to ensure proper user identification.
    */
   @ApiProperty({
-    description: 'User full legal name for official records and identification',
-    example: 'John Michael Doe',
+    description: 'Nombre completo del usuario para registros oficiales',
+    example: 'Juan Carlos Pérez',
     minLength: 3,
-    maxLength: 50,
+    maxLength: 100,
     required: true,
   })
-  @IsString({ message: 'Name must be a string' })
-  @MinLength(3, { message: 'Name must be at least 3 characters long' })
-  @MaxLength(50, { message: 'Name must be at most 50 characters long' })
+  @IsNotEmpty({ message: 'El nombre completo es obligatorio' })
+  @IsString({ message: 'El nombre debe ser texto' })
+  @MinLength(3, { message: 'El nombre debe tener al menos 3 caracteres' })
+  @MaxLength(100, { message: 'El nombre no puede tener más de 100 caracteres' })
+  @IsValidName({ message: 'El nombre solo puede contener letras, espacios y acentos' })
   name: string;
 
   /**
@@ -55,15 +60,15 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * Can be different from legal name for user preference.
    */
   @ApiProperty({
-    description: 'Display name shown in the application interface',
-    example: 'John Doe',
-    maxLength: 100,
+    description: 'Nombre para mostrar en la interfaz de la aplicación',
+    example: 'Juan Pérez',
+    maxLength: 50,
     required: true,
   })
-  @IsString({ message: 'Display name must be a string' })
-  @MaxLength(100, {
-    message: 'Display name must be at most 100 characters long',
-  })
+  @IsNotEmpty({ message: 'El nombre para mostrar es obligatorio' })
+  @IsString({ message: 'El nombre para mostrar debe ser texto' })
+  @MaxLength(50, { message: 'El nombre para mostrar no puede tener más de 50 caracteres' })
+  @IsValidName({ message: 'El nombre para mostrar solo puede contener letras, espacios y acentos' })
   displayName: string;
 
   /**
@@ -73,12 +78,14 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * HR systems, or other identity providers. Allows for seamless data correlation.
    */
   @ApiProperty({
-    description: 'External system identifier for integration purposes',
+    description: 'Identificador de sistema externo para integración',
     example: 'ext_usr_abc123def456',
     required: false,
+    pattern: '^[a-zA-Z0-9_-]+$',
   })
   @IsOptional()
-  @IsString({ message: 'External ID must be a string' })
+  @IsString({ message: 'El ID externo debe ser texto' })
+  @Matches(/^[a-zA-Z0-9_-]+$/, { message: 'El ID externo solo puede contener letras, números, guiones y guiones bajos' })
   externalId?: string;
 
   /**
@@ -89,13 +96,13 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * for administrative approval workflows.
    */
   @ApiProperty({
-    description: 'Account activation status - controls immediate access',
+    description: 'Estado de activación de la cuenta - controla el acceso inmediato',
     example: true,
     default: true,
     required: false,
   })
   @IsOptional()
-  @IsBoolean({ message: 'Active status must be a boolean value' })
+  @IsBoolean({ message: 'El estado activo debe ser verdadero o falso' })
   active?: boolean;
 
   /**
@@ -105,12 +112,12 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * Automatically populated during Google Sign-In registration.
    */
   @ApiProperty({
-    description: 'Google account identifier for OAuth integration',
+    description: 'Identificador de cuenta de Google para integración OAuth',
     example: 'google_108234567890123456789',
     required: false,
   })
   @IsOptional()
-  @IsString({ message: 'Google ID must be a string' })
+  @IsString({ message: 'El ID de Google debe ser texto' })
   googleId?: string;
 
   /**
@@ -120,14 +127,15 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * Used for personalized communication and display purposes.
    */
   @ApiProperty({
-    description: 'User first name from profile or manual input',
-    example: 'John',
+    description: 'Primer nombre del usuario',
+    example: 'Juan',
     maxLength: 50,
     required: false,
   })
   @IsOptional()
-  @IsString({ message: 'First name must be a string' })
-  @MaxLength(50, { message: 'First name must be at most 50 characters long' })
+  @IsString({ message: 'El primer nombre debe ser texto' })
+  @MaxLength(50, { message: 'El primer nombre no puede tener más de 50 caracteres' })
+  @IsValidName({ message: 'El primer nombre solo puede contener letras, espacios y acentos' })
   firstName?: string;
 
   /**
@@ -137,14 +145,15 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * Used in combination with firstName for complete name display.
    */
   @ApiProperty({
-    description: 'User last name from profile or manual input',
-    example: 'Doe',
+    description: 'Apellido del usuario',
+    example: 'Pérez',
     maxLength: 50,
     required: false,
   })
   @IsOptional()
-  @IsString({ message: 'Last name must be a string' })
-  @MaxLength(50, { message: 'Last name must be at most 50 characters long' })
+  @IsString({ message: 'El apellido debe ser texto' })
+  @MaxLength(50, { message: 'El apellido no puede tener más de 50 caracteres' })
+  @IsValidName({ message: 'El apellido solo puede contener letras, espacios y acentos' })
   lastName?: string;
 
   /**
@@ -154,13 +163,13 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * Enhances user experience with visual identification.
    */
   @ApiProperty({
-    description: 'Profile picture URL for user avatar display',
+    description: 'URL de la foto de perfil del usuario',
     example: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
     format: 'uri',
     required: false,
   })
   @IsOptional()
-  @IsString({ message: 'Picture URL must be a string' })
-  @IsUrl({}, { message: 'Picture must be a valid URL' })
+  @IsString({ message: 'La URL de la foto debe ser texto' })
+  @IsUrl({}, { message: 'Debe ser una URL válida (ej: https://ejemplo.com/foto.jpg)' })
   picture?: string;
 }

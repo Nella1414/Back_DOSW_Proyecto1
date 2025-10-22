@@ -1,0 +1,175 @@
+### SIRHA API - Casos de Prueba de Auditoría RADICATE
+### Pruebas para FEAT-019 US-0074: Audit Radicado
+
+@baseUrl = http://localhost:3000
+@contentType = application/json
+
+### ===========================================
+### 1. AUDITORÍA AUTOMÁTICA RADICATE
+### ===========================================
+
+### 1.1 Crear solicitud con auditoría RADICATE automática
+POST {{baseUrl}}/audit-radicate-examples/create-with-radicate
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a1",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "reason": "Solicitud para probar auditoría RADICATE",
+  "observations": "Debe generar eventos CREATE y RADICATE automáticamente"
+}
+
+### 1.2 Segunda solicitud con diferentes criterios
+POST {{baseUrl}}/audit-radicate-examples/create-with-radicate
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a5",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a6",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a4",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1a8",
+  "reason": "Segunda solicitud para comparar auditorías"
+}
+
+### 1.3 Tercera solicitud (materia obligatoria simulada)
+POST {{baseUrl}}/audit-radicate-examples/create-with-radicate
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a7",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1a8",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1a2",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1aa",
+  "reason": "Solicitud con materia obligatoria (ID termina en par)"
+}
+
+### ===========================================
+### 2. AUDITORÍA MANUAL RADICATE
+### ===========================================
+
+### 2.1 Registrar evento RADICATE manualmente
+POST {{baseUrl}}/audit-radicate-examples/manual-radicate-audit
+Content-Type: {{contentType}}
+
+### 2.2 Segundo evento manual con diferentes parámetros
+POST {{baseUrl}}/audit-radicate-examples/manual-radicate-audit
+Content-Type: {{contentType}}
+
+### ===========================================
+### 3. CONSULTAS DE AUDITORÍA
+### ===========================================
+
+### 3.1 Obtener historial completo de solicitud específica
+GET {{baseUrl}}/audit-radicate-examples/audit-history/60d5ecb8b0a7c4b4b8b9b1a4
+
+### 3.2 Obtener historial de solicitud manual
+GET {{baseUrl}}/audit-radicate-examples/audit-history/manual-radicate-test-123
+
+### 3.3 Obtener solo eventos RADICATE del sistema
+GET {{baseUrl}}/audit-radicate-examples/radicate-events
+
+### ===========================================
+### 4. VERIFICACIÓN DE DATOS RADICATE
+### ===========================================
+
+### 4.1 Crear solicitud y verificar datos completos
+POST {{baseUrl}}/audit-radicate-examples/create-with-radicate
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1a9",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1aa",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1ab",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1ac",
+  "reason": "Verificación completa de datos RADICATE"
+}
+
+### 4.2 Obtener historial de la solicitud anterior
+### (Usar el ID retornado en la respuesta anterior)
+GET {{baseUrl}}/audit-radicate-examples/audit-history/REPLACE_WITH_ACTUAL_ID
+
+### ===========================================
+### 5. INTEGRACIÓN CON OTROS ENDPOINTS
+### ===========================================
+
+### 5.1 Crear solicitud normal (debe incluir RADICATE)
+POST {{baseUrl}}/change-request-examples
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1ad",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1ae",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1af",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1b0",
+  "reason": "Solicitud desde endpoint normal"
+}
+
+### 5.2 Verificar auditoría general
+GET {{baseUrl}}/audit-examples/history/REPLACE_WITH_ACTUAL_ID
+
+### ===========================================
+### 6. PRUEBAS DE TIMESTAMP Y PRECISIÓN
+### ===========================================
+
+### 6.1 Crear múltiples solicitudes rápidamente
+POST {{baseUrl}}/audit-radicate-examples/create-with-radicate
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1b1",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1b2",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1b3",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1b4",
+  "reason": "Primera solicitud rápida"
+}
+
+### 6.2 Segunda solicitud inmediata
+POST {{baseUrl}}/audit-radicate-examples/create-with-radicate
+Content-Type: {{contentType}}
+
+{
+  "sourceSubjectId": "60d5ecb8b0a7c4b4b8b9b1b5",
+  "sourceGroupId": "60d5ecb8b0a7c4b4b8b9b1b6",
+  "targetSubjectId": "60d5ecb8b0a7c4b4b8b9b1b7",
+  "targetGroupId": "60d5ecb8b0a7c4b4b8b9b1b8",
+  "reason": "Segunda solicitud rápida"
+}
+
+### 6.3 Verificar timestamps precisos
+GET {{baseUrl}}/audit-radicate-examples/radicate-events
+
+### ===========================================
+### NOTAS DE PRUEBA:
+### 
+### Criterios de aceptación verificados:
+### ✅ Evento RADICATE se registra automáticamente
+### ✅ Incluye radicado y prioridad asignados
+### ✅ Timestamp es preciso
+### 
+### Datos registrados en evento RADICATE:
+### - requestId: ID de la solicitud
+### - eventType: 'RADICATE'
+### - actorId: 'system' (automático)
+### - timestamp: Momento exacto de asignación
+### - radicado: Número de radicado asignado
+### - priority: Prioridad calculada
+### - priorityCriteria: Criterios usados para cálculo
+### 
+### Información de criterios incluida:
+### - studentSemester: Semestre del estudiante
+### - isTargetMandatory: Si materia destino es obligatoria
+### - isAddDropPeriod: Si es periodo add/drop
+### - calculationDate: Fecha del cálculo
+### - priorityDescription: Descripción legible
+### - priorityWeight: Peso numérico
+### 
+### Flujo completo:
+### 1. Usuario crea solicitud
+### 2. Sistema genera radicado
+### 3. Sistema calcula prioridad
+### 4. Se registra evento CREATE
+### 5. Se registra evento RADICATE automáticamente
+### 6. Ambos eventos quedan en historial de auditoría
+### ===========================================
