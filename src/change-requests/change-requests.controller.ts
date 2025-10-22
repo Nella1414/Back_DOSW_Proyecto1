@@ -9,6 +9,9 @@ import {
   Query,
   Req,
   UseGuards,
+  HttpCode,
+  HttpStatus,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -105,7 +108,7 @@ export class ChangeRequestsController {
   @ApiOperation({
     summary: 'Approve change request (DEAN)',
     description:
-      'Deans can approve change requests from their faculty students',
+      'Deans can approve change requests from their faculty students. Supports optimistic locking via If-Match header.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -117,18 +120,37 @@ export class ChangeRequestsController {
     description: 'Request cannot be approved or validation failed',
   })
   @ApiResponse({ status: 404, description: 'Change request not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Conflict - Request already approved or modified by another user',
+  })
   @RequirePermissions(Permission.UPDATE_ENROLLMENT)
   @Patch(':id/approve')
   async approveRequest(
     @Param('id') id: string,
     @Body() approveDto: ApproveChangeRequestDto,
+    @Req() req: any,
+    @Headers('if-match') ifMatch?: string,
   ) {
-    return this.changeRequestsService.approveChangeRequest(id, approveDto);
+    const userEmail = req.user?.email;
+    const userName = req.user?.displayName || userEmail;
+
+    // Extraer versión del header If-Match si existe
+    const expectedVersion = ifMatch ? parseInt(ifMatch, 10) : undefined;
+
+    return this.changeRequestsService.approveChangeRequest(
+      id,
+      approveDto,
+      req.user?.id,
+      userName, 
+    );
   }
 
   @ApiOperation({
     summary: 'Reject change request (DEAN)',
-    description: 'Deans can reject change requests with a reason',
+    description:
+      'Deans can reject change requests with a reason. Supports optimistic locking via If-Match header.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -137,29 +159,146 @@ export class ChangeRequestsController {
   })
   @ApiResponse({ status: 400, description: 'Request cannot be rejected' })
   @ApiResponse({ status: 404, description: 'Change request not found' })
+  @ApiResponse({
+    status: 409,
+    description:
+      'Conflict - Request already rejected or modified by another user',
+  })
   @RequirePermissions(Permission.UPDATE_ENROLLMENT)
   @Patch(':id/reject')
   async rejectRequest(
     @Param('id') id: string,
     @Body() rejectDto: RejectChangeRequestDto,
+    @Req() req: any,
+    @Headers('if-match') ifMatch?: string,
   ) {
-    return this.changeRequestsService.rejectChangeRequest(id, rejectDto);
+    const userEmail = req.user?.email;
+    const userName = req.user?.displayName || userEmail;
+
+    return this.changeRequestsService.rejectChangeRequest(
+      id,
+      rejectDto,
+      req.user?.id,
+      userName,
+       // Incluye la versión esperada
+    );
   }
 
   @ApiOperation({
-    summary: 'Get student own change requests',
-    description: 'Students can view their own change request history',
+    summary: 'Request additional information (DEAN)',
+    description: 'Request additional information from student',
   })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
     status: 200,
-    description: 'Student change requests retrieved',
+    description: 'Successfully requested additional information',
   })
-  @Get('student/my-requests')
-  async getMyRequests(@Req() req: any) {
-    const userEmail = req.user?.email;
-    const studentCode = await this.extractStudentCodeFromUser(userEmail);
-    // TODO: Implement getRequestsByStudent method
-    return { message: 'Feature coming soon', studentCode };
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - Invalid state transition',
+  })
+  @RequirePermissions(Permission.VIEW_REPORTS)
+  @Patch(':id/request-info')
+  async requestAdditionalInfo(
+    @Param('id') id: string,
+    @Body() body: { reason: string; observations?: string },
+    @Req() req: any,
+  ) {
+    const userName = req.user?.displayName || req.user?.email;
+
+    return this.changeRequestsService.requestAdditionalInfo(
+      id,
+      body.reason,
+      body.observations,
+      req.user?.id,
+      userName,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Move request to review (DEAN)',
+    description: 'Start reviewing a pending request',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Request moved to review successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - Invalid state transition',
+  })
+  @RequirePermissions(Permission.VIEW_REPORTS)
+  @Patch(':id/start-review')
+  async startReview(@Param('id') id: string, @Req() req: any) {
+    const userName = req.user?.displayName || req.user?.email;
+
+    return this.changeRequestsService.moveToReview(
+      id,
+      req.user?.id,
+      userName,
+    );
+  }
+
+  @ApiOperation({
+    summary: 'Get available actions for request',
+    description:
+      'Get current state, version, and available state transitions for a request',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Available actions retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/available-actions')
+  async getAvailableActions(@Param('id') id: string) {
+    return this.changeRequestsService.getAvailableActions(id);
+  }
+
+  @ApiOperation({
+    summary: 'Generic state change endpoint (ADMIN)',
+    description:
+      'Allows administrators to change request state to any valid state. Supports optimistic locking.',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'State changed successfully',
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid state transition',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - Redundant transition or concurrent modification',
+  })
+  @RequirePermissions(Permission.UPDATE_ENROLLMENT)
+  @Patch(':id/change-state')
+  async changeState(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      toState: RequestState;
+      reason?: string;
+      observations?: string;
+    },
+    @Req() req: any,
+    @Headers('if-match') ifMatch?: string,
+  ) {
+    const userName = req.user?.displayName || req.user?.email;
+    const expectedVersion = ifMatch ? parseInt(ifMatch, 10) : undefined;
+
+    return this.changeRequestsService.changeRequestState(id, body.toState, {
+      reason: body.reason,
+      observations: body.observations,
+      actorId: req.user?.id,
+      actorName: userName,
+      expectedVersion,
+    });
   }
 
   private async extractStudentCodeFromUser(email: string): Promise<string> {

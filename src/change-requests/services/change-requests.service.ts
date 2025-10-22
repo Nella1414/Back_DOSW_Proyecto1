@@ -39,6 +39,8 @@ import {
   ApproveChangeRequestDto,
   RejectChangeRequestDto,
 } from '../dto/change-request-response.dto';
+import { StateManagementService } from './state-management.service';
+
 
 /**
  * * Change Requests Management Service
@@ -64,20 +66,22 @@ export class ChangeRequestsService {
    * @param programModel - Model for program data
    * @param scheduleValidationService - Service for schedule conflict validation
    */
-  constructor(
-    @InjectModel(ChangeRequest.name)
-    private changeRequestModel: Model<ChangeRequestDocument>,
-    @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
-    @InjectModel(CourseGroup.name)
-    private courseGroupModel: Model<CourseGroupDocument>,
-    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
-    @InjectModel(Enrollment.name)
-    private enrollmentModel: Model<EnrollmentDocument>,
-    @InjectModel(AcademicPeriod.name)
-    private academicPeriodModel: Model<AcademicPeriodDocument>,
-    @InjectModel(Program.name) private programModel: Model<ProgramDocument>,
-    private scheduleValidationService: ScheduleValidationService,
-  ) {}
+constructor(
+  @InjectModel(ChangeRequest.name)
+  private changeRequestModel: Model<ChangeRequestDocument>,
+  @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
+  @InjectModel(CourseGroup.name)
+  private courseGroupModel: Model<CourseGroupDocument>,
+  @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
+  @InjectModel(Enrollment.name)
+  private enrollmentModel: Model<EnrollmentDocument>,
+  @InjectModel(AcademicPeriod.name)
+  private academicPeriodModel: Model<AcademicPeriodDocument>,
+  @InjectModel(Program.name) private programModel: Model<ProgramDocument>,
+  private scheduleValidationService: ScheduleValidationService,
+  // NUEVOS SERVICIOS
+  private stateManagementService: StateManagementService,
+) {}
 
   /**
    * * Create new change request for student
@@ -240,89 +244,76 @@ export class ChangeRequestsService {
     );
   }
 
-  async approveChangeRequest(
-    requestId: string,
-    approveDto: ApproveChangeRequestDto,
-  ): Promise<ChangeRequestResponseDto> {
-    const request = await this.changeRequestModel.findById(requestId).exec();
-    if (!request) {
-      throw new NotFoundException('Request not found');
-    }
-
-    if (
-      request.state !== RequestState.PENDING &&
-      request.state !== RequestState.IN_REVIEW
-    ) {
-      throw new BadRequestException(
-        'Request cannot be approved in its current state',
-      );
-    }
-
-    // Re-validar antes de aprobar
-    const validation =
-      await this.scheduleValidationService.validateChangeRequest(
-        request.studentId,
-        request.sourceGroupId,
-        request.targetGroupId as string,
-      );
-
-    if (!validation.isValid) {
-      throw new BadRequestException({
-        message: 'Request is no longer valid',
-        errors: validation.errors,
-      });
-    }
-
-    // Ejecutar el cambio
-    await this.executeChangeRequest(request);
-
-    // Actualizar solicitud
-    request.state = RequestState.APPROVED;
-    request.resolvedAt = new Date();
-    request.resolutionReason =
-      approveDto.resolutionReason || 'Request approved';
-    if (approveDto.observations) {
-      request.observations =
-        (request.observations || '') + '\n' + approveDto.observations;
-    }
-    request.updatedAt = new Date();
-
-    await request.save();
-
-    return this.getRequestDetails(requestId);
+async approveChangeRequest(
+  requestId: string,
+  approveDto: ApproveChangeRequestDto,
+  actorId?: string,
+  actorName?: string,
+): Promise<ChangeRequestResponseDto> {
+  const request = await this.changeRequestModel.findById(requestId).exec();
+  if (!request) {
+    throw new NotFoundException('Request not found');
   }
 
-  async rejectChangeRequest(
-    requestId: string,
-    rejectDto: RejectChangeRequestDto,
-  ): Promise<ChangeRequestResponseDto> {
-    const request = await this.changeRequestModel.findById(requestId).exec();
-    if (!request) {
-      throw new NotFoundException('Request not found');
-    }
+  // Re-validar antes de aprobar
+  const validation =
+    await this.scheduleValidationService.validateChangeRequest(
+      request.studentId,
+      request.sourceGroupId,
+      request.targetGroupId as string,
+    );
 
-    if (
-      request.state !== RequestState.PENDING &&
-      request.state !== RequestState.IN_REVIEW
-    ) {
-      throw new BadRequestException(
-        'Request cannot be rejected in its current state',
-      );
-    }
-
-    request.state = RequestState.REJECTED;
-    request.resolvedAt = new Date();
-    request.resolutionReason = rejectDto.resolutionReason;
-    if (rejectDto.observations) {
-      request.observations =
-        (request.observations || '') + '\n' + rejectDto.observations;
-    }
-    request.updatedAt = new Date();
-
-    await request.save();
-
-    return this.getRequestDetails(requestId);
+  if (!validation.isValid) {
+    throw new BadRequestException({
+      message: 'Request is no longer valid',
+      errors: validation.errors,
+    });
   }
+
+  // Ejecutar el cambio de matrícula primero
+  await this.executeChangeRequest(request);
+
+  // Cambiar estado usando el sistema de gestión de estados
+  await this.stateManagementService.changeState(
+    requestId,
+    RequestState.APPROVED,
+    {
+      actorId,
+      actorName,
+      reason: approveDto.resolutionReason || 'Request approved',
+      observations: approveDto.observations,
+    },
+  );
+
+  return this.getRequestDetails(requestId);
+}
+
+
+async rejectChangeRequest(
+  requestId: string,
+  rejectDto: RejectChangeRequestDto,
+  actorId?: string,
+  actorName?: string,
+): Promise<ChangeRequestResponseDto> {
+  const request = await this.changeRequestModel.findById(requestId).exec();
+  if (!request) {
+    throw new NotFoundException('Request not found');
+  }
+
+  // Cambiar estado usando el sistema de gestión de estados
+  await this.stateManagementService.changeState(
+    requestId,
+    RequestState.REJECTED,
+    {
+      actorId,
+      actorName,
+      reason: rejectDto.resolutionReason,
+      observations: rejectDto.observations,
+    },
+  );
+
+  return this.getRequestDetails(requestId);
+}
 
   async getRequestDetails(
     requestId: string,
@@ -354,6 +345,95 @@ export class ChangeRequestsService {
       targetGroup,
     );
   }
+
+
+  async requestAdditionalInfo(
+  requestId: string,
+  reason: string,
+  observations?: string,
+  actorId?: string,
+  actorName?: string,
+): Promise<ChangeRequestResponseDto> {
+  await this.stateManagementService.changeState(
+    requestId,
+    RequestState.WAITING_INFO,
+    {
+      actorId,
+      actorName,
+      reason,
+      observations,
+    },
+  );
+
+  return this.getRequestDetails(requestId);
+}
+
+async moveToReview(
+  requestId: string,
+  actorId?: string,
+  actorName?: string,
+): Promise<ChangeRequestResponseDto> {
+  await this.stateManagementService.changeState(
+    requestId,
+    RequestState.IN_REVIEW,
+    {
+      actorId,
+      actorName,
+    },
+  );
+
+  return this.getRequestDetails(requestId);
+}
+
+
+async changeRequestState(
+  requestId: string,
+  toState: RequestState,
+  options: {
+    reason?: string;
+    observations?: string;
+    actorId?: string;
+    actorName?: string;
+    expectedVersion?: number;
+  } = {},
+): Promise<ChangeRequestResponseDto> {
+  await this.stateManagementService.changeState(
+    requestId,
+    toState,
+    {
+      actorId: options.actorId,
+      actorName: options.actorName,
+      reason: options.reason,
+      observations: options.observations,
+    },
+    options.expectedVersion,
+  );
+
+  return this.getRequestDetails(requestId);
+}
+
+async getAvailableActions(requestId: string): Promise<{
+  currentState: RequestState;
+  version: number;
+  availableTransitions: {
+    toState: string;
+    description?: string;
+    requiresReason?: boolean;
+    requiredPermissions?: string[];
+  }[];
+}> {
+  const stateInfo = await this.stateManagementService.getCurrentState(requestId);
+  const transitions =
+    await this.stateManagementService.getAvailableTransitionsForRequest(
+      requestId,
+    );
+
+  return {
+    currentState: stateInfo.state,
+    version: stateInfo.version,
+    availableTransitions: transitions,
+  };
+}
 
   private async executeChangeRequest(
     request: ChangeRequestDocument,
@@ -456,4 +536,6 @@ export class ChangeRequestsService {
       resolutionReason: request.resolutionReason,
     };
   }
+
+  
 }

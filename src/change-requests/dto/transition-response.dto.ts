@@ -17,3 +17,23 @@ export class StateTransitionRequestDto {
   reason?: string;
   observations?: string;
 }
+
+export class RequestAdditionalInfoDto {
+  reason: string;
+  observations?: string;
+}
+
+export class StateChangeResponseDto {
+  success: boolean;
+  previousState: string;
+  newState: string;
+  version: number;
+  changedAt: Date;
+  changedBy?: string;
+}
+
+export class AvailableActionsResponseDto {
+  currentState: string;
+  version: number;
+  availableTransitions: AvailableTransitionDto[];
+}
