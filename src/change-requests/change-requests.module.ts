@@ -6,6 +6,14 @@ import {
   ChangeRequest,
   ChangeRequestSchema,
 } from './entities/change-request.entity';
+import {
+  RequestStateDefinition,
+  RequestStateDefinitionSchema,
+} from './entities/request-state-definition.entity';
+import {
+  RequestStateHistory,
+  RequestStateHistorySchema,
+} from './entities/request-state-history.entity';
 import { Student, StudentSchema } from '../students/entities/student.entity';
 import {
   CourseGroup,
@@ -28,6 +36,8 @@ import { SchedulesModule } from '../schedules/schedules.module';
     SchedulesModule,
     MongooseModule.forFeature([
       { name: ChangeRequest.name, schema: ChangeRequestSchema },
+      { name: RequestStateDefinition.name, schema: RequestStateDefinitionSchema },
+      { name: RequestStateHistory.name, schema: RequestStateHistorySchema },
       { name: Student.name, schema: StudentSchema },
       { name: CourseGroup.name, schema: CourseGroupSchema },
       { name: Course.name, schema: CourseSchema },
