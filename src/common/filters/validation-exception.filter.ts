@@ -6,14 +6,15 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
-/**
- * ValidationExceptionFilter - Maneja errores de validación con formato detallado
- * 
- * Convierte errores de class-validator en respuestas 422 con información específica
- * por campo para que el frontend pueda mostrar errores precisos.
- */
+
 @Catch(BadRequestException)
 export class ValidationExceptionFilter implements ExceptionFilter {
+  // Mensajes centralizados para facilitar i18n futuro
+  private readonly messages = {
+    validationFailed: 'Validation Failed',
+    validationMessage: 'Los datos enviados contienen errores de validación',
+  };
+
   catch(exception: BadRequestException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -31,8 +32,8 @@ export class ValidationExceptionFilter implements ExceptionFilter {
 
       return response.status(422).json({
         statusCode: 422,
-        error: 'Validation Failed',
-        message: 'Los datos enviados contienen errores de validación',
+        error: this.messages.validationFailed,
+        message: this.messages.validationMessage,
         timestamp: new Date().toISOString(),
         path: request.url,
         errors: validationErrors,

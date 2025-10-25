@@ -97,31 +97,10 @@ export function IsStrongPassword(validationOptions?: ValidationOptions) {
 }
 
 /**
- * Validador para ObjectId de MongoDB
+ * NOTA: Para validar MongoDB ObjectIds, usar el decorador nativo de class-validator:
+ * import { IsMongoId } from 'class-validator';
+ *
+ * Ejemplo de uso:
+ * @IsMongoId({ message: 'Debe ser un ID válido de MongoDB' })
+ * programId: string;
  */
-@ValidatorConstraint({ name: 'isMongoId', async: false })
-export class IsMongoIdConstraint implements ValidatorConstraintInterface {
-  validate(id: string, args: ValidationArguments) {
-    if (!id) return false;
-    
-    // Formato ObjectId de MongoDB (24 caracteres hexadecimales)
-    const mongoIdRegex = /^[0-9a-fA-F]{24}$/;
-    return mongoIdRegex.test(id);
-  }
-
-  defaultMessage(args: ValidationArguments) {
-    return 'Debe ser un ID válido de MongoDB (24 caracteres hexadecimales)';
-  }
-}
-
-export function IsMongoId(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
-    registerDecorator({
-      target: object.constructor,
-      propertyName: propertyName,
-      options: validationOptions,
-      constraints: [],
-      validator: IsMongoIdConstraint,
-    });
-  };
-}

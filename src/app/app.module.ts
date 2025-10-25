@@ -3,6 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { I18nModule, QueryResolver, AcceptLanguageResolver } from 'nestjs-i18n';
+import * as path from 'path';
 
 import { AppController } from './app.controller';
 import { AppService } from './services/app.service';
@@ -37,7 +39,7 @@ import { RolesGuard } from '../auth/guards/roles.guard';
     ThrottlerModule.forRoot([
       {
         ttl: 60000, // one minute
-        limit: 100, // 100 requests per minute
+        limit: 200, // 200 requests per minute
       },
     ]),
 
@@ -47,6 +49,19 @@ import { RolesGuard } from '../auth/guards/roles.guard';
       useFactory: async (configService: ConfigService) => ({
         uri: configService.get<string>('MONGODB_URI'),
       }),
+    }),
+
+    // Configuración i18n
+    I18nModule.forRoot({
+      fallbackLanguage: 'es',
+      loaderOptions: {
+        path: path.join(__dirname, '..', 'i18n'),
+        watch: true,
+      },
+      resolvers: [
+        { use: QueryResolver, options: ['lang'] },
+        AcceptLanguageResolver,
+      ],
     }),
 
     AuthModule,

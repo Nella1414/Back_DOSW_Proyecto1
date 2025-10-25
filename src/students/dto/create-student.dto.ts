@@ -9,11 +9,12 @@ import {
   Length,
   Matches,
   IsEmail,
+  IsMongoId,
 } from 'class-validator';
 // Import Swagger documentation decorator
 import { ApiProperty } from '@nestjs/swagger';
 // Import custom validators
-import { IsStudentCode, IsValidName, IsMongoId } from '../../common/validators/custom-validators';
+import { IsStudentCode, IsValidName } from '../../common/validators/custom-validators';
 import { IsValidObservations } from '../../common/validators/observations.validator';
 import { SanitizeObservations } from '../../common/decorators/sanitize-observations.decorator';
 

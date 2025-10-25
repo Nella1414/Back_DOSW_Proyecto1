@@ -1,0 +1,70 @@
+{
+  "audit": {
+    "events": {
+      "create": "Creation",
+      "update": "Update",
+      "delete": "Deletion",
+      "approve": "Approval",
+      "reject": "Rejection",
+      "radicate": "Radication",
+      "route": "Routing",
+      "fallback": "Fallback",
+      "route_assigned": "Route Assigned"
+    },
+    "messages": {
+      "logged": "Audit event logged",
+      "critical": "Critical event logged",
+      "radicado": "Radicado {radicado} assigned with priority {priority}",
+      "fallback": "Fallback applied: {original} → {fallback}. Reason: {reason}"
+    }
+  },
+  "radicado": {
+    "generated": "Radicado generated",
+    "error": "Error generating radicado",
+    "retry": "Retrying radicado generation",
+    "failed": "Generation failed after {max} attempts"
+  },
+  "routing": {
+    "rules": {
+      "SAME_PROGRAM": "Both subjects from same program",
+      "TARGET_PROGRAM": "Target subject program",
+      "SOURCE_PROGRAM": "Source subject program",
+      "STUDENT_PROGRAM": "Student program (fallback)"
+    },
+    "messages": {
+      "determined": "Program determined",
+      "error": "Error determining program",
+      "not_found": "Program not found for student {userId}"
+    }
+  },
+  "priority": {
+    "levels": {
+      "LOW": "Low Priority",
+      "NORMAL": "Normal Priority",
+      "HIGH": "High Priority",
+      "URGENT": "Urgent Priority"
+    },
+    "descriptions": {
+      "LOW": "Add/drop period or electives",
+      "NORMAL": "Standard request",
+      "HIGH": "Mandatory subject or advanced student",
+      "URGENT": "Student near graduation with mandatory subject"
+    }
+  },
+  "validation": {
+    "program": {
+      "validated": "Program {programId} validated successfully",
+      "not_exists": "Program does not exist",
+      "inactive": "Program inactive",
+      "fallback_applied": "Fallback applied",
+      "emergency": "Emergency program assigned"
+    }
+  },
+  "errors": {
+    "internal": "Internal server error",
+    "not_found": "Resource not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Access denied",
+    "bad_request": "Invalid request"
+  }
+}

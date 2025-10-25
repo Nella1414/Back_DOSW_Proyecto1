@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuditRequest, AuditRequestDocument } from '../entities/audit-request.entity';
@@ -16,6 +16,8 @@ export interface AuditEventData {
 
 @Injectable()
 export class AuditService {
+  private readonly logger = new Logger(AuditService.name);
+
   constructor(
     @InjectModel(AuditRequest.name)
     private auditModel: Model<AuditRequestDocument>,
@@ -25,12 +27,46 @@ export class AuditService {
    * Registra evento de auditoría
    */
   async logEvent(eventData: AuditEventData): Promise<AuditRequestDocument> {
-    const auditEntry = new this.auditModel({
-      ...eventData,
-      timestamp: new Date(),
-    });
+    try {
+      this.logger.debug(`Registrando evento de auditoría: ${eventData.eventType} para solicitud ${eventData.requestId}`);
 
-    return auditEntry.save();
+      const auditEntry = new this.auditModel({
+        ...eventData,
+        timestamp: new Date(),
+      });
+
+      const savedEntry = await auditEntry.save();
+
+      // Log eventos críticos
+      if (this.isCriticalEvent(eventData.eventType)) {
+        this.logger.warn(`Evento crítico de auditoría registrado: ${eventData.eventType} - Solicitud: ${eventData.requestId} - Actor: ${eventData.actorId}`);
+      }
+
+      this.logger.debug(`Evento de auditoría registrado exitosamente: ID ${savedEntry._id}`);
+      return savedEntry;
+
+    } catch (error) {
+      this.logger.error(
+        `Error registrando evento de auditoría [${eventData.eventType}] para solicitud ${eventData.requestId}: ${error.message}`,
+        error.stack
+      );
+      // No lanzar error para no interrumpir el flujo principal
+      // La auditoría es importante pero no debe detener operaciones críticas
+      throw error;
+    }
+  }
+
+  /**
+   * Determina si un evento es crítico y requiere atención especial
+   */
+  private isCriticalEvent(eventType: AuditEventData['eventType']): boolean {
+    const criticalEvents: AuditEventData['eventType'][] = [
+      'DELETE',
+      'APPROVE',
+      'REJECT',
+      'FALLBACK',
+    ];
+    return criticalEvents.includes(eventType);
   }
 
   /**
@@ -43,14 +79,19 @@ export class AuditService {
     ipAddress?: string,
     userAgent?: string,
   ): Promise<AuditRequestDocument> {
-    return this.logEvent({
-      requestId,
-      eventType: 'CREATE',
-      actorId,
-      requestDetails,
-      ipAddress,
-      userAgent,
-    });
+    try {
+      return await this.logEvent({
+        requestId,
+        eventType: 'CREATE',
+        actorId,
+        requestDetails,
+        ipAddress,
+        userAgent,
+      });
+    } catch (error) {
+      this.logger.error(`Error en logCreateEvent para solicitud ${requestId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -62,18 +103,25 @@ export class AuditService {
     priority: string,
     priorityCriteria: Record<string, any>,
   ): Promise<AuditRequestDocument> {
-    return this.logEvent({
-      requestId,
-      eventType: 'RADICATE',
-      actorId: 'system',
-      requestDetails: {
-        entityType: 'radicado_assignment',
-        radicado,
-        priority,
-        priorityCriteria,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    try {
+      this.logger.log(`Radicación: ${radicado} asignado a solicitud ${requestId} con prioridad ${priority}`);
+
+      return await this.logEvent({
+        requestId,
+        eventType: 'RADICATE',
+        actorId: 'system',
+        requestDetails: {
+          entityType: 'radicado_assignment',
+          radicado,
+          priority,
+          priorityCriteria,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error en logRadicateEvent para solicitud ${requestId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -84,17 +132,22 @@ export class AuditService {
     assignedProgramId: string,
     routingDecision: Record<string, any>,
   ): Promise<AuditRequestDocument> {
-    return this.logEvent({
-      requestId,
-      eventType: 'ROUTE',
-      actorId: 'system',
-      requestDetails: {
-        entityType: 'program_assignment',
-        assignedProgramId,
-        routingDecision,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    try {
+      return await this.logEvent({
+        requestId,
+        eventType: 'ROUTE',
+        actorId: 'system',
+        requestDetails: {
+          entityType: 'program_assignment',
+          assignedProgramId,
+          routingDecision,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error en logRouteEvent para solicitud ${requestId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -106,18 +159,25 @@ export class AuditService {
     fallbackProgramId: string,
     reason: string,
   ): Promise<AuditRequestDocument> {
-    return this.logEvent({
-      requestId,
-      eventType: 'FALLBACK',
-      actorId: 'system',
-      requestDetails: {
-        entityType: 'program_fallback',
-        originalProgramId,
-        fallbackProgramId,
-        reason,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    try {
+      this.logger.warn(`Fallback aplicado en solicitud ${requestId}: ${originalProgramId} -> ${fallbackProgramId}. Razón: ${reason}`);
+
+      return await this.logEvent({
+        requestId,
+        eventType: 'FALLBACK',
+        actorId: 'system',
+        requestDetails: {
+          entityType: 'program_fallback',
+          originalProgramId,
+          fallbackProgramId,
+          reason,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error en logFallbackEvent para solicitud ${requestId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   /**
@@ -130,28 +190,44 @@ export class AuditService {
     validationResult: Record<string, any>,
     troubleshootingInfo: Record<string, any>,
   ): Promise<AuditRequestDocument> {
-    return this.logEvent({
-      requestId,
-      eventType: 'ROUTE_ASSIGNED',
-      actorId: 'system',
-      requestDetails: {
-        entityType: 'route_assignment',
-        finalProgramId,
-        routingDecision,
-        validationResult,
-        troubleshootingInfo,
-        timestamp: new Date().toISOString(),
-      },
-    });
+    try {
+      return await this.logEvent({
+        requestId,
+        eventType: 'ROUTE_ASSIGNED',
+        actorId: 'system',
+        requestDetails: {
+          entityType: 'route_assignment',
+          finalProgramId,
+          routingDecision,
+          validationResult,
+          troubleshootingInfo,
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (error) {
+      this.logger.error(`Error en logRouteAssignedEvent para solicitud ${requestId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 
   /**
    * Obtiene historial de auditoría por solicitud
    */
   async getAuditHistory(requestId: string): Promise<AuditRequestDocument[]> {
-    return this.auditModel
-      .find({ requestId })
-      .sort({ timestamp: -1 })
-      .exec();
+    try {
+      this.logger.debug(`Consultando historial de auditoría para solicitud ${requestId}`);
+
+      const history = await this.auditModel
+        .find({ requestId })
+        .sort({ timestamp: -1 })
+        .exec();
+
+      this.logger.debug(`Encontrados ${history.length} eventos de auditoría para solicitud ${requestId}`);
+      return history;
+
+    } catch (error) {
+      this.logger.error(`Error obteniendo historial de auditoría para solicitud ${requestId}: ${error.message}`, error.stack);
+      throw error;
+    }
   }
 }
