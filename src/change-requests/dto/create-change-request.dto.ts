@@ -1,6 +1,5 @@
-import { IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsMongoId } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsMongoId } from '../../common/validators/custom-validators';
 import { IsValidObservations } from '../../common/validators/observations.validator';
 import { SanitizeObservations } from '../../common/decorators/sanitize-observations.decorator';
 

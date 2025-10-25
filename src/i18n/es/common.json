@@ -1,0 +1,70 @@
+{
+  "audit": {
+    "events": {
+      "create": "Creación",
+      "update": "Actualización",
+      "delete": "Eliminación",
+      "approve": "Aprobación",
+      "reject": "Rechazo",
+      "radicate": "Radicación",
+      "route": "Enrutamiento",
+      "fallback": "Fallback",
+      "route_assigned": "Ruta Asignada"
+    },
+    "messages": {
+      "logged": "Evento de auditoría registrado",
+      "critical": "Evento crítico registrado",
+      "radicado": "Radicado {radicado} asignado con prioridad {priority}",
+      "fallback": "Fallback aplicado: {original} → {fallback}. Razón: {reason}"
+    }
+  },
+  "radicado": {
+    "generated": "Radicado generado",
+    "error": "Error generando radicado",
+    "retry": "Reintentando generación de radicado",
+    "failed": "Falló la generación después de {max} intentos"
+  },
+  "routing": {
+    "rules": {
+      "SAME_PROGRAM": "Ambas materias del mismo programa",
+      "TARGET_PROGRAM": "Programa de materia destino",
+      "SOURCE_PROGRAM": "Programa de materia origen",
+      "STUDENT_PROGRAM": "Programa del estudiante (fallback)"
+    },
+    "messages": {
+      "determined": "Programa determinado",
+      "error": "Error determinando programa",
+      "not_found": "Programa no encontrado para estudiante {userId}"
+    }
+  },
+  "priority": {
+    "levels": {
+      "LOW": "Prioridad Baja",
+      "NORMAL": "Prioridad Normal",
+      "HIGH": "Prioridad Alta",
+      "URGENT": "Prioridad Urgente"
+    },
+    "descriptions": {
+      "LOW": "Período add/drop o electivas",
+      "NORMAL": "Solicitud estándar",
+      "HIGH": "Materia obligatoria o estudiante avanzado",
+      "URGENT": "Estudiante próximo a graduar con materia obligatoria"
+    }
+  },
+  "validation": {
+    "program": {
+      "validated": "Programa {programId} validado exitosamente",
+      "not_exists": "Programa no existe",
+      "inactive": "Programa inactivo",
+      "fallback_applied": "Fallback aplicado",
+      "emergency": "Programa de emergencia asignado"
+    }
+  },
+  "errors": {
+    "internal": "Error interno del servidor",
+    "not_found": "Recurso no encontrado",
+    "unauthorized": "No autorizado",
+    "forbidden": "Acceso denegado",
+    "bad_request": "Solicitud inválida"
+  }
+}
