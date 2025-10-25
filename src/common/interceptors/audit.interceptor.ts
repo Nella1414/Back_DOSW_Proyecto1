@@ -32,15 +32,18 @@ export class AuditInterceptor implements NestInterceptor {
 
     return next.handle().pipe(
       tap(async (response) => {
-        if (response && response.id) {
+        // Detectar ID tanto en formato 'id' como '_id' (MongoDB)
+        const entityId = response?.id || response?._id?.toString();
+
+        if (entityId) {
           await this.auditService.logCreateEvent(
-            response.id,
+            entityId,
             user?.id || 'anonymous',
             {
               entityType,
               data: body,
               response: {
-                id: response.id,
+                id: entityId,
                 status: 'created',
               },
             },
