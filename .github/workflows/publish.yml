@@ -3,7 +3,7 @@ name: Publish to Docker BAck SIRHA
 on:
   push:
     branches:
-      - main
+      - refactor/common
 permissions:
   packages: write
   contents: read
