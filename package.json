@@ -18,7 +18,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "ts-node": "ts-node"
+    "ts-node": "ts-node",
+    "seed:states": "ts-node -r tsconfig-paths/register src/seeds/seed-request-states.ts",
+    "seed:transitions": "ts-node -r tsconfig-paths/register src/seeds/seed-valid-transitions.ts",
+    "seed:all": "npm run seed:states && npm run seed:transitions"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.64.0",

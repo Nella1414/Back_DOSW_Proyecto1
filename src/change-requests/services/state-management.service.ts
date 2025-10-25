@@ -7,6 +7,8 @@ import {
   RequestState,
 } from '../entities/change-request.entity';
 import { StateTransitionService } from './state-transition.service';
+import { StateAuditService } from './state-audit.service';
+import { StateChangeType } from '../entities/request-state-history.entity';
 import {
   RedundantStateTransitionException,
   ConcurrentModificationException,

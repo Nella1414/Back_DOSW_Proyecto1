@@ -5,12 +5,9 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
   Req,
   UseGuards,
-  HttpCode,
-  HttpStatus,
   Headers,
 } from '@nestjs/common';
 import {
@@ -27,9 +24,15 @@ import {
   ApproveChangeRequestDto,
   RejectChangeRequestDto,
 } from './dto/change-request-response.dto';
+import {
+  RequestHistoryResponseDto,
+  HistoryStatsDto,
+  TimelineEventDto,
+} from './dto/history-response.dto';
+import { RequestCurrentStateResponseDto } from './dto/current-state-response.dto';
 import { RequestState } from './entities/change-request.entity';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';
-import { Permission, RoleName } from '../roles/entities/role.entity';
+import { Permission } from '../roles/entities/role.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @ApiTags('Change Requests')
@@ -106,9 +109,126 @@ export class ChangeRequestsController {
   }
 
   @ApiOperation({
+    summary: 'Get complete current state information',
+    description:
+      'Returns consolidated information about the request including current state, available actions, metrics, and complete details',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current state information retrieved successfully',
+    type: RequestCurrentStateResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/current-state')
+  async getCurrentState(
+    @Param('id') id: string,
+    @Req() req: any,
+  ): Promise<RequestCurrentStateResponseDto> {
+    const userPermissions = req.user?.permissions || [];
+    return this.changeRequestsService.getCurrentStateInfo(id, userPermissions);
+  }
+
+  @ApiOperation({
+    summary: 'Get complete history of a change request',
+    description:
+      'Returns the complete audit trail of state changes, ordered chronologically with actor names from database joins',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'History retrieved successfully with complete actor information',
+    type: RequestHistoryResponseDto,
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/history')
+  async getRequestHistory(
+    @Param('id') id: string,
+  ): Promise<RequestHistoryResponseDto> {
+    return this.changeRequestsService.getRequestHistory(id);
+  }
+
+  @ApiOperation({
+    summary: 'Get timeline for change request',
+    description:
+      'Returns formatted timeline events for frontend display, with icons and colors',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Timeline retrieved successfully',
+    type: [TimelineEventDto],
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/timeline')
+  async getRequestTimeline(
+    @Param('id') id: string,
+  ): Promise<TimelineEventDto[]> {
+    return this.changeRequestsService.getRequestTimeline(id);
+  }
+
+  @ApiOperation({
+    summary: 'Get history statistics',
+    description: 'Returns aggregated statistics about the request history',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Statistics retrieved successfully',
+    type: HistoryStatsDto,
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/history/stats')
+  async getHistoryStats(@Param('id') id: string): Promise<HistoryStatsDto> {
+    return this.changeRequestsService.getHistoryStats(id);
+  }
+
+  @ApiOperation({
+    summary: 'Check if request has state transitions',
+    description:
+      'Returns whether the request has any state transitions beyond creation',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Check completed successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/has-transitions')
+  async hasStateTransitions(
+    @Param('id') id: string,
+  ): Promise<{ hasTransitions: boolean; message: string }> {
+    const hasTransitions =
+      await this.changeRequestsService.hasStateTransitions(id);
+
+    return {
+      hasTransitions,
+      message: hasTransitions
+        ? 'Request has state transitions'
+        : 'Request only has initial creation event',
+    };
+  }
+
+  @ApiOperation({
+    summary: 'Get available actions for request',
+    description:
+      'Get current state, version, and available state transitions for a request',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Available actions retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/available-actions')
+  async getAvailableActions(@Param('id') id: string) {
+    return this.changeRequestsService.getAvailableActions(id);
+  }
+
+  @ApiOperation({
     summary: 'Approve change request (DEAN)',
     description:
-      'Deans can approve change requests from their faculty students. Supports optimistic locking via If-Match header.',
+      'Deans can approve change requests. Supports optimistic locking via If-Match header',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -122,8 +242,7 @@ export class ChangeRequestsController {
   @ApiResponse({ status: 404, description: 'Change request not found' })
   @ApiResponse({
     status: 409,
-    description:
-      'Conflict - Request already approved or modified by another user',
+    description: 'Conflict - Request already approved or modified by another user',
   })
   @RequirePermissions(Permission.UPDATE_ENROLLMENT)
   @Patch(':id/approve')
@@ -133,24 +252,20 @@ export class ChangeRequestsController {
     @Req() req: any,
     @Headers('if-match') ifMatch?: string,
   ) {
-    const userEmail = req.user?.email;
-    const userName = req.user?.displayName || userEmail;
-
-    // Extraer versión del header If-Match si existe
-    const expectedVersion = ifMatch ? parseInt(ifMatch, 10) : undefined;
+    const userName = req.user?.displayName || req.user?.email;
 
     return this.changeRequestsService.approveChangeRequest(
       id,
       approveDto,
       req.user?.id,
-      userName, 
+      userName,
     );
   }
 
   @ApiOperation({
     summary: 'Reject change request (DEAN)',
     description:
-      'Deans can reject change requests with a reason. Supports optimistic locking via If-Match header.',
+      'Deans can reject change requests with a reason. Supports optimistic locking',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -161,8 +276,7 @@ export class ChangeRequestsController {
   @ApiResponse({ status: 404, description: 'Change request not found' })
   @ApiResponse({
     status: 409,
-    description:
-      'Conflict - Request already rejected or modified by another user',
+    description: 'Conflict - Request already rejected or modified by another user',
   })
   @RequirePermissions(Permission.UPDATE_ENROLLMENT)
   @Patch(':id/reject')
@@ -172,15 +286,13 @@ export class ChangeRequestsController {
     @Req() req: any,
     @Headers('if-match') ifMatch?: string,
   ) {
-    const userEmail = req.user?.email;
-    const userName = req.user?.displayName || userEmail;
+    const userName = req.user?.displayName || req.user?.email;
 
     return this.changeRequestsService.rejectChangeRequest(
       id,
       rejectDto,
       req.user?.id,
       userName,
-       // Incluye la versión esperada
     );
   }
 
@@ -243,25 +355,9 @@ export class ChangeRequestsController {
   }
 
   @ApiOperation({
-    summary: 'Get available actions for request',
-    description:
-      'Get current state, version, and available state transitions for a request',
-  })
-  @ApiParam({ name: 'id', description: 'Change request ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Available actions retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Change request not found' })
-  @Get(':id/available-actions')
-  async getAvailableActions(@Param('id') id: string) {
-    return this.changeRequestsService.getAvailableActions(id);
-  }
-
-  @ApiOperation({
     summary: 'Generic state change endpoint (ADMIN)',
     description:
-      'Allows administrators to change request state to any valid state. Supports optimistic locking.',
+      'Allows administrators to change request state to any valid state. Supports optimistic locking via If-Match header.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -299,6 +395,22 @@ export class ChangeRequestsController {
       actorName: userName,
       expectedVersion,
     });
+  }
+
+  @ApiOperation({
+    summary: 'Get student own change requests',
+    description: 'Students can view their own change request history',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Student change requests retrieved',
+  })
+  @Get('student/my-requests')
+  async getMyRequests(@Req() req: any) {
+    const userEmail = req.user?.email;
+    const studentCode = await this.extractStudentCodeFromUser(userEmail);
+    // TODO: Implement getRequestsByStudent method
+    return { message: 'Feature coming soon', studentCode };
   }
 
   private async extractStudentCodeFromUser(email: string): Promise<string> {

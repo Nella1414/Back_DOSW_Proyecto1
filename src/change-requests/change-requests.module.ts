@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChangeRequestsService } from './services/change-requests.service';
 import { StateTransitionService } from './services/state-transition.service';
+import { StateManagementService } from './services/state-management.service';
+import { StateAuditService } from './services/state-audit.service';
+import { CurrentStateService } from './services/current-state.service';
 import { ChangeRequestsController } from './change-requests.controller';
 import {
   ChangeRequest,
@@ -20,6 +23,7 @@ import {
   ValidTransitionSchema,
 } from './entities/valid-transition.entity';
 import { Student, StudentSchema } from '../students/entities/student.entity';
+import { User, UserSchema } from '../users/entities/user.entity';
 import {
   CourseGroup,
   CourseGroupSchema,
@@ -36,6 +40,7 @@ import {
 import { Program, ProgramSchema } from '../programs/entities/program.entity';
 import { SchedulesModule } from '../schedules/schedules.module';
 
+
 @Module({
   imports: [
     SchedulesModule,
@@ -45,6 +50,7 @@ import { SchedulesModule } from '../schedules/schedules.module';
       { name: RequestStateHistory.name, schema: RequestStateHistorySchema },
       { name: ValidTransition.name, schema: ValidTransitionSchema },
       { name: Student.name, schema: StudentSchema },
+      { name: User.name, schema: UserSchema },
       { name: CourseGroup.name, schema: CourseGroupSchema },
       { name: Course.name, schema: CourseSchema },
       { name: Enrollment.name, schema: EnrollmentSchema },
@@ -53,7 +59,19 @@ import { SchedulesModule } from '../schedules/schedules.module';
     ]),
   ],
   controllers: [ChangeRequestsController],
-  providers: [ChangeRequestsService, StateTransitionService],
-  exports: [ChangeRequestsService, StateTransitionService],
+  providers: [
+    ChangeRequestsService,
+    StateTransitionService,
+    StateManagementService,
+    StateAuditService,
+    CurrentStateService,
+  ],
+  exports: [
+    ChangeRequestsService,
+    StateTransitionService,
+    StateManagementService,
+    StateAuditService,
+    CurrentStateService,
+  ],
 })
 export class ChangeRequestsModule {}
