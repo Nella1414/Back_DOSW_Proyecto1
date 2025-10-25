@@ -3,6 +3,8 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app/app.module';
 import { ConfigService } from '@nestjs/config';
+import { ValidationExceptionFilter } from './common/filters/validation-exception.filter';
+import { I18nService } from 'nestjs-i18n';
 
 /**
  * Bootstrap function for the SIRHA (Student Information and Registration Hub API)
@@ -171,6 +173,15 @@ For API support and documentation issues, please refer to the comprehensive endp
   // ===== GLOBAL MIDDLEWARE CONFIGURATION =====
 
   /**
+   * Global Exception Filter for Validation Errors
+   *
+   * Converts class-validator errors into detailed 422 responses
+   * with field-specific error information for better frontend handling.
+   */
+  const i18nService = app.get(I18nService) as I18nService<Record<string, unknown>>;
+  app.useGlobalFilters(new ValidationExceptionFilter(i18nService));
+
+  /**
    * Global Validation Pipe
    *
    * Provides comprehensive input validation, transformation, and sanitization
@@ -184,7 +195,8 @@ For API support and documentation issues, please refer to the comprehensive endp
       transformOptions: {
         enableImplicitConversion: true, // Enable automatic type conversion
       },
-      disableErrorMessages: process.env.NODE_ENV === 'production', // Hide detailed errors in production
+      disableErrorMessages: false, // Always show detailed errors for 422 responses
+      stopAtFirstError: false, // Collect all validation errors
     }),
   );
 

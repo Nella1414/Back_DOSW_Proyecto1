@@ -1,0 +1,16 @@
+{
+  "failed": "Validation Failed",
+  "message": "The submitted data contains validation errors",
+  "errors": {
+    "required": "The field {field} is required",
+    "invalid": "The field {field} is invalid",
+    "min": "The field {field} must be at least {min}",
+    "max": "The field {field} must be at most {max}",
+    "email": "The field {field} must be a valid email address",
+    "mongoId": "The field {field} must be a valid MongoDB ID",
+    "studentCode": "The code must have a valid format (e.g.: EST001, PROG2024)",
+    "name": "The name can only contain letters, spaces and accents",
+    "password": "The password must have at least 8 characters, one uppercase, one lowercase and one number",
+    "observations": "Observations cannot exceed {max} characters"
+  }
+}

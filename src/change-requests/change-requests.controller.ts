@@ -19,8 +19,8 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ChangeRequestsService } from './services/change-requests.service';
+import { CreateChangeRequestDto } from './dto/create-change-request.dto';
 import {
-  CreateChangeRequestDto,
   ApproveChangeRequestDto,
   RejectChangeRequestDto,
 } from './dto/change-request-response.dto';
@@ -28,6 +28,7 @@ import { RequestState } from './entities/change-request.entity';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';
 import { Permission, RoleName } from '../roles/entities/role.entity';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { AuditCreate } from '../common/decorators/audit-create.decorator';
 
 @ApiTags('Change Requests')
 @Controller('change-requests')
@@ -37,29 +38,48 @@ export class ChangeRequestsController {
   constructor(private readonly changeRequestsService: ChangeRequestsService) {}
 
   @ApiOperation({
-    summary: 'Create change request (STUDENT)',
-    description:
-      'Students can create requests to change from one course group to another',
+    summary: 'Crear solicitud de cambio',
+    description: 'Crea una nueva solicitud de cambio con sistema anti-duplicados',
   })
   @ApiResponse({
     status: 201,
-    description: 'Change request created successfully',
+    description: 'Solicitud creada exitosamente',
+    schema: {
+      type: 'object',
+      properties: {
+        _id: { type: 'string', example: '60d5ecb8b0a7c4b4b8b9b1a4' },
+        userId: { type: 'string' },
+        sourceSubjectId: { type: 'string' },
+        targetSubjectId: { type: 'string' },
+        status: { type: 'string', example: 'PENDING' },
+        requestHash: { type: 'string' },
+        createdAt: { type: 'string', format: 'date-time' },
+      },
+    },
   })
   @ApiResponse({
-    status: 400,
-    description: 'Invalid request data or validation failed',
+    status: 200,
+    description: 'Solicitud duplicada - retorna existente',
   })
-  @ApiResponse({ status: 404, description: 'Student or groups not found' })
+  @ApiResponse({
+    status: 422,
+    description: 'Datos de validación inválidos',
+  })
+  @AuditCreate('change_request')
   @Post()
   async createChangeRequest(
     @Req() req: any,
     @Body() createChangeRequestDto: CreateChangeRequestDto,
   ) {
-    const userEmail = req.user?.email;
-    const studentCode = await this.extractStudentCodeFromUser(userEmail);
-    return this.changeRequestsService.createChangeRequest(
-      studentCode,
+    const userId = req.user?.id || 'anonymous';
+    const ipAddress = req.ip;
+    const userAgent = req.headers['user-agent'];
+
+    return this.changeRequestsService.create(
       createChangeRequestDto,
+      userId,
+      ipAddress,
+      userAgent,
     );
   }
 

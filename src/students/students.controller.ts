@@ -23,6 +23,7 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { StudentResponseDto } from './dto/student-response.dto';
 import { RequirePermissions } from '../auth/decorators/auth.decorator';
 import { Permission } from '../roles/entities/role.entity';
+import { AuditCreate } from '../common/decorators/audit-create.decorator';
 
 /**
  * Students Controller
@@ -213,6 +214,7 @@ export class StudentsController {
   })
   @ApiBearerAuth()
   @RequirePermissions(Permission.CREATE_USER)
+  @AuditCreate('student')
   @Post()
   create(@Body() createStudentDto: CreateStudentDto): Promise<StudentResponseDto> {
     return this.studentsService.create(createStudentDto);

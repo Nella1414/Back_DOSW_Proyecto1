@@ -1,459 +1,325 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import {
-  ChangeRequest,
-  ChangeRequestDocument,
-  RequestState,
-} from '../entities/change-request.entity';
-import {
-  Student,
-  StudentDocument,
-} from '../../students/entities/student.entity';
-import {
-  CourseGroup,
-  CourseGroupDocument,
-} from '../../course-groups/entities/course-group.entity';
-import { Course, CourseDocument } from '../../courses/entities/course.entity';
-import {
-  Enrollment,
-  EnrollmentDocument,
-  EnrollmentStatus,
-} from '../../enrollments/entities/enrollment.entity';
-import {
-  AcademicPeriod,
-  AcademicPeriodDocument,
-} from '../../academic-periods/entities/academic-period.entity';
-import {
-  Program,
-  ProgramDocument,
-} from '../../programs/entities/program.entity';
-import { ScheduleValidationService } from '../../schedules/services/schedule-validation.service';
-import {
-  CreateChangeRequestDto,
-  ChangeRequestResponseDto,
-  ApproveChangeRequestDto,
-  RejectChangeRequestDto,
-} from '../dto/change-request-response.dto';
+import { createHash } from 'crypto';
+import { ChangeRequest, ChangeRequestDocument } from '../entities/change-request.entity';
+import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
+import { AuditService } from '../../common/services/audit.service';
+import { RadicadoService } from '../../common/services/radicado.service';
+import { PriorityCalculatorService, PriorityContext } from '../../common/services/priority-calculator.service';
+import { RoutingService, RoutingContext } from '../../common/services/routing.service';
+import { RoutingValidatorService } from '../../common/services/routing-validator.service';
 
-/**
- * * Change Requests Management Service
- *
- * ? Servicio completamente implementado con logica compleja de solicitudes
- * ? Maneja cambios de grupos de materias con validaciones completas
- * ? Incluye generacion de radicados, aprobaciones y rechazos
- * TODO: Agregar notificaciones por email para cambios de estado
- * TODO: Implementar dashboard de metricas de solicitudes
- * TODO: Agregar validacion de fechas limite para solicitudes
- * TODO: Implementar auditoria completa de cambios realizados
- */
 @Injectable()
 export class ChangeRequestsService {
-  /**
-   * * Constructor injects all required MongoDB models and services
-   * @param changeRequestModel - Model for change requests
-   * @param studentModel - Model for student lookup
-   * @param courseGroupModel - Model for course group operations
-   * @param courseModel - Model for course data
-   * @param enrollmentModel - Model for enrollment updates
-   * @param academicPeriodModel - Model for period validation
-   * @param programModel - Model for program data
-   * @param scheduleValidationService - Service for schedule conflict validation
-   */
   constructor(
     @InjectModel(ChangeRequest.name)
     private changeRequestModel: Model<ChangeRequestDocument>,
-    @InjectModel(Student.name) private studentModel: Model<StudentDocument>,
-    @InjectModel(CourseGroup.name)
-    private courseGroupModel: Model<CourseGroupDocument>,
-    @InjectModel(Course.name) private courseModel: Model<CourseDocument>,
-    @InjectModel(Enrollment.name)
-    private enrollmentModel: Model<EnrollmentDocument>,
-    @InjectModel(AcademicPeriod.name)
-    private academicPeriodModel: Model<AcademicPeriodDocument>,
-    @InjectModel(Program.name) private programModel: Model<ProgramDocument>,
-    private scheduleValidationService: ScheduleValidationService,
+    private auditService: AuditService,
+    private radicadoService: RadicadoService,
+    private priorityCalculatorService: PriorityCalculatorService,
+    private routingService: RoutingService,
+    private routingValidatorService: RoutingValidatorService,
   ) {}
 
   /**
-   * * Create new change request for student
-   * ? Funcion completamente implementada con validaciones completas
-   * ? Valida horarios, genera radicado unico y crea solicitud
-   * TODO: Agregar validacion de fechas limite para solicitudes
-   * TODO: Implementar prioridad automatica basada en criterios
+   * Crea solicitud de cambio con sistema anti-duplicados
    */
-  async createChangeRequest(
-    studentCode: string,
-    createChangeRequestDto: CreateChangeRequestDto,
-  ): Promise<ChangeRequestResponseDto> {
-    // 1. Buscar estudiante
-    const student = await this.studentModel
-      .findOne({ code: studentCode })
-      .exec();
-    if (!student) {
-      throw new NotFoundException('Student not found');
+  async create(
+    createDto: CreateChangeRequestDto,
+    userId: string,
+    ipAddress?: string,
+    userAgent?: string,
+  ): Promise<ChangeRequestDocument> {
+    // Validar que origen ≠ destino
+    if (createDto.sourceSubjectId === createDto.targetSubjectId) {
+      throw new BadRequestException('La materia origen no puede ser igual a la materia destino');
     }
 
-    // 2. Validar solicitud
-    const validation =
-      await this.scheduleValidationService.validateChangeRequest(
-        student._id as string,
-        createChangeRequestDto.sourceGroupId,
-        createChangeRequestDto.targetGroupId,
-      );
+    // Generar hash anti-duplicados
+    const requestHash = this.generateRequestHash(userId, createDto);
 
-    if (!validation.isValid) {
-      throw new BadRequestException({
-        message: 'Invalid change request',
-        errors: validation.errors,
-        warnings: validation.warnings,
-      });
+    // Verificar si ya existe solicitud duplicada
+    const existingRequest = await this.changeRequestModel.findOne({ requestHash });
+    if (existingRequest) {
+      return existingRequest; // Retornar existente sin error
     }
 
-    // 3. Obtener información de grupos y periodo
-    const sourceGroup = await this.courseGroupModel
-      .findById(createChangeRequestDto.sourceGroupId)
-      .populate('courseId')
-      .populate('periodId')
-      .exec();
+    // Generar radicado único
+    const radicado = await this.radicadoService.generateRadicado();
 
-    const targetGroup = await this.courseGroupModel
-      .findById(createChangeRequestDto.targetGroupId)
-      .populate('courseId')
-      .populate('periodId')
-      .exec();
+    // Calcular prioridad automáticamente
+    const priorityContext: PriorityContext = {
+      userId,
+      sourceSubjectId: createDto.sourceSubjectId,
+      targetSubjectId: createDto.targetSubjectId,
+      studentSemester: await this.getStudentSemester(userId),
+      isTargetMandatory: await this.isSubjectMandatory(createDto.targetSubjectId),
+      isAddDropPeriod: this.priorityCalculatorService.isAddDropPeriod(),
+      requestDate: new Date(),
+    };
 
-    if (!sourceGroup) {
-      throw new NotFoundException('Source group not found');
-    }
+    const priority = this.priorityCalculatorService.calculatePriority(priorityContext);
 
-    if (!targetGroup) {
-      throw new NotFoundException('Target group not found');
-    }
+    // Determinar programa automáticamente
+    const routingContext: RoutingContext = {
+      userId,
+      sourceSubjectId: createDto.sourceSubjectId,
+      targetSubjectId: createDto.targetSubjectId,
+      studentProgramId: await this.getStudentProgramId(userId),
+    };
 
-    const program = await this.programModel.findById(student.programId).exec();
+    const routingDecision = await this.routingService.determineProgram(routingContext);
 
-    // 4. Generar radicado único
-    const radicado = await this.generateUniqueRadicado();
+    // Validar y garantizar programa válido
+    const validationResult = await this.routingValidatorService.validateAndEnsureProgram(
+      routingDecision.assignedProgramId,
+      radicado, // Usar radicado como ID temporal
+      {
+        userId,
+        sourceSubjectId: createDto.sourceSubjectId,
+        targetSubjectId: createDto.targetSubjectId,
+        originalRule: routingDecision.rule,
+      }
+    );
 
-    // 5. Crear solicitud
+    // Crear nueva solicitud
     const changeRequest = new this.changeRequestModel({
+      userId,
+      ...createDto,
+      status: 'PENDING',
+      priority,
+      assignedProgramId: validationResult.assignedProgramId,
+      requestHash,
       radicado,
-      studentId: student._id,
-      programId: student.programId,
-      periodId: sourceGroup.periodId,
-      sourceCourseId: sourceGroup.courseId,
-      sourceGroupId: createChangeRequestDto.sourceGroupId,
-      targetCourseId: targetGroup.courseId,
-      targetGroupId: createChangeRequestDto.targetGroupId,
-      state: RequestState.PENDING,
-      priority: createChangeRequestDto.priority || 1,
-      observations: createChangeRequestDto.observations,
-      exceptional: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
     });
 
     const savedRequest = await changeRequest.save();
 
-    return this.mapToResponseDto(
-      savedRequest,
-      student,
-      program,
-      sourceGroup,
-      targetGroup,
+    // Registrar evento CREATE en auditoría
+    await this.auditService.logCreateEvent(
+      (savedRequest._id as any).toString(),
+      userId,
+      {
+        entityType: 'change_request',
+        sourceSubject: createDto.sourceSubjectId,
+        targetSubject: createDto.targetSubjectId,
+        status: 'PENDING',
+      },
+      ipAddress,
+      userAgent,
     );
+
+    // Registrar evento RADICATE en auditoría
+    await this.auditService.logRadicateEvent(
+      (savedRequest._id as any).toString(),
+      radicado,
+      priority,
+      {
+        studentSemester: priorityContext.studentSemester,
+        isTargetMandatory: priorityContext.isTargetMandatory,
+        isAddDropPeriod: priorityContext.isAddDropPeriod,
+        calculationDate: priorityContext.requestDate,
+        priorityDescription: this.priorityCalculatorService.getPriorityDescription(priority),
+        priorityWeight: this.priorityCalculatorService.getPriorityWeight(priority),
+      },
+    );
+
+    // Registrar evento ROUTE en auditoría
+    await this.auditService.logRouteEvent(
+      (savedRequest._id as any).toString(),
+      routingDecision.assignedProgramId,
+      {
+        rule: routingDecision.rule,
+        reason: routingDecision.reason,
+        sourceSubjectId: createDto.sourceSubjectId,
+        targetSubjectId: createDto.targetSubjectId,
+        studentProgramId: routingContext.studentProgramId,
+        routingDate: new Date(),
+      },
+    );
+
+    // Registrar evento FALLBACK si se usó programa por defecto
+    if (validationResult.fallbackUsed) {
+      await this.auditService.logFallbackEvent(
+        (savedRequest._id as any).toString(),
+        routingDecision.assignedProgramId,
+        validationResult.assignedProgramId,
+        validationResult.reason || 'Programa original inválido',
+      );
+    }
+
+    // Registrar evento ROUTE_ASSIGNED con información completa para troubleshooting
+    await this.auditService.logRouteAssignedEvent(
+      (savedRequest._id as any).toString(),
+      validationResult.assignedProgramId,
+      {
+        originalRule: routingDecision.rule,
+        originalReason: routingDecision.reason,
+        originalProgramId: routingDecision.assignedProgramId,
+      },
+      {
+        validationPassed: validationResult.isValid,
+        fallbackUsed: validationResult.fallbackUsed,
+        fallbackReason: validationResult.reason,
+        finalProgramId: validationResult.assignedProgramId,
+      },
+      {
+        userId,
+        sourceSubjectId: createDto.sourceSubjectId,
+        targetSubjectId: createDto.targetSubjectId,
+        sourceSubjectProgram: await this.getSubjectProgram(createDto.sourceSubjectId),
+        targetSubjectProgram: await this.getSubjectProgram(createDto.targetSubjectId),
+        studentProgramId: routingContext.studentProgramId,
+        routingTimestamp: new Date(),
+        radicado: savedRequest.radicado,
+        priority: savedRequest.priority,
+      },
+    );
+
+    return savedRequest;
   }
 
   /**
-   * * Get change requests by faculty with filters
-   * ? Funcion implementada con filtros por estado, periodo y estudiante
-   * ? Busca solicitudes de todos los programas de la facultad
-   * TODO: Agregar paginacion para mejor performance
-   * TODO: Implementar ordenamiento por prioridad y fecha
-   * TODO: Agregar estadisticas resumidas por facultad
+   * Genera hash estable para detectar duplicados
    */
-  async getRequestsByFaculty(
-    facultyId: string,
-    filters?: {
-      status?: RequestState;
-      periodId?: string;
-      studentId?: string;
-    },
-  ): Promise<ChangeRequestResponseDto[]> {
-    // Obtener estudiantes de programas de la facultad
-    const programs = await this.programModel.find({ facultyId }).exec();
-    const programIds = programs.map((p) => p._id);
+  private generateRequestHash(userId: string, dto: CreateChangeRequestDto): string {
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const hashInput = `${userId}:${dto.sourceSubjectId}:${dto.targetSubjectId}:${today}`;
+    return createHash('sha256').update(hashInput).digest('hex');
+  }
 
-    const query: any = { programId: { $in: programIds } };
-
-    if (filters?.status) {
-      query.state = filters.status;
-    }
-    if (filters?.periodId) {
-      query.periodId = filters.periodId;
-    }
-    if (filters?.studentId) {
-      const student = await this.studentModel
-        .findOne({ code: filters.studentId })
-        .exec();
-      if (student) {
-        query.studentId = student._id;
-      }
-    }
-
-    const requests = await this.changeRequestModel
-      .find(query)
-      .populate('studentId')
-      .populate('programId')
-      .populate('periodId')
-      .populate('sourceCourseId')
-      .populate('targetCourseId')
-      .populate('sourceGroupId')
-      .populate('targetGroupId')
+  /**
+   * Obtiene solicitudes del usuario
+   */
+  async findByUser(userId: string): Promise<ChangeRequestDocument[]> {
+    return this.changeRequestModel
+      .find({ userId })
       .sort({ createdAt: -1 })
       .exec();
-
-    return Promise.all(
-      requests.map(async (request) => {
-        const sourceGroup = await this.courseGroupModel
-          .findById(request.sourceGroupId)
-          .populate('courseId')
-          .exec();
-        const targetGroup = await this.courseGroupModel
-          .findById(request.targetGroupId)
-          .populate('courseId')
-          .exec();
-
-        return this.mapToResponseDto(
-          request,
-          request.studentId as any,
-          request.programId as any,
-          sourceGroup,
-          targetGroup,
-        );
-      }),
-    );
   }
 
-  async approveChangeRequest(
-    requestId: string,
-    approveDto: ApproveChangeRequestDto,
-  ): Promise<ChangeRequestResponseDto> {
-    const request = await this.changeRequestModel.findById(requestId).exec();
+  /**
+   * Obtiene solicitud por ID
+   */
+  async findOne(id: string): Promise<ChangeRequestDocument> {
+    const request = await this.changeRequestModel.findById(id);
     if (!request) {
-      throw new NotFoundException('Request not found');
+      throw new BadRequestException('Solicitud no encontrada');
     }
-
-    if (
-      request.state !== RequestState.PENDING &&
-      request.state !== RequestState.IN_REVIEW
-    ) {
-      throw new BadRequestException(
-        'Request cannot be approved in its current state',
-      );
-    }
-
-    // Re-validar antes de aprobar
-    const validation =
-      await this.scheduleValidationService.validateChangeRequest(
-        request.studentId,
-        request.sourceGroupId,
-        request.targetGroupId as string,
-      );
-
-    if (!validation.isValid) {
-      throw new BadRequestException({
-        message: 'Request is no longer valid',
-        errors: validation.errors,
-      });
-    }
-
-    // Ejecutar el cambio
-    await this.executeChangeRequest(request);
-
-    // Actualizar solicitud
-    request.state = RequestState.APPROVED;
-    request.resolvedAt = new Date();
-    request.resolutionReason =
-      approveDto.resolutionReason || 'Request approved';
-    if (approveDto.observations) {
-      request.observations =
-        (request.observations || '') + '\n' + approveDto.observations;
-    }
-    request.updatedAt = new Date();
-
-    await request.save();
-
-    return this.getRequestDetails(requestId);
+    return request;
   }
 
-  async rejectChangeRequest(
-    requestId: string,
-    rejectDto: RejectChangeRequestDto,
-  ): Promise<ChangeRequestResponseDto> {
-    const request = await this.changeRequestModel.findById(requestId).exec();
-    if (!request) {
-      throw new NotFoundException('Request not found');
-    }
-
-    if (
-      request.state !== RequestState.PENDING &&
-      request.state !== RequestState.IN_REVIEW
-    ) {
-      throw new BadRequestException(
-        'Request cannot be rejected in its current state',
-      );
-    }
-
-    request.state = RequestState.REJECTED;
-    request.resolvedAt = new Date();
-    request.resolutionReason = rejectDto.resolutionReason;
-    if (rejectDto.observations) {
-      request.observations =
-        (request.observations || '') + '\n' + rejectDto.observations;
-    }
-    request.updatedAt = new Date();
-
-    await request.save();
-
-    return this.getRequestDetails(requestId);
+  /**
+   * Obtiene el semestre actual del estudiante (simulación)
+   */
+  private async getStudentSemester(userId: string): Promise<number> {
+    // Simulación - en implementación real consultar base de datos
+    // Retornar semestre aleatorio entre 1-12 para pruebas
+    return Math.floor(Math.random() * 12) + 1;
   }
 
-  async getRequestDetails(
-    requestId: string,
-  ): Promise<ChangeRequestResponseDto> {
-    const request = await this.changeRequestModel
-      .findById(requestId)
-      .populate('studentId')
-      .populate('programId')
-      .exec();
-
-    if (!request) {
-      throw new NotFoundException('Request not found');
-    }
-
-    const sourceGroup = await this.courseGroupModel
-      .findById(request.sourceGroupId)
-      .populate('courseId')
-      .exec();
-    const targetGroup = await this.courseGroupModel
-      .findById(request.targetGroupId)
-      .populate('courseId')
-      .exec();
-
-    return this.mapToResponseDto(
-      request,
-      request.studentId as any,
-      request.programId as any,
-      sourceGroup,
-      targetGroup,
-    );
+  /**
+   * Verifica si una materia es obligatoria (simulación)
+   */
+  private async isSubjectMandatory(subjectId: string): Promise<boolean> {
+    // Simulación - en implementación real consultar base de datos
+    // Considerar obligatorias las materias que terminan en números pares
+    const lastChar = subjectId.slice(-1);
+    const lastDigit = parseInt(lastChar);
+    return !isNaN(lastDigit) && lastDigit % 2 === 0;
   }
 
-  private async executeChangeRequest(
-    request: ChangeRequestDocument,
-  ): Promise<void> {
-    // Actualizar enrollment
-    await this.enrollmentModel
-      .updateOne(
-        {
-          studentId: request.studentId,
-          groupId: request.sourceGroupId,
-          status: EnrollmentStatus.ENROLLED,
-        },
-        {
-          groupId: request.targetGroupId,
-          updatedAt: new Date(),
-        },
-      )
-      .exec();
-
-    // Actualizar contadores de cupos
-    await this.courseGroupModel
-      .updateOne(
-        { _id: request.sourceGroupId },
-        { $inc: { currentEnrollments: -1 } },
-      )
-      .exec();
-
-    await this.courseGroupModel
-      .updateOne(
-        { _id: request.targetGroupId },
-        { $inc: { currentEnrollments: 1 } },
-      )
-      .exec();
+  /**
+   * Obtiene el programa del estudiante (simulación)
+   */
+  private async getStudentProgramId(userId: string): Promise<string> {
+    // Simulación - en implementación real consultar base de datos
+    // Usar hash simple del userId para asignar programa
+    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const programIndex = hash % 5;
+    
+    const programs = ['PROG-CS', 'PROG-ING', 'PROG-MAT', 'PROG-FIS', 'PROG-ADMIN'];
+    return programs[programIndex];
   }
 
-  private async generateUniqueRadicado(): Promise<string> {
-    const year = new Date().getFullYear();
-    const month = (new Date().getMonth() + 1).toString().padStart(2, '0');
-
-    let counter = 1;
-    let radicado: string;
-
-    do {
-      radicado = `CR-${year}${month}-${counter.toString().padStart(4, '0')}`;
-      const exists = await this.changeRequestModel.findOne({ radicado }).exec();
-      if (!exists) break;
-      counter++;
-    } while (true);
-
-    return radicado;
-  }
-
-  private async mapToResponseDto(
-    request: ChangeRequestDocument,
-    student: any,
-    program: any,
-    sourceGroup: any,
-    targetGroup: any,
-  ): Promise<ChangeRequestResponseDto> {
-    const sourceSchedules =
-      await this.scheduleValidationService.getGroupSchedule(sourceGroup._id);
-    const targetSchedules =
-      await this.scheduleValidationService.getGroupSchedule(targetGroup._id);
-
-    return {
-      id: request._id as string,
-      radicado: request.radicado,
-      studentId: student.code,
-      studentName: `${student.firstName} ${student.lastName}`,
-      programName: program.name,
-      periodCode: request.periodId,
-      sourceCourse: {
-        courseId: sourceGroup.courseId._id,
-        courseCode: sourceGroup.courseId.code,
-        courseName: sourceGroup.courseId.name,
-        groupNumber: sourceGroup.groupNumber,
-        schedule: sourceSchedules.map((s) => ({
-          dayOfWeek: s.dayOfWeek,
-          startTime: s.startTime,
-          endTime: s.endTime,
-        })),
-      },
-      targetCourse: {
-        courseId: targetGroup.courseId._id,
-        courseCode: targetGroup.courseId.code,
-        courseName: targetGroup.courseId.name,
-        groupNumber: targetGroup.groupNumber,
-        schedule: targetSchedules.map((s) => ({
-          dayOfWeek: s.dayOfWeek,
-          startTime: s.startTime,
-          endTime: s.endTime,
-        })),
-      },
-      state: request.state,
-      priority: request.priority,
-      observations: request.observations,
-      exceptional: request.exceptional,
-      createdAt: request.createdAt,
-      resolvedAt: request.resolvedAt,
-      resolutionReason: request.resolutionReason,
+  /**
+   * Obtiene el programa de una materia (simulación)
+   */
+  private async getSubjectProgram(subjectId: string): Promise<string | null> {
+    // Simulación - en implementación real consultar base de datos
+    const lastChar = subjectId.slice(-1);
+    const lastDigit = parseInt(lastChar);
+    
+    if (isNaN(lastDigit)) return null;
+    
+    const programMap = {
+      0: 'PROG-CS', 1: 'PROG-CS',
+      2: 'PROG-ING', 3: 'PROG-ING',
+      4: 'PROG-MAT', 5: 'PROG-MAT',
+      6: 'PROG-FIS', 7: 'PROG-FIS',
+      8: 'PROG-ADMIN', 9: 'PROG-ADMIN'
     };
+
+    return programMap[lastDigit] || null;
+  }
+
+  /**
+   * Obtiene solicitudes por facultad
+   */
+  async getRequestsByFaculty(facultyId: string, filters: any): Promise<ChangeRequestDocument[]> {
+    const query: any = { assignedProgramId: facultyId };
+    
+    if (filters.status) {
+      query.status = filters.status;
+    }
+    if (filters.studentId) {
+      query.userId = filters.studentId;
+    }
+    
+    return this.changeRequestModel.find(query).sort({ createdAt: -1 }).exec();
+  }
+
+  /**
+   * Obtiene detalles de una solicitud
+   */
+  async getRequestDetails(id: string): Promise<ChangeRequestDocument> {
+    return this.findOne(id);
+  }
+
+  /**
+   * Aprueba una solicitud de cambio
+   */
+  async approveChangeRequest(id: string, approveDto: any): Promise<ChangeRequestDocument> {
+    const request = await this.findOne(id);
+    
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Solo se pueden aprobar solicitudes pendientes');
+    }
+
+    request.status = 'APPROVED';
+    if (approveDto.observations) {
+      request.observations = approveDto.observations;
+    }
+
+    return request.save();
+  }
+
+  /**
+   * Rechaza una solicitud de cambio
+   */
+  async rejectChangeRequest(id: string, rejectDto: any): Promise<ChangeRequestDocument> {
+    const request = await this.findOne(id);
+    
+    if (request.status !== 'PENDING') {
+      throw new BadRequestException('Solo se pueden rechazar solicitudes pendientes');
+    }
+
+    request.status = 'REJECTED';
+    if (rejectDto.observations) {
+      request.observations = rejectDto.observations;
+    }
+
+    return request.save();
   }
 }
