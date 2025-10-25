@@ -178,9 +178,7 @@ For API support and documentation issues, please refer to the comprehensive endp
    * Converts class-validator errors into detailed 422 responses
    * with field-specific error information for better frontend handling.
    */
-  const i18nService = app.get(I18nService) as I18nService<Record<string, unknown>>;
-  app.useGlobalFilters(new ValidationExceptionFilter(i18nService));
-
+  app.useGlobalFilters(new ValidationExceptionFilter());
   /**
    * Global Validation Pipe
    *
