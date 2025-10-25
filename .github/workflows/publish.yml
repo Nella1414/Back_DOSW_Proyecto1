@@ -1,8 +1,8 @@
-name: Publish to Docker
+name: Publish to Docker BAck SIRHA
 on:
   push:
     branches:
-      - main
+      - feature/Docker_pusblish
 permissions:
   packages: write
   contents: read
