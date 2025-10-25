@@ -9,6 +9,7 @@ import {
   Req,
   UseGuards,
   Headers,
+  NotFoundException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -42,6 +43,10 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 export class ChangeRequestsController {
   constructor(private readonly changeRequestsService: ChangeRequestsService) {}
 
+  // ========================================
+  // CREATION ENDPOINTS
+  // ========================================
+
   @ApiOperation({
     summary: 'Create change request (STUDENT)',
     description:
@@ -61,13 +66,23 @@ export class ChangeRequestsController {
     @Req() req: any,
     @Body() createChangeRequestDto: CreateChangeRequestDto,
   ) {
-    const userEmail = req.user?.email;
+    // Obtener email del usuario autenticado
+    const userEmail = req.user?.email || req.user?.user?.email;
+    
+    if (!userEmail) {
+      throw new NotFoundException('User email not found in token');
+    }
+    
     const studentCode = await this.extractStudentCodeFromUser(userEmail);
     return this.changeRequestsService.createChangeRequest(
       studentCode,
       createChangeRequestDto,
     );
   }
+
+  // ========================================
+  // QUERY ENDPOINTS
+  // ========================================
 
   @ApiOperation({
     summary: 'Get change requests by faculty (DEAN)',
@@ -97,6 +112,22 @@ export class ChangeRequestsController {
   }
 
   @ApiOperation({
+    summary: 'Get student own change requests',
+    description: 'Students can view their own change request history',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Student change requests retrieved',
+  })
+  @Get('student/my-requests')
+  async getMyRequests(@Req() req: any) {
+    const userEmail = req.user?.email;
+    const studentCode = await this.extractStudentCodeFromUser(userEmail);
+    // TODO: Implement getRequestsByStudent method
+    return { message: 'Feature coming soon', studentCode };
+  }
+
+  @ApiOperation({
     summary: 'Get change request details',
     description: 'Get detailed information about a specific change request',
   })
@@ -108,10 +139,14 @@ export class ChangeRequestsController {
     return this.changeRequestsService.getRequestDetails(id);
   }
 
+  // ========================================
+  // CURRENT STATE ENDPOINTS (Tarea 6)
+  // ========================================
+
   @ApiOperation({
     summary: 'Get complete current state information',
     description:
-      'Returns consolidated information about the request including current state, available actions, metrics, and complete details',
+      'Returns consolidated information about the request including current state, available actions, metrics, and complete details. This is the main endpoint for displaying request details in the UI.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -130,9 +165,29 @@ export class ChangeRequestsController {
   }
 
   @ApiOperation({
+    summary: 'Get available actions for request',
+    description:
+      'Get current state, version, and available state transitions for a request based on current state',
+  })
+  @ApiParam({ name: 'id', description: 'Change request ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Available actions retrieved successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Change request not found' })
+  @Get(':id/available-actions')
+  async getAvailableActions(@Param('id') id: string) {
+    return this.changeRequestsService.getAvailableActions(id);
+  }
+
+  // ========================================
+  // HISTORY ENDPOINTS (Tareas 7 y 8)
+  // ========================================
+
+  @ApiOperation({
     summary: 'Get complete history of a change request',
     description:
-      'Returns the complete audit trail of state changes, ordered chronologically with actor names from database joins',
+      'Returns the complete audit trail of state changes for a request, ordered chronologically with actor names from database joins. Includes summary information and noTransitions flag when only creation event exists.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -151,12 +206,12 @@ export class ChangeRequestsController {
   @ApiOperation({
     summary: 'Get timeline for change request',
     description:
-      'Returns formatted timeline events for frontend display, with icons and colors',
+      'Returns formatted timeline events for frontend display, with user-friendly descriptions, icons, and colors. Optimized for UI rendering in timeline components.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
     status: 200,
-    description: 'Timeline retrieved successfully',
+    description: 'Timeline retrieved successfully with visual metadata',
     type: [TimelineEventDto],
   })
   @ApiResponse({ status: 404, description: 'Change request not found' })
@@ -169,7 +224,8 @@ export class ChangeRequestsController {
 
   @ApiOperation({
     summary: 'Get history statistics',
-    description: 'Returns aggregated statistics about the request history',
+    description:
+      'Returns aggregated statistics about the request history and activity, including unique actors count, event distribution, and temporal information.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -186,7 +242,7 @@ export class ChangeRequestsController {
   @ApiOperation({
     summary: 'Check if request has state transitions',
     description:
-      'Returns whether the request has any state transitions beyond creation',
+      'Returns whether the request has any state transitions beyond the initial creation event. Useful for conditional UI rendering.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -209,26 +265,14 @@ export class ChangeRequestsController {
     };
   }
 
-  @ApiOperation({
-    summary: 'Get available actions for request',
-    description:
-      'Get current state, version, and available state transitions for a request',
-  })
-  @ApiParam({ name: 'id', description: 'Change request ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Available actions retrieved successfully',
-  })
-  @ApiResponse({ status: 404, description: 'Change request not found' })
-  @Get(':id/available-actions')
-  async getAvailableActions(@Param('id') id: string) {
-    return this.changeRequestsService.getAvailableActions(id);
-  }
+  // ========================================
+  // STATE CHANGE ENDPOINTS (Tareas 3, 4, 5)
+  // ========================================
 
   @ApiOperation({
     summary: 'Approve change request (DEAN)',
     description:
-      'Deans can approve change requests. Supports optimistic locking via If-Match header',
+      'Deans can approve change requests from their faculty students. Executes the course group change and updates enrollment. Supports optimistic locking via If-Match header.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -242,7 +286,8 @@ export class ChangeRequestsController {
   @ApiResponse({ status: 404, description: 'Change request not found' })
   @ApiResponse({
     status: 409,
-    description: 'Conflict - Request already approved or modified by another user',
+    description:
+      'Conflict - Request already approved or modified by another user',
   })
   @RequirePermissions(Permission.UPDATE_ENROLLMENT)
   @Patch(':id/approve')
@@ -265,7 +310,7 @@ export class ChangeRequestsController {
   @ApiOperation({
     summary: 'Reject change request (DEAN)',
     description:
-      'Deans can reject change requests with a reason. Supports optimistic locking',
+      'Deans can reject change requests with a mandatory reason. Supports optimistic locking via If-Match header to prevent concurrent modifications.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -276,7 +321,8 @@ export class ChangeRequestsController {
   @ApiResponse({ status: 404, description: 'Change request not found' })
   @ApiResponse({
     status: 409,
-    description: 'Conflict - Request already rejected or modified by another user',
+    description:
+      'Conflict - Request already rejected or modified by another user',
   })
   @RequirePermissions(Permission.UPDATE_ENROLLMENT)
   @Patch(':id/reject')
@@ -298,7 +344,8 @@ export class ChangeRequestsController {
 
   @ApiOperation({
     summary: 'Request additional information (DEAN)',
-    description: 'Request additional information from student',
+    description:
+      'Request additional information from student. Transitions request to WAITING_INFO state with a mandatory reason explaining what information is needed.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -330,7 +377,8 @@ export class ChangeRequestsController {
 
   @ApiOperation({
     summary: 'Move request to review (DEAN)',
-    description: 'Start reviewing a pending request',
+    description:
+      'Start reviewing a pending request. Transitions request to IN_REVIEW state to indicate active evaluation is in progress.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -357,7 +405,7 @@ export class ChangeRequestsController {
   @ApiOperation({
     summary: 'Generic state change endpoint (ADMIN)',
     description:
-      'Allows administrators to change request state to any valid state. Supports optimistic locking via If-Match header.',
+      'Allows administrators to change request state to any valid state defined in the state machine. Validates transitions, supports optimistic locking via If-Match header, and automatically records audit trail.',
   })
   @ApiParam({ name: 'id', description: 'Change request ID' })
   @ApiResponse({
@@ -366,7 +414,7 @@ export class ChangeRequestsController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid state transition',
+    description: 'Invalid state transition - transition not allowed',
   })
   @ApiResponse({
     status: 409,
@@ -397,25 +445,25 @@ export class ChangeRequestsController {
     });
   }
 
-  @ApiOperation({
-    summary: 'Get student own change requests',
-    description: 'Students can view their own change request history',
-  })
-  @ApiResponse({
-    status: 200,
-    description: 'Student change requests retrieved',
-  })
-  @Get('student/my-requests')
-  async getMyRequests(@Req() req: any) {
-    const userEmail = req.user?.email;
-    const studentCode = await this.extractStudentCodeFromUser(userEmail);
-    // TODO: Implement getRequestsByStudent method
-    return { message: 'Feature coming soon', studentCode };
-  }
+  // ========================================
+  // HELPER METHODS
+  // ========================================
 
   private async extractStudentCodeFromUser(email: string): Promise<string> {
-    // TODO: Implement logic to extract student code from user email/ID
-    // This should query the User->Student relationship
-    return 'TEMP-CODE'; // Placeholder
+    // Para testing: mapear emails conocidos a códigos de estudiante
+    // En producción, esto debería buscar en la BD la relación User->Student
+    
+    const emailToStudentCode: Record<string, string> = {
+      'juan.perez@estudiante.edu': 'SIS2024001',
+      'maria.garcia@estudiante.edu': 'SIS2024002',
+    };
+
+    const studentCode = emailToStudentCode[email];
+    
+    if (!studentCode) {
+      throw new NotFoundException(`Student code not found for email: ${email}`);
+    }
+
+    return studentCode;
   }
 }

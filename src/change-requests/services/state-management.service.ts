@@ -34,11 +34,7 @@ export interface StateChangeResult {
 
 /**
  * * State Management Service
- *
- * ? Servicio que gestiona los cambios de estado con:
- * ? - Idempotencia (evita cambios duplicados)
- * ? - Control de concurrencia optimista (version field)
- * ? - Validación de transiciones
+ 
  */
 @Injectable()
 export class StateManagementService {
@@ -46,6 +42,7 @@ export class StateManagementService {
     @InjectModel(ChangeRequest.name)
     private changeRequestModel: Model<ChangeRequestDocument>,
     private stateTransitionService: StateTransitionService,
+    private stateAuditService: StateAuditService,
   ) {}
 
   /**
@@ -147,6 +144,15 @@ export class StateManagementService {
       throw new ConcurrentModificationException(requestId, request.version);
     }
 
+    await this.stateAuditService.recordTransition(
+      requestId,
+      currentState,
+      toState,
+      options.actorId,
+      options.actorName,
+      options.reason,
+      options.metadata,
+    );
     // 8. Devolver resultado exitoso
     return {
       success: true,

@@ -329,4 +329,32 @@ export class StateAuditService {
         return 'Event occurred';
     }
   }
+  
+  private generateReadableDescription(
+    event: RequestStateHistoryDocument,
+  ): string {
+    const actor = event.actorName || 'System';
+
+    switch (event.changeType) {
+      case StateChangeType.CREATE:
+        return `${actor} created the request`;
+
+      case StateChangeType.STATE_CHANGE:
+        const actionMap: Record<string, string> = {
+          APPROVED: 'approved',
+          REJECTED: 'rejected',
+          IN_REVIEW: 'started reviewing',
+          WAITING_INFO: 'requested additional information for',
+          PENDING: 'moved back to pending',
+        };
+        const action = actionMap[event.toState] || `changed state to ${event.toState} for`;
+        return `${actor} ${action} the request`;
+
+      case StateChangeType.UPDATE:
+        return `${actor} updated the request information`;
+
+      default:
+        return `${actor} performed an action`;
+    }
+  }
 }
