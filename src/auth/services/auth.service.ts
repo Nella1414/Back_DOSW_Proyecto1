@@ -67,7 +67,7 @@ export class AuthService {
 
       // ? Critical: Password must be hashed before storage for security
       const { password, ...userData } = userObject;
-      const hashedPassword = await hash(password, 10); // Salt rounds = 10
+      const hashedPassword = await hash(password, 10); 
 
       // Step 3: Create new user in database with hashed password
       const newUser = await this.userModel.create({

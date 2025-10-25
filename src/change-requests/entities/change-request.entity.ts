@@ -32,7 +32,7 @@ export class ChangeRequest {
   @Prop({ required: true, enum: ['LOW', 'NORMAL', 'HIGH', 'URGENT'] })
   priority: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, index: true })
   requestHash: string;
 
   @Prop({ unique: true, sparse: true })
@@ -53,7 +53,6 @@ export class ChangeRequest {
 
 export const ChangeRequestSchema = SchemaFactory.createForClass(ChangeRequest);
 
-// Índices para performance
-ChangeRequestSchema.index({ requestHash: 1 });
+// Índices para performance (requestHash ya tiene índice único en @Prop)
 ChangeRequestSchema.index({ userId: 1, status: 1 });
 ChangeRequestSchema.index({ createdAt: -1 });
