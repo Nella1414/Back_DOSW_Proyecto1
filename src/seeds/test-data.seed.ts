@@ -300,6 +300,10 @@ export async function seedTestData() {
     // 6. Create Students
     console.log('Creating Students...');
     const students: StudentDocument[] = [];
+
+    // Define semester per student to match their enrollment history
+    const semesterPerStudent = [4, 2, 3, 4, 5]; // Juan=4, Maria=2, Carlos=3, Ana=4, Luis=5
+
     for (let i = 0; i < studentUsers.length; i++) {
       const studentData = studentUsers[i];
       const student = await studentModel.create({
@@ -307,7 +311,7 @@ export async function seedTestData() {
         firstName: studentData.firstName,
         lastName: studentData.lastName,
         programId: program._id,
-        currentSemester: (i % 5) + 1, // Diferentes semestres: 1-5
+        currentSemester: semesterPerStudent[i] || 1,
         externalId: studentData.externalId,
       });
       students.push(student);
@@ -771,16 +775,44 @@ export async function seedTestData() {
       }
     }
 
+    // Add some FAILED courses to illustrate failed courses in UI
+    // Using courses from semester 5 that student hasn't taken yet
+    const student1_failed_courses = [
+      {
+        courseCode: 'NET501',
+        status: EnrollmentStatus.FAILED,
+        grade: 2.3,
+        period: periods.period2024_1._id,
+      },
+    ];
+
+    for (const enrollment of student1_failed_courses) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (enrollment.period as any).toString(),
+        'B',
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: student1._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-01-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
     // === STUDENT 2 (Maria Garcia - STU002) - Semester 2 ===
-    // Enrolled in semester 2 courses (different schedule from student 1)
-    const student2Enrollments = [
+    // Current semester 2 courses (enrolled)
+    const student2CurrentEnrollments = [
       { courseCode: 'MAT201', status: EnrollmentStatus.ENROLLED, grade: null },
       { courseCode: 'PRG201', status: EnrollmentStatus.ENROLLED, grade: null },
       { courseCode: 'FIS201', status: EnrollmentStatus.ENROLLED, grade: null },
       { courseCode: 'EST201', status: EnrollmentStatus.ENROLLED, grade: null },
     ];
 
-    for (const enrollment of student2Enrollments) {
+    for (const enrollment of student2CurrentEnrollments) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
         (periods.currentPeriod._id as any).toString(),
@@ -791,6 +823,59 @@ export async function seedTestData() {
           studentId: students[1]._id,
           groupId: group._id,
           enrolledAt: new Date('2024-07-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // Period 2024-1 - Semester 1 courses (mostly passed, one failed)
+    const student2_2024_1 = [
+      { courseCode: 'MAT101', status: EnrollmentStatus.PASSED, grade: 4.0 },
+      { courseCode: 'PRG101', status: EnrollmentStatus.PASSED, grade: 2.1 },
+      { courseCode: 'FIS101', status: EnrollmentStatus.PASSED, grade: 3.8 },
+      { courseCode: 'QUI101', status: EnrollmentStatus.PASSED, grade: 3.9 },
+      { courseCode: 'ING101', status: EnrollmentStatus.PASSED, grade: 4.2 },
+    ];
+
+    for (const enrollment of student2_2024_1) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (periods.period2024_1._id as any).toString(),
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: students[1]._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-01-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // Add failed courses for illustration
+    // Using courses from semester 3 that student hasn't taken yet
+    const student2_failed_courses = [
+      {
+        courseCode: 'DSA301',
+        status: EnrollmentStatus.FAILED,
+        grade: 2.6,
+        period: periods.period2023_2._id,
+      },
+    ];
+
+    for (const enrollment of student2_failed_courses) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (enrollment.period as any).toString(),
+        'B',
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: students[1]._id,
+          groupId: group._id,
+          enrolledAt: new Date('2023-07-15'),
           status: enrollment.status,
           grade: enrollment.grade,
         });
@@ -895,19 +980,19 @@ export async function seedTestData() {
     );
     console.log('\n📚 STUDENTS (all password: 123456789):');
     console.log(
-      'Student 1: juan.perez@estudiante.edu (Advanced - Semester 4) - 2 current + historical',
+      'Student 1: juan.perez@estudiante.edu (SIS2024001) - Semester 4 - 11 passed + 2 current',
     );
     console.log(
-      'Student 2: maria.garcia@estudiante.edu (Semester 2) - 4 courses',
+      'Student 2: maria.garcia@estudiante.edu (SIS2024002) - Semester 2 - 5 passed + 4 current',
     );
     console.log(
-      'Student 3: carlos.lopez@estudiante.edu (Semester 3) - 2 courses',
+      'Student 3: carlos.lopez@estudiante.edu (SIS2024003) - Semester 3 - 2 courses',
     );
     console.log(
-      'Student 4: ana.martinez@estudiante.edu (Semester 4) - 2 courses',
+      'Student 4: ana.martinez@estudiante.edu (SIS2024004) - Semester 4 - 2 courses',
     );
     console.log(
-      'Student 5: luis.rodriguez@estudiante.edu (Semester 5) - 2 courses\n',
+      'Student 5: luis.rodriguez@estudiante.edu (SIS2024005) - Semester 5 - 2 courses\n',
     );
 
     return {

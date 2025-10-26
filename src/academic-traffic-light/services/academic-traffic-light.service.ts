@@ -251,9 +251,8 @@ export class AcademicTrafficLightService {
       })
       .exec();
 
-    const passedCourses: CourseStatus[] = [];
-    const currentCourses: CourseStatus[] = [];
-    const failedCourses: CourseStatus[] = [];
+    // Use Map to track unique courses and keep only the most recent status
+    const courseMap = new Map<string, CourseStatus>();
 
     for (const enrollment of allEnrollments) {
       const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
@@ -265,17 +264,50 @@ export class AcademicTrafficLightService {
       const course = group.courseId;
       const period = group.periodId;
 
+      const courseCode = course.code;
       const courseStatus: CourseStatus = {
         periodCode: period.code,
-        courseCode: course.code,
+        courseCode: courseCode,
         courseName: course.name,
         credits: course.credits,
         grade: enrollment.grade,
         status: enrollment.status,
         color: this.getTrafficLightColor(enrollment.status, enrollment.grade),
+        semester: course.semester,
       };
 
-      switch (enrollment.status) {
+      // Check if we already have this course
+      const existing = courseMap.get(courseCode);
+      if (!existing) {
+        courseMap.set(courseCode, courseStatus);
+      } else {
+        // Priority: PASSED > ENROLLED > FAILED
+        // If course is currently ENROLLED, it takes priority (student is retaking it)
+        // If existing is PASSED, keep it unless new is also PASSED with higher grade
+        if (enrollment.status === EnrollmentStatus.ENROLLED) {
+          courseMap.set(courseCode, courseStatus);
+        } else if (
+          enrollment.status === EnrollmentStatus.PASSED &&
+          existing.status !== EnrollmentStatus.ENROLLED
+        ) {
+          // Keep the PASSED with best grade
+          if (
+            !existing.grade ||
+            (enrollment.grade && enrollment.grade > existing.grade)
+          ) {
+            courseMap.set(courseCode, courseStatus);
+          }
+        }
+      }
+    }
+
+    // Separate by status
+    const passedCourses: CourseStatus[] = [];
+    const currentCourses: CourseStatus[] = [];
+    const failedCourses: CourseStatus[] = [];
+
+    courseMap.forEach((courseStatus) => {
+      switch (courseStatus.status) {
         case EnrollmentStatus.PASSED:
           passedCourses.push(courseStatus);
           break;
@@ -283,10 +315,11 @@ export class AcademicTrafficLightService {
           currentCourses.push(courseStatus);
           break;
         case EnrollmentStatus.FAILED:
+          // Only include failed if not currently enrolled or passed
           failedCourses.push(courseStatus);
           break;
       }
-    }
+    });
 
     return {
       passedCourses: passedCourses.sort((a, b) =>

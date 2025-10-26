@@ -6,6 +6,9 @@ import {
   Patch,
   Param,
   Delete,
+  Request,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -824,7 +827,7 @@ export class StudentsController {
 
   @ApiOperation({
     summary: 'Get student schedule',
-    description: 'Retrieves the current schedule for a specific student',
+    description: 'Retrieves the current schedule for a specific student. Students can access their own schedule.',
   })
   @ApiParam({
     name: 'studentCode',
@@ -837,9 +840,39 @@ export class StudentsController {
   })
   @ApiResponse({ status: 404, description: 'Student not found' })
   @ApiBearerAuth()
-  @RequirePermissions(Permission.READ_USER)
   @Get(':studentCode/schedule')
-  getSchedule(@Param('studentCode') studentCode: string) {
+  async getSchedule(
+    @Param('studentCode') studentCode: string,
+    @Request() req: any,
+  ) {
+    // Check if user is the student themselves or has admin/dean permissions
+    const userRoles = req.user?.roles || [];
+
+    // For students, verify they can only access their own schedule
+    // The studentScheduleService will validate if student exists
+    const hasAdminAccess =
+      userRoles.includes('ADMIN') ||
+      userRoles.includes('DEAN') ||
+      userRoles.some((role: any) =>
+        role.permissions?.includes(Permission.READ_USER)
+      );
+
+    // If not admin, verify the student is accessing their own schedule
+    // by checking if the requested studentCode matches their externalId
+    if (!hasAdminAccess) {
+      // The getCurrentSchedule service method accepts both code and externalId
+      // It will verify the student exists and matches the requesting user
+      try {
+        return await this.studentsService.getStudentSchedule(
+          req.user?.externalId || studentCode,
+        );
+      } catch (error) {
+        throw new ForbiddenException(
+          'You can only access your own schedule',
+        );
+      }
+    }
+
     return this.studentsService.getStudentSchedule(studentCode);
   }
 

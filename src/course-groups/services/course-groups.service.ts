@@ -34,6 +34,7 @@ export interface AvailableGroupDto {
   groupId: string;
   courseCode: string;
   courseName: string;
+  courseCredits: number;
   groupNumber: string;
   maxStudents: number;
   currentEnrollments: number;
@@ -255,6 +256,7 @@ export class CourseGroupsService {
           groupId: group._id as string,
           courseCode: (group.courseId as any).code,
           courseName: (group.courseId as any).name,
+          courseCredits: (group.courseId as any).credits || 0,
           groupNumber: group.groupNumber,
           maxStudents: group.maxStudents,
           currentEnrollments: currentEnrollments,
