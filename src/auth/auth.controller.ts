@@ -597,16 +597,14 @@ export class AuthController {
    */
   @ApiOperation({
     summary: 'Get current authenticated user',
-    description: 'Returns the profile extracted from the JWT token.',
+    description:
+      'Returns the profile extracted from the JWT token with student info if available.',
     operationId: 'getCurrentUser',
   })
   @ApiBearerAuth()
   @Get('me')
-  getMe(@Req() req: any) {
+  async getMe(@Req() req: any) {
     // JwtAuthGuard is applied globally, so req.user is populated by JwtStrategy
-    return {
-      user: req.user,
-      tokenType: 'Bearer',
-    };
+    return this.authService.getCurrentUserWithStudent(req.user);
   }
 }

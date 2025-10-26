@@ -111,22 +111,29 @@ export class AuthService {
           currentSemester: 1, // Start at semester 1
         });
 
-        this.logger.log(`Student profile created: ${studentCode} for user: ${newUser.email}`);
+        this.logger.log(
+          `Student profile created: ${studentCode} for user: ${newUser.email}`,
+        );
       } catch (studentError) {
         // If student creation fails, rollback user creation and throw error
         await this.userModel.deleteOne({ _id: newUser._id });
+        const errorMessage =
+          studentError instanceof Error
+            ? studentError.message
+            : 'Unknown error';
         this.logger.error('Failed to create student profile', {
           userId: newUser._id,
-          error: studentError.message,
+          error: errorMessage,
         });
         throw new HttpException(
-          `Error al crear perfil de estudiante: ${studentError.message}`,
+          `Error al crear perfil de estudiante: ${errorMessage}`,
           HttpStatus.BAD_REQUEST,
         );
       }
 
       // ? Critical: Never return password in API responses for security
-      const { password: _, ...userResponse } = newUser.toObject();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { password: _password, ...userResponse } = newUser.toObject();
       return userResponse;
     } catch (error) {
       // Handle known errors first
@@ -135,14 +142,19 @@ export class AuthService {
       }
 
       // Handle MongoDB duplicate key error (email already exists)
-      if (error.code === 11000) {
+      if (
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === 11000
+      ) {
         throw new HttpException('EMAIL_ALREADY_EXISTS', HttpStatus.CONFLICT);
       }
 
       // Log unexpected errors securely (without sensitive data)
       this.logger.error('Registration failed', {
         email: userObject.email,
-        errorType: error.constructor.name,
+        errorType: error instanceof Error ? error.constructor.name : 'Unknown',
       });
 
       // Throw generic error to prevent information leakage
@@ -344,12 +356,17 @@ export class AuthService {
             currentSemester: 1,
           });
 
-          this.logger.log(`Student profile created for Google user: ${studentCode}`);
+          this.logger.log(
+            `Student profile created for Google user: ${studentCode}`,
+          );
         } catch (studentError) {
-          this.logger.error('Failed to create student profile for Google user', {
-            userId: user._id,
-            error: studentError.message,
-          });
+          this.logger.error(
+            'Failed to create student profile for Google user',
+            {
+              userId: user._id,
+              error: studentError.message,
+            },
+          );
         }
       } else {
         // Step 2b: Update existing user with Google info if needed
@@ -411,6 +428,75 @@ export class AuthService {
         'GOOGLE_LOGIN_FAILED',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
+    }
+  }
+
+  /**
+   * Get current user with student information if available
+   *
+   * @param user - User object from JWT token
+   * @returns User with student profile if exists
+   */
+  async getCurrentUserWithStudent(user: {
+    email: string;
+    externalId: string;
+    roles: string[];
+    id?: string;
+  }) {
+    try {
+      this.logger.log(
+        `Getting profile for user: ${user.email} (externalId: ${user.externalId})`,
+      );
+
+      // If user is a student, get their student profile
+      let studentProfile: StudentDocument | null = null;
+      if (user.roles && user.roles.includes(RoleName.STUDENT)) {
+        this.logger.log(
+          `User is a student, searching for student profile with externalId: ${user.externalId}`,
+        );
+
+        studentProfile = await this.studentModel
+          .findOne({
+            externalId: user.externalId,
+          })
+          .exec();
+
+        if (studentProfile) {
+          this.logger.log(`Student profile found: ${studentProfile.code}`);
+        } else {
+          this.logger.warn(
+            `Student profile NOT found for externalId: ${user.externalId}`,
+          );
+        }
+      }
+
+      return {
+        user: user,
+        student: studentProfile
+          ? {
+              _id: studentProfile._id as string,
+              code: studentProfile.code,
+              firstName: studentProfile.firstName,
+              lastName: studentProfile.lastName,
+              currentSemester: studentProfile.currentSemester,
+              programId: studentProfile.programId,
+              externalId: studentProfile.externalId,
+            }
+          : null,
+        tokenType: 'Bearer' as const,
+      };
+    } catch (error) {
+      this.logger.error('Error getting user with student profile', {
+        userId: user.id,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+
+      // Still return user even if student lookup fails
+      return {
+        user: user,
+        student: null,
+        tokenType: 'Bearer' as const,
+      };
     }
   }
 }

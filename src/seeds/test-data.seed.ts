@@ -910,7 +910,6 @@ export async function seedTestData() {
       'Student 5: luis.rodriguez@estudiante.edu (Semester 5) - 2 courses\n',
     );
 
-
     return {
       faculty,
       program,
