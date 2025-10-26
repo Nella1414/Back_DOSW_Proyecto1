@@ -1,10 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiExcludeEndpoint,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AppService } from './services/app.service';
 import { Public } from '../auth/decorators/auth.decorator';
 
@@ -65,7 +60,10 @@ export class AppController {
           example: 'SIRHA - Student Information & Registration Hub API',
         },
         version: { type: 'string', example: '1.0.2' },
-        description: { type: 'string', example: 'Academic Management System REST API' },
+        description: {
+          type: 'string',
+          example: 'Academic Management System REST API',
+        },
         documentation: { type: 'string', example: '/doc' },
         endpoints: {
           type: 'object',
@@ -75,7 +73,11 @@ export class AppController {
             version: { type: 'string', example: '/version' },
           },
         },
-        message: { type: 'string', example: 'Welcome to SIRHA API! Visit /doc for complete documentation.' },
+        message: {
+          type: 'string',
+          example:
+            'Welcome to SIRHA API! Visit /doc for complete documentation.',
+        },
       },
     },
   })
@@ -122,7 +124,8 @@ export class AppController {
   })
   @ApiResponse({
     status: 200,
-    description: 'Health check completed - Returns health status of all components',
+    description:
+      'Health check completed - Returns health status of all components',
     schema: {
       type: 'object',
       properties: {
@@ -152,7 +155,10 @@ export class AppController {
               type: 'object',
               properties: {
                 status: { type: 'string', example: 'ok' },
-                message: { type: 'string', example: 'Database connection active' },
+                message: {
+                  type: 'string',
+                  example: 'Database connection active',
+                },
                 connectionState: { type: 'string', example: 'connected' },
               },
             },
@@ -232,7 +238,10 @@ export class AppController {
               format: 'date-time',
               example: '2025-01-15T10:00:00.000Z',
             },
-            uptime: { type: 'string', example: '2 hours 30 minutes 15 seconds' },
+            uptime: {
+              type: 'string',
+              example: '2 hours 30 minutes 15 seconds',
+            },
             uptimeSeconds: { type: 'number', example: 9015 },
             currentTime: {
               type: 'string',
@@ -251,7 +260,11 @@ export class AppController {
             collections: { type: 'number', example: 14 },
           },
         },
-        health: { type: 'string', enum: ['healthy', 'degraded'], example: 'healthy' },
+        health: {
+          type: 'string',
+          enum: ['healthy', 'degraded'],
+          example: 'healthy',
+        },
       },
     },
   })
@@ -301,7 +314,10 @@ export class AppController {
         version: { type: 'string', example: '1.0.2' },
         apiName: { type: 'string', example: 'SIRHA API' },
         releaseDate: { type: 'string', example: '2025-01-15' },
-        description: { type: 'string', example: 'Student Information & Registration Hub API' },
+        description: {
+          type: 'string',
+          example: 'Student Information & Registration Hub API',
+        },
         changelog: {
           type: 'object',
           example: {

@@ -59,7 +59,9 @@ export class StudentsService {
    * @throws ConflictException - If student code already exists
    * @throws Error - If creation fails for other reasons
    */
-  async create(createStudentDto: CreateStudentDto): Promise<StudentResponseDto> {
+  async create(
+    createStudentDto: CreateStudentDto,
+  ): Promise<StudentResponseDto> {
     try {
       // Step 1: Check for existing student with same code
       const existingStudent = await this.studentModel.findOne({

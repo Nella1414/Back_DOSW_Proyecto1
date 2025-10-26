@@ -39,7 +39,8 @@ export class ChangeRequestsController {
 
   @ApiOperation({
     summary: 'Crear solicitud de cambio',
-    description: 'Crea una nueva solicitud de cambio con sistema anti-duplicados',
+    description:
+      'Crea una nueva solicitud de cambio con sistema anti-duplicados',
   })
   @ApiResponse({
     status: 201,

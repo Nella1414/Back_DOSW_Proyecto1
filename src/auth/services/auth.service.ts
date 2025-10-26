@@ -12,6 +12,10 @@ import { RegisterAuthDto } from '../dto/register-auth.dto';
 // Import User entity and types for database operations
 import { User, UserDocument } from '../../users/entities/user.entity';
 import { RoleName } from '../../roles/entities/role.entity';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
 
 // UUID library for generating unique external IDs
 import { v4 as uuidv4 } from 'uuid';
@@ -35,11 +39,14 @@ export class AuthService {
   /**
    * Constructor injects dependencies needed for authentication:
    * @param userModel - MongoDB model for user operations
+   * @param studentModel - MongoDB model for student operations
    * @param jwtService - Service for generating and validating JWT tokens
    */
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
+    @InjectModel(Student.name)
+    private readonly studentModel: Model<StudentDocument>,
     private readonly jwtService: JwtService,
   ) {}
   /**
@@ -67,13 +74,56 @@ export class AuthService {
 
       // ? Critical: Password must be hashed before storage for security
       const { password, ...userData } = userObject;
-      const hashedPassword = await hash(password, 10); 
+      const hashedPassword = await hash(password, 10);
 
       // Step 3: Create new user in database with hashed password
+      // All new users are students by default
       const newUser = await this.userModel.create({
         ...userData,
         password: hashedPassword,
+        roles: [RoleName.STUDENT], // Default role
       });
+
+      // Step 4: Create associated student profile automatically
+      try {
+        // Validate programId is provided
+        if (!userObject.programId) {
+          throw new Error('Program ID is required for student registration');
+        }
+
+        // Generate student code: SIS + year + sequential number
+        const currentYear = new Date().getFullYear();
+        const studentCount = await this.studentModel.countDocuments();
+        const studentCode = `SIS${currentYear}${String(studentCount + 1).padStart(4, '0')}`;
+
+        // Extract first and last name from displayName
+        const nameParts = userObject.displayName.trim().split(' ');
+        const firstName = nameParts[0];
+        const lastName = nameParts.slice(1).join(' ') || nameParts[0];
+
+        // Create student record with programId
+        await this.studentModel.create({
+          code: studentCode,
+          firstName: firstName,
+          lastName: lastName,
+          externalId: newUser.externalId,
+          programId: userObject.programId, // Add programId
+          currentSemester: 1, // Start at semester 1
+        });
+
+        this.logger.log(`Student profile created: ${studentCode} for user: ${newUser.email}`);
+      } catch (studentError) {
+        // If student creation fails, rollback user creation and throw error
+        await this.userModel.deleteOne({ _id: newUser._id });
+        this.logger.error('Failed to create student profile', {
+          userId: newUser._id,
+          error: studentError.message,
+        });
+        throw new HttpException(
+          `Error al crear perfil de estudiante: ${studentError.message}`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
 
       // ? Critical: Never return password in API responses for security
       const { password: _, ...userResponse } = newUser.toObject();
@@ -157,7 +207,18 @@ export class AuthService {
 
       const accessToken = this.jwtService.sign(payload);
 
-      // Step 6: Return user data and token (exclude sensitive information)
+      // Step 6: Get student code if user is a student
+      let studentCode: string | undefined;
+      if (findUser.roles.includes(RoleName.STUDENT)) {
+        const student = await this.studentModel.findOne({
+          externalId: findUser.externalId,
+        });
+        if (student) {
+          studentCode = student.code;
+        }
+      }
+
+      // Step 7: Return user data and token (exclude sensitive information)
       return {
         user: {
           id: findUser._id,
@@ -166,6 +227,7 @@ export class AuthService {
           externalId: findUser.externalId,
           roles: findUser.roles,
           active: findUser.active,
+          studentCode, // Include student code if available
         },
         accessToken,
         tokenType: 'Bearer', // Standard OAuth 2.0 token type
@@ -247,9 +309,11 @@ export class AuthService {
     try {
       // Step 1: Search for existing user by email
       let user = await this.userModel.findOne({ email: googleUser.email });
+      let isNewUser = false;
 
       if (!user) {
         // Step 2a: Create new user if not found
+        isNewUser = true;
         user = await this.userModel.create({
           email: googleUser.email,
           displayName: `${googleUser.firstName} ${googleUser.lastName}`,
@@ -265,6 +329,28 @@ export class AuthService {
           isGoogleUser: true,
           // Note: No password field since this is OAuth user
         });
+
+        // Step 2a.1: Create student profile for new Google user
+        try {
+          const currentYear = new Date().getFullYear();
+          const studentCount = await this.studentModel.countDocuments();
+          const studentCode = `SIS${currentYear}${String(studentCount + 1).padStart(4, '0')}`;
+
+          await this.studentModel.create({
+            code: studentCode,
+            firstName: googleUser.firstName,
+            lastName: googleUser.lastName,
+            externalId: user.externalId,
+            currentSemester: 1,
+          });
+
+          this.logger.log(`Student profile created for Google user: ${studentCode}`);
+        } catch (studentError) {
+          this.logger.error('Failed to create student profile for Google user', {
+            userId: user._id,
+            error: studentError.message,
+          });
+        }
       } else {
         // Step 2b: Update existing user with Google info if needed
         if (!user.googleId) {
@@ -287,7 +373,18 @@ export class AuthService {
 
       const accessToken = this.jwtService.sign(payload);
 
-      // Step 4: Return user data and token
+      // Step 4: Get student code if user is a student
+      let studentCode: string | undefined;
+      if (user.roles.includes(RoleName.STUDENT)) {
+        const student = await this.studentModel.findOne({
+          externalId: user.externalId,
+        });
+        if (student) {
+          studentCode = student.code;
+        }
+      }
+
+      // Step 5: Return user data and token
       return {
         user: {
           id: user._id,
@@ -298,6 +395,7 @@ export class AuthService {
           active: user.active,
           picture: user.picture,
           isGoogleUser: true,
+          studentCode, // Include student code if available
         },
         accessToken,
         tokenType: 'Bearer',

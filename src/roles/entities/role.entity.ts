@@ -53,10 +53,10 @@ export class Role {
   })
   name: RoleName;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: String })
   displayName: string;
 
-  @Prop({ required: false })
+  @Prop({ required: false, type: String })
   description?: string;
 
   @Prop({
@@ -66,10 +66,10 @@ export class Role {
   })
   permissions: Permission[];
 
-  @Prop({ default: true })
+  @Prop({ default: true, type: Boolean })
   isActive: boolean;
 
-  @Prop({ default: 1 })
+  @Prop({ default: 1, type: Number })
   priority: number;
 }
 

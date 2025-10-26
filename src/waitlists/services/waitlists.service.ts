@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateWaitlistDto } from '../dto/create-waitlist.dto';
-import { UpdateWaitlistDto } from '../dto/update-waitlist.dto';
 
 /**
  * * Waitlist Management Service
@@ -25,7 +23,7 @@ export class WaitlistsService {
    * TODO: Prevenir duplicados de estudiante en misma lista
    * TODO: Implementar notificacion de posicion en lista
    */
-  create(createWaitlistDto: CreateWaitlistDto) {
+  create(_createWaitlistDto?: unknown) {
     return 'This action adds a new waitlist';
   }
 
@@ -64,7 +62,7 @@ export class WaitlistsService {
    * TODO: Reordenar posiciones automaticamente
    * TODO: Notificar cambios a estudiante y siguientes en lista
    */
-  update(id: number, updateWaitlistDto: UpdateWaitlistDto) {
+  update(id: number, _updateWaitlistDto?: unknown) {
     return `This action updates a #${id} waitlist`;
   }
 

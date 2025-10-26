@@ -17,7 +17,8 @@ export class StudentIdParamDto {
   @IsString()
   @IsNotEmpty({ message: 'Student ID cannot be empty' })
   @Matches(/^[A-Z0-9\-_]+$/i, {
-    message: 'Student ID must contain only letters, numbers, hyphens and underscores',
+    message:
+      'Student ID must contain only letters, numbers, hyphens and underscores',
   })
   studentId: string;
 }

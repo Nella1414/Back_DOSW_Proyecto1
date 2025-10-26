@@ -216,7 +216,9 @@ export class StudentsController {
   @RequirePermissions(Permission.CREATE_USER)
   @AuditCreate('student')
   @Post()
-  create(@Body() createStudentDto: CreateStudentDto): Promise<StudentResponseDto> {
+  create(
+    @Body() createStudentDto: CreateStudentDto,
+  ): Promise<StudentResponseDto> {
     return this.studentsService.create(createStudentDto);
   }
 
@@ -673,7 +675,10 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.UPDATE_USER)
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateStudentDto: UpdateStudentDto): Promise<StudentResponseDto> {
+  update(
+    @Param('id') id: string,
+    @Body() updateStudentDto: UpdateStudentDto,
+  ): Promise<StudentResponseDto> {
     return this.studentsService.update(id, updateStudentDto);
   }
 
@@ -856,7 +861,9 @@ export class StudentsController {
   @ApiBearerAuth()
   @RequirePermissions(Permission.READ_USER)
   @Get('code/:studentCode')
-  findByCode(@Param('studentCode') studentCode: string): Promise<StudentResponseDto> {
+  findByCode(
+    @Param('studentCode') studentCode: string,
+  ): Promise<StudentResponseDto> {
     return this.studentsService.findByCode(studentCode);
   }
 

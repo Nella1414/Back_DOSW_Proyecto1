@@ -41,7 +41,7 @@ describe('SanitizerUtil', () => {
       const input = 'Texto con null byte: \0';
 
       expect(() => SanitizerUtil.sanitizeObservations(input)).toThrow(
-        'La observación contiene caracteres null bytes no permitidos'
+        'La observación contiene caracteres null bytes no permitidos',
       );
     });
 
@@ -77,9 +77,21 @@ describe('SanitizerUtil', () => {
 
     it('debe escapar todos los operadores NoSQL peligrosos', () => {
       const operators = [
-        '$where', '$ne', '$gt', '$gte', '$lt', '$lte',
-        '$or', '$and', '$not', '$nor', '$exists',
-        '$type', '$regex', '$expr', '$function'
+        '$where',
+        '$ne',
+        '$gt',
+        '$gte',
+        '$lt',
+        '$lte',
+        '$or',
+        '$and',
+        '$not',
+        '$nor',
+        '$exists',
+        '$type',
+        '$regex',
+        '$expr',
+        '$function',
       ];
 
       for (const op of operators) {

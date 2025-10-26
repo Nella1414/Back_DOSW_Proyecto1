@@ -244,7 +244,7 @@ export class AcademicPeriodsService {
     endDate: Date,
     excludeId?: string,
   ): Promise<void> {
-    const query: any = {
+    const query: Record<string, unknown> = {
       $or: [
         {
           $and: [
@@ -297,7 +297,7 @@ export class AcademicPeriodsService {
     totalPages: number;
   }> {
     const skip = (page - 1) * limit;
-    const query: any = {};
+    const query: Record<string, unknown> = {};
 
     if (status) {
       query.status = status;

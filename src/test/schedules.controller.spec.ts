@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException, HttpException } from '@nestjs/common';
+import { ForbiddenException } from '@nestjs/common';
 import { SchedulesController } from '../schedules/controllers/schedules.controller';
 import { StudentScheduleService } from '../schedules/services/student-schedule.service';
 import { ScheduleValidationService } from '../schedules/services/schedule-validation.service';
@@ -105,9 +105,9 @@ describe('SchedulesController', () => {
 
       await controller.getCurrentSchedule(mockReq, 'student456');
 
-      expect(mockStudentScheduleService.getCurrentSchedule).toHaveBeenCalledWith(
-        'student456',
-      );
+      expect(
+        mockStudentScheduleService.getCurrentSchedule,
+      ).toHaveBeenCalledWith('student456');
     });
 
     it('should throw ForbiddenException when student tries to access another schedule', async () => {

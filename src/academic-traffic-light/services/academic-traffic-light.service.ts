@@ -20,17 +20,14 @@ import {
   AcademicPeriodDocument,
 } from '../../academic-periods/entities/academic-period.entity';
 import {
-  StudentAcademicStatusDto,
   AcademicStatisticsDto,
   StudentTrafficLightReportDto,
-  CourseStatusDto,
 } from '../dto/academic-traffic-light.dto';
 import {
   TrafficLightColor,
   StudentAcademicStatus,
   CourseStatus,
   PopulatedEnrollment,
-  PopulatedGroup,
 } from '../interfaces/academic-status.interface';
 
 /**
@@ -341,8 +338,6 @@ export class AcademicTrafficLightService {
       };
     };
   }> {
-    const student = await this.findStudentByIdOrCode(studentId);
-
     const academicStatus = await this.getStudentAcademicStatus(studentId);
 
     const currentPeriod = await this.academicPeriodModel
@@ -425,7 +420,8 @@ export class AcademicTrafficLightService {
         .exec();
 
       for (const enrollment of allEnrollments) {
-        const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+        const populatedEnrollment =
+          enrollment as unknown as PopulatedEnrollment;
         const group = populatedEnrollment.groupId;
 
         if (!group) {
@@ -447,16 +443,24 @@ export class AcademicTrafficLightService {
         }
 
         if (!course.credits || course.credits <= 0) {
-          inconsistencies.push(`Course ${course.code} has invalid credit value`);
+          inconsistencies.push(
+            `Course ${course.code} has invalid credit value`,
+          );
         }
 
         // Check for passed courses without grades
-        if (enrollment.status === EnrollmentStatus.PASSED && !enrollment.grade) {
+        if (
+          enrollment.status === EnrollmentStatus.PASSED &&
+          !enrollment.grade
+        ) {
           inconsistencies.push(`Passed course ${course.code} missing grade`);
         }
 
         // Check for failed courses without grades
-        if (enrollment.status === EnrollmentStatus.FAILED && !enrollment.grade) {
+        if (
+          enrollment.status === EnrollmentStatus.FAILED &&
+          !enrollment.grade
+        ) {
           inconsistencies.push(
             `Failed course ${course.code} missing grade (should have grade < 3.0)`,
           );
@@ -520,7 +524,9 @@ export class AcademicTrafficLightService {
         `Error detecting inconsistencies for student ${studentId}:`,
         error,
       );
-      return ['Error detecting inconsistencies: ' + error.message];
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      return ['Error detecting inconsistencies: ' + errorMessage];
     }
   }
 
@@ -535,7 +541,8 @@ export class AcademicTrafficLightService {
 
     for (const enrollment of enrollments) {
       if (enrollment.status === EnrollmentStatus.PASSED) {
-        const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+        const populatedEnrollment =
+          enrollment as unknown as PopulatedEnrollment;
         const group = populatedEnrollment.groupId;
 
         if (group && group.courseId) {
@@ -556,9 +563,7 @@ export class AcademicTrafficLightService {
   /**
    * Calculate average grade per semester
    */
-  async calculateAverageGradePerSemester(
-    studentId: string,
-  ): Promise<
+  async calculateAverageGradePerSemester(studentId: string): Promise<
     Array<{
       period: string;
       averageGrade: number;
@@ -656,8 +661,10 @@ export class AcademicTrafficLightService {
       } catch (error) {
         // Log error and continue processing other students
         errorCount++;
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
-          `Failed to calculate status for student ${student.code}: ${error.message}`,
+          `Failed to calculate status for student ${student.code}: ${errorMessage}`,
         );
         continue;
       }
@@ -687,7 +694,9 @@ export class AcademicTrafficLightService {
           ? Math.round((blueCount / students.length) * 100)
           : 0,
       redPercentage:
-        students.length > 0 ? Math.round((redCount / students.length) * 100) : 0,
+        students.length > 0
+          ? Math.round((redCount / students.length) * 100)
+          : 0,
     };
   }
 
@@ -707,5 +716,4 @@ export class AcademicTrafficLightService {
       courseStatuses,
     };
   }
-
 }
