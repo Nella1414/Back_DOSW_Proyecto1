@@ -39,6 +39,15 @@ import {
   ApproveChangeRequestDto,
   RejectChangeRequestDto,
 } from '../dto/change-request-response.dto';
+import {
+  RequestHistoryResponseDto,
+  HistoryStatsDto,
+  TimelineEventDto,
+} from '../dto/history-response.dto';
+import { RequestCurrentStateResponseDto } from '../dto/current-state-response.dto';
+import { StateManagementService } from './state-management.service';
+import { StateAuditService } from './state-audit.service';
+import { CurrentStateService } from './current-state.service';
 
 /**
  * * Change Requests Management Service
@@ -46,24 +55,9 @@ import {
  * ? Servicio completamente implementado con logica compleja de solicitudes
  * ? Maneja cambios de grupos de materias con validaciones completas
  * ? Incluye generacion de radicados, aprobaciones y rechazos
- * TODO: Agregar notificaciones por email para cambios de estado
- * TODO: Implementar dashboard de metricas de solicitudes
- * TODO: Agregar validacion de fechas limite para solicitudes
- * TODO: Implementar auditoria completa de cambios realizados
  */
 @Injectable()
 export class ChangeRequestsService {
-  /**
-   * * Constructor injects all required MongoDB models and services
-   * @param changeRequestModel - Model for change requests
-   * @param studentModel - Model for student lookup
-   * @param courseGroupModel - Model for course group operations
-   * @param courseModel - Model for course data
-   * @param enrollmentModel - Model for enrollment updates
-   * @param academicPeriodModel - Model for period validation
-   * @param programModel - Model for program data
-   * @param scheduleValidationService - Service for schedule conflict validation
-   */
   constructor(
     @InjectModel(ChangeRequest.name)
     private changeRequestModel: Model<ChangeRequestDocument>,
@@ -77,14 +71,14 @@ export class ChangeRequestsService {
     private academicPeriodModel: Model<AcademicPeriodDocument>,
     @InjectModel(Program.name) private programModel: Model<ProgramDocument>,
     private scheduleValidationService: ScheduleValidationService,
+    private stateManagementService: StateManagementService,
+    private stateAuditService: StateAuditService,
+    private currentStateService: CurrentStateService,
   ) {}
 
   /**
-   * * Create new change request for student
-   * ? Funcion completamente implementada con validaciones completas
-   * ? Valida horarios, genera radicado unico y crea solicitud
-   * TODO: Agregar validacion de fechas limite para solicitudes
-   * TODO: Implementar prioridad automatica basada en criterios
+   * * Create new change request for student with automatic audit
+   * ? Registra automáticamente el evento de creación en el historial
    */
   async createChangeRequest(
     studentCode: string,
@@ -154,11 +148,20 @@ export class ChangeRequestsService {
       priority: createChangeRequestDto.priority || 1,
       observations: createChangeRequestDto.observations,
       exceptional: false,
+      version: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
 
     const savedRequest = await changeRequest.save();
+
+    // 6. AUDITORÍA: Registrar la creación de la solicitud
+    await this.stateAuditService.recordCreation(
+      savedRequest._id as string,
+      RequestState.PENDING,
+      student._id as string,
+      `${student.firstName} ${student.lastName}`,
+    );
 
     return this.mapToResponseDto(
       savedRequest,
@@ -171,11 +174,6 @@ export class ChangeRequestsService {
 
   /**
    * * Get change requests by faculty with filters
-   * ? Funcion implementada con filtros por estado, periodo y estudiante
-   * ? Busca solicitudes de todos los programas de la facultad
-   * TODO: Agregar paginacion para mejor performance
-   * TODO: Implementar ordenamiento por prioridad y fecha
-   * TODO: Agregar estadisticas resumidas por facultad
    */
   async getRequestsByFaculty(
     facultyId: string,
@@ -185,7 +183,6 @@ export class ChangeRequestsService {
       studentId?: string;
     },
   ): Promise<ChangeRequestResponseDto[]> {
-    // Obtener estudiantes de programas de la facultad
     const programs = await this.programModel.find({ facultyId }).exec();
     const programIds = programs.map((p) => p._id);
 
@@ -240,25 +237,20 @@ export class ChangeRequestsService {
     );
   }
 
+  /**
+   * * Approve change request with idempotent state management
+   */
   async approveChangeRequest(
     requestId: string,
     approveDto: ApproveChangeRequestDto,
+    actorId?: string,
+    actorName?: string,
   ): Promise<ChangeRequestResponseDto> {
     const request = await this.changeRequestModel.findById(requestId).exec();
     if (!request) {
       throw new NotFoundException('Request not found');
     }
 
-    if (
-      request.state !== RequestState.PENDING &&
-      request.state !== RequestState.IN_REVIEW
-    ) {
-      throw new BadRequestException(
-        'Request cannot be approved in its current state',
-      );
-    }
-
-    // Re-validar antes de aprobar
     const validation =
       await this.scheduleValidationService.validateChangeRequest(
         request.studentId,
@@ -273,53 +265,90 @@ export class ChangeRequestsService {
       });
     }
 
-    // Ejecutar el cambio
     await this.executeChangeRequest(request);
 
-    // Actualizar solicitud
-    request.state = RequestState.APPROVED;
-    request.resolvedAt = new Date();
-    request.resolutionReason =
-      approveDto.resolutionReason || 'Request approved';
-    if (approveDto.observations) {
-      request.observations =
-        (request.observations || '') + '\n' + approveDto.observations;
-    }
-    request.updatedAt = new Date();
-
-    await request.save();
+    await this.stateManagementService.changeState(
+      requestId,
+      RequestState.APPROVED,
+      {
+        actorId,
+        actorName,
+        reason: approveDto.resolutionReason || 'Request approved',
+        observations: approveDto.observations,
+      },
+    );
 
     return this.getRequestDetails(requestId);
   }
 
+  /**
+   * * Reject change request with idempotent state management
+   */
   async rejectChangeRequest(
     requestId: string,
     rejectDto: RejectChangeRequestDto,
+    actorId?: string,
+    actorName?: string,
   ): Promise<ChangeRequestResponseDto> {
     const request = await this.changeRequestModel.findById(requestId).exec();
     if (!request) {
       throw new NotFoundException('Request not found');
     }
 
-    if (
-      request.state !== RequestState.PENDING &&
-      request.state !== RequestState.IN_REVIEW
-    ) {
-      throw new BadRequestException(
-        'Request cannot be rejected in its current state',
-      );
-    }
+    await this.stateManagementService.changeState(
+      requestId,
+      RequestState.REJECTED,
+      {
+        actorId,
+        actorName,
+        reason: rejectDto.resolutionReason,
+        observations: rejectDto.observations,
+      },
+    );
 
-    request.state = RequestState.REJECTED;
-    request.resolvedAt = new Date();
-    request.resolutionReason = rejectDto.resolutionReason;
-    if (rejectDto.observations) {
-      request.observations =
-        (request.observations || '') + '\n' + rejectDto.observations;
-    }
-    request.updatedAt = new Date();
+    return this.getRequestDetails(requestId);
+  }
 
-    await request.save();
+  /**
+   * * Request additional information from student
+   */
+  async requestAdditionalInfo(
+    requestId: string,
+    reason: string,
+    observations?: string,
+    actorId?: string,
+    actorName?: string,
+  ): Promise<ChangeRequestResponseDto> {
+    await this.stateManagementService.changeState(
+      requestId,
+      RequestState.WAITING_INFO,
+      {
+        actorId,
+        actorName,
+        reason,
+        observations,
+      },
+    );
+
+    return this.getRequestDetails(requestId);
+  }
+
+  /**
+   * * Move request to in-review state
+   */
+  async moveToReview(
+    requestId: string,
+    actorId?: string,
+    actorName?: string,
+  ): Promise<ChangeRequestResponseDto> {
+    await this.stateManagementService.changeState(
+      requestId,
+      RequestState.IN_REVIEW,
+      {
+        actorId,
+        actorName,
+      },
+    );
 
     return this.getRequestDetails(requestId);
   }
@@ -355,10 +384,222 @@ export class ChangeRequestsService {
     );
   }
 
+  /**
+   * * Get complete current state information
+   */
+  async getCurrentStateInfo(
+    requestId: string,
+    userPermissions: string[] = [],
+  ): Promise<RequestCurrentStateResponseDto> {
+    return this.currentStateService.getCurrentStateInfo(
+      requestId,
+      userPermissions,
+    );
+  }
+
+async getRequestHistory(requestId: string): Promise<RequestHistoryResponseDto> {
+  // Verify request exists
+  const request = await this.changeRequestModel.findById(requestId).exec();
+  if (!request) {
+    throw new NotFoundException('Request not found');
+  }
+
+  // Retrieve enriched history (may return undefined/null)
+  const history: any[] = (await this.stateAuditService.getEnrichedHistory(requestId)) || [];
+
+  // Safely obtain other values
+  const hasTransitions = await this.stateAuditService.hasTransitions(requestId);
+  const stats = (await this.stateAuditService.getHistoryStats(requestId)) || { totalStateChanges: 0 };
+
+  const firstEvent = history[0];
+  const lastEvent = history.length > 0 ? history[history.length - 1] : undefined;
+
+  return {
+    requestId,
+    radicado: request.radicado ?? null,
+    totalEvents: history.length,
+    hasTransitions,
+    noTransitions: !hasTransitions,
+    events: history.map((event) => ({
+      id: event._id?.toString?.() ?? event.id ?? null,
+      requestId: event.requestId ?? requestId,
+      fromState: event.fromState ?? null,
+      toState: event.toState ?? null,
+      changeType: event.changeType ?? null,
+      actorId: event.actorId ?? null,
+      actorName: event.actorName ?? null,
+      actorEmail: event.actorEmail ?? null,
+      reason: event.reason ?? null,
+      timestamp:
+        event.timestamp
+          ? new Date(event.timestamp)
+          : event.createdAt
+          ? new Date(event.createdAt)
+          : request.createdAt
+          ? new Date(request.createdAt)
+          : new Date(),
+      metadata: event.metadata ?? null,
+      description: event.description ?? null,
+      readableDescription: event.readableDescription ?? null,
+    })),
+    summary: {
+      createdAt: firstEvent?.timestamp ? new Date(firstEvent.timestamp) : request.createdAt ?? null,
+      createdBy: firstEvent?.actorName ?? firstEvent?.actorId ?? 'System',
+      currentState: request.state,
+      lastChangedAt: lastEvent?.timestamp ? new Date(lastEvent.timestamp) : request.updatedAt ?? null,
+      lastChangedBy: lastEvent?.actorName ?? lastEvent?.actorId ?? 'System',
+      totalStateChanges: stats.totalStateChanges ?? 0,
+    },
+  };
+}
+
+  /**
+   * * Get history statistics for a request
+   */
+  async getHistoryStats(requestId: string): Promise<HistoryStatsDto> {
+    const request = await this.changeRequestModel.findById(requestId).exec();
+    if (!request) {
+      throw new NotFoundException('Request not found');
+    }
+
+    return this.stateAuditService.getHistoryStats(requestId);
+  }
+
+  /**
+   * * Get timeline events for frontend display
+   */
+  async getRequestTimeline(requestId: string): Promise<TimelineEventDto[]> {
+    const historyResponse = await this.getRequestHistory(requestId);
+
+    return historyResponse.events.map((event) => ({
+      id: event.id,
+      type: this.mapChangeTypeToTimelineType(event.changeType),
+      timestamp: event.timestamp,
+      actor: event.actorName,
+      actorEmail: event.actorEmail,
+      fromState: event.fromState,
+      toState: event.toState,
+      reason: event.reason,
+      description: event.description,
+      readableDescription: event.readableDescription,
+      icon: this.getTimelineIcon(event.changeType, event.toState),
+      color: this.getTimelineColor(event.changeType, event.toState),
+    }));
+  }
+
+  /**
+   * * Check if request has any state transitions
+   */
+  async hasStateTransitions(requestId: string): Promise<boolean> {
+    return this.stateAuditService.hasTransitions(requestId);
+  }
+
+  /**
+   * * Get available state transitions and actions
+   */
+  async getAvailableActions(requestId: string): Promise<{
+    currentState: RequestState;
+    version: number;
+    availableTransitions: {
+      toState: string;
+      description?: string;
+      requiresReason?: boolean;
+      requiredPermissions?: string[];
+    }[];
+  }> {
+    const stateInfo =
+      await this.stateManagementService.getCurrentState(requestId);
+    const transitions =
+      await this.stateManagementService.getAvailableTransitionsForRequest(
+        requestId,
+      );
+
+    return {
+      currentState: stateInfo.state,
+      version: stateInfo.version,
+      availableTransitions: transitions,
+    };
+  }
+
+  /**
+   * * Generic state change method
+   * ? Permite cambiar a cualquier estado válido
+   * ? Útil para operaciones administrativas
+   */
+  async changeRequestState(
+    requestId: string,
+    toState: RequestState,
+    options: {
+      reason?: string;
+      observations?: string;
+      actorId?: string;
+      actorName?: string;
+      expectedVersion?: number;
+    } = {},
+  ): Promise<ChangeRequestResponseDto> {
+    await this.stateManagementService.changeState(
+      requestId,
+      toState,
+      {
+        actorId: options.actorId,
+        actorName: options.actorName,
+        reason: options.reason,
+        observations: options.observations,
+      },
+      options.expectedVersion,
+    );
+
+    return this.getRequestDetails(requestId);
+  }
+
+  // MÉTODOS PRIVADOS
+
+  private mapChangeTypeToTimelineType(
+    changeType: string,
+  ): 'create' | 'state_change' | 'update' {
+    switch (changeType) {
+      case 'CREATE':
+        return 'create';
+      case 'STATE_CHANGE':
+        return 'state_change';
+      case 'UPDATE':
+        return 'update';
+      default:
+        return 'update';
+    }
+  }
+
+  private getTimelineIcon(changeType: string, toState: string): string {
+    if (changeType === 'CREATE') return 'plus-circle';
+
+    const icons: Record<string, string> = {
+      APPROVED: 'check-circle',
+      REJECTED: 'x-circle',
+      IN_REVIEW: 'eye',
+      WAITING_INFO: 'alert-circle',
+      PENDING: 'clock',
+    };
+
+    return icons[toState] || 'circle';
+  }
+
+  private getTimelineColor(changeType: string, toState: string): string {
+    if (changeType === 'CREATE') return '#6B7280';
+
+    const colors: Record<string, string> = {
+      APPROVED: '#10B981',
+      REJECTED: '#EF4444',
+      IN_REVIEW: '#3B82F6',
+      WAITING_INFO: '#F59E0B',
+      PENDING: '#FFA500',
+    };
+
+    return colors[toState] || '#6B7280';
+  }
+
   private async executeChangeRequest(
     request: ChangeRequestDocument,
   ): Promise<void> {
-    // Actualizar enrollment
     await this.enrollmentModel
       .updateOne(
         {
@@ -373,7 +614,6 @@ export class ChangeRequestsService {
       )
       .exec();
 
-    // Actualizar contadores de cupos
     await this.courseGroupModel
       .updateOne(
         { _id: request.sourceGroupId },
