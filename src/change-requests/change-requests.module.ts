@@ -18,10 +18,13 @@ import {
   RequestStateHistory,
   RequestStateHistorySchema,
 } from './entities/request-state-history.entity';
+
 import {
   ValidTransition,
   ValidTransitionSchema,
 } from './entities/valid-transition.entity';
+
+
 import { Student, StudentSchema } from '../students/entities/student.entity';
 import { User, UserSchema } from '../users/entities/user.entity';
 import {
@@ -48,7 +51,9 @@ import { SchedulesModule } from '../schedules/schedules.module';
       { name: ChangeRequest.name, schema: ChangeRequestSchema },
       { name: RequestStateDefinition.name, schema: RequestStateDefinitionSchema },
       { name: RequestStateHistory.name, schema: RequestStateHistorySchema },
+
       { name: ValidTransition.name, schema: ValidTransitionSchema },
+
       { name: Student.name, schema: StudentSchema },
       { name: User.name, schema: UserSchema },
       { name: CourseGroup.name, schema: CourseGroupSchema },
