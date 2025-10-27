@@ -69,7 +69,6 @@ describe('AcademicPeriodsController', () => {
         name: 'Primer Semestre 2025',
         startDate: new Date('2025-01-15'),
         endDate: new Date('2025-06-15'),
-        status: 'ACTIVE',
         isActive: false,
         allowChangeRequests: true,
         isEnrollmentOpen: true,
@@ -96,6 +95,78 @@ describe('AcademicPeriodsController', () => {
       const result = await controller.findAll();
 
       expect(service.findAll).toHaveBeenCalled();
+      expect(result).toEqual(periods);
+    });
+
+    it('should return empty array when no periods exist', async () => {
+      mockAcademicPeriodsService.findAll.mockResolvedValue([]);
+
+      const result = await controller.findAll();
+
+      expect(service.findAll).toHaveBeenCalled();
+      expect(result).toEqual([]);
+    });
+
+    it('should return multiple periods', async () => {
+      const periods = [
+        mockPeriod,
+        { ...mockPeriod, _id: 'period456', code: '2025-1' },
+      ];
+      mockAcademicPeriodsService.findAll.mockResolvedValue(periods);
+
+      const result = await controller.findAll();
+
+      expect(service.findAll).toHaveBeenCalled();
+      expect(result).toHaveLength(2);
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return a single period by ID', async () => {
+      mockAcademicPeriodsService.findOne.mockResolvedValue(mockPeriod);
+
+      const result = await controller.findOne('period123');
+
+      expect(service.findOne).toHaveBeenCalledWith('period123');
+      expect(result).toEqual(mockPeriod);
+    });
+  });
+
+  describe('update', () => {
+    it('should update a period', async () => {
+      const updateDto: UpdateAcademicPeriodDto = {
+        name: 'Segundo Semestre 2024 Actualizado',
+      };
+      const updatedPeriod = { ...mockPeriod, ...updateDto };
+      mockAcademicPeriodsService.update.mockResolvedValue(updatedPeriod);
+
+      const result = await controller.update('period123', updateDto);
+
+      expect(service.update).toHaveBeenCalledWith('period123', updateDto);
+      expect(result).toEqual(updatedPeriod);
+    });
+  });
+
+  describe('getPeriodsAllowingChanges', () => {
+    it('should return periods that allow change requests', async () => {
+      const periods = [mockPeriod];
+      mockAcademicPeriodsService.getPeriodsAllowingChanges.mockResolvedValue(periods);
+
+      const result = await controller.getPeriodsAllowingChanges();
+
+      expect(service.getPeriodsAllowingChanges).toHaveBeenCalled();
+      expect(result).toEqual(periods);
+    });
+  });
+
+  describe('getPeriodsWithOpenEnrollment', () => {
+    it('should return periods with open enrollment', async () => {
+      const periods = [mockPeriod];
+      mockAcademicPeriodsService.getPeriodsWithOpenEnrollment.mockResolvedValue(periods);
+
+      const result = await controller.getPeriodsWithOpenEnrollment();
+
+      expect(service.getPeriodsWithOpenEnrollment).toHaveBeenCalled();
       expect(result).toEqual(periods);
     });
   });
