@@ -12,6 +12,7 @@ import {
   UseGuards,
   Logger,
 } from '@nestjs/common';
+import { Document } from 'mongoose';
 import {
   ApiTags,
   ApiOperation,
@@ -80,9 +81,8 @@ export class AcademicPeriodsController {
       const result = await this.academicPeriodsService.create(
         createAcademicPeriodDto,
       );
-      this.logger.log(
-        `Academic period created successfully: ${(result as any)._id}`,
-      );
+      const resultDoc = result as unknown as Document & { _id: string };
+      this.logger.log(`Academic period created successfully: ${resultDoc._id}`);
       return result;
     } catch (error) {
       this.logger.error(

@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
   ConflictException,
+  Logger,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -36,6 +37,8 @@ import { StudentScheduleService } from '../../schedules/services/student-schedul
  */
 @Injectable()
 export class StudentsService {
+  private readonly logger = new Logger(StudentsService.name);
+
   /**
    * Constructor injects the Student MongoDB model
    * @param studentModel - Mongoose model for Student collection operations
@@ -59,7 +62,9 @@ export class StudentsService {
    * @throws ConflictException - If student code already exists
    * @throws Error - If creation fails for other reasons
    */
-  async create(createStudentDto: CreateStudentDto): Promise<StudentResponseDto> {
+  async create(
+    createStudentDto: CreateStudentDto,
+  ): Promise<StudentResponseDto> {
     try {
       // Step 1: Check for existing student with same code
       const existingStudent = await this.studentModel.findOne({
@@ -90,7 +95,18 @@ export class StudentsService {
    * @returns Promise<StudentResponseDto[]> - Array of all students with MongoDB _id
    */
   async findAll(): Promise<StudentResponseDto[]> {
+    this.logger.log('Finding all students...');
     const students = await this.studentModel.find().exec();
+    this.logger.log(`Found ${students.length} students`);
+    this.logger.debug(
+      `Students: ${JSON.stringify(
+        students.map((s) => ({
+          code: s.code,
+          externalId: s.externalId,
+          name: `${s.firstName} ${s.lastName}`,
+        })),
+      )}`,
+    );
     return students.map((student) => this.toResponseDto(student));
   }
 

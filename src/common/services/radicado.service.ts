@@ -1,7 +1,14 @@
-import { Injectable, Logger, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { RadicadoCounter, RadicadoCounterDocument } from '../entities/radicado-counter.entity';
+import {
+  RadicadoCounter,
+  RadicadoCounterDocument,
+} from '../entities/radicado-counter.entity';
 
 @Injectable()
 export class RadicadoService {
@@ -23,7 +30,9 @@ export class RadicadoService {
     // Implementar reintentos para garantizar atomicidad
     for (let attempt = 1; attempt <= this.MAX_RETRIES; attempt++) {
       try {
-        this.logger.debug(`Generando radicado para año ${currentYear} (intento ${attempt}/${this.MAX_RETRIES})`);
+        this.logger.debug(
+          `Generando radicado para año ${currentYear} (intento ${attempt}/${this.MAX_RETRIES})`,
+        );
 
         // Usar findOneAndUpdate con upsert para operación atómica
         const counter = await this.radicadoCounterModel.findOneAndUpdate(
@@ -32,33 +41,40 @@ export class RadicadoService {
           {
             new: true,
             upsert: true,
-            setDefaultsOnInsert: true
-          }
+            setDefaultsOnInsert: true,
+          },
         );
 
         // Formatear radicado: YYYY-NNNNNN
         const paddedSequence = counter.sequence.toString().padStart(6, '0');
         const radicado = `${currentYear}-${paddedSequence}`;
 
-        this.logger.log(`Radicado generado exitosamente: ${radicado} (secuencia: ${counter.sequence})`);
+        this.logger.log(
+          `Radicado generado exitosamente: ${radicado} (secuencia: ${counter.sequence})`,
+        );
         return radicado;
-
       } catch (error) {
         lastError = error;
-        this.logger.warn(`Error generando radicado (intento ${attempt}/${this.MAX_RETRIES}): ${error.message}`, error.stack);
+        this.logger.warn(
+          `Error generando radicado (intento ${attempt}/${this.MAX_RETRIES}): ${error.message}`,
+          error.stack,
+        );
 
         // Esperar antes de reintentar (backoff exponencial)
         if (attempt < this.MAX_RETRIES) {
           const delayMs = Math.pow(2, attempt - 1) * 100; // 100ms, 200ms, 400ms
-          await new Promise(resolve => setTimeout(resolve, delayMs));
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
     }
 
     // Si todos los intentos fallaron
-    this.logger.error(`Falló la generación de radicado después de ${this.MAX_RETRIES} intentos`, lastError?.stack);
+    this.logger.error(
+      `Falló la generación de radicado después de ${this.MAX_RETRIES} intentos`,
+      lastError?.stack,
+    );
     throw new InternalServerErrorException(
-      `No se pudo generar el radicado después de ${this.MAX_RETRIES} intentos. Por favor intente nuevamente.`
+      `No se pudo generar el radicado después de ${this.MAX_RETRIES} intentos. Por favor intente nuevamente.`,
     );
   }
 
@@ -71,10 +87,14 @@ export class RadicadoService {
 
       this.logger.debug(`Consultando último radicado para año ${targetYear}`);
 
-      const counter = await this.radicadoCounterModel.findOne({ year: targetYear });
+      const counter = await this.radicadoCounterModel.findOne({
+        year: targetYear,
+      });
 
       if (!counter || counter.sequence === 0) {
-        this.logger.debug(`No se encontraron radicados para el año ${targetYear}`);
+        this.logger.debug(
+          `No se encontraron radicados para el año ${targetYear}`,
+        );
         return null;
       }
 
@@ -83,10 +103,14 @@ export class RadicadoService {
 
       this.logger.debug(`Último radicado encontrado: ${radicado}`);
       return radicado;
-
     } catch (error) {
-      this.logger.error(`Error obteniendo último radicado para año ${year}: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Error al consultar el último radicado');
+      this.logger.error(
+        `Error obteniendo último radicado para año ${year}: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Error al consultar el último radicado',
+      );
     }
   }
 
@@ -101,16 +125,22 @@ export class RadicadoService {
         .find({}, { year: 1, sequence: 1, _id: 0 })
         .sort({ year: -1 })
         .lean()
-        .then(counters =>
-          counters.map(c => ({ year: c.year, count: c.sequence }))
+        .then((counters) =>
+          counters.map((c) => ({ year: c.year, count: c.sequence })),
         );
 
-      this.logger.debug(`Estadísticas obtenidas: ${stats.length} años registrados`);
+      this.logger.debug(
+        `Estadísticas obtenidas: ${stats.length} años registrados`,
+      );
       return stats;
-
     } catch (error) {
-      this.logger.error(`Error obteniendo estadísticas de radicados: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Error al consultar estadísticas de radicados');
+      this.logger.error(
+        `Error obteniendo estadísticas de radicados: ${error.message}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException(
+        'Error al consultar estadísticas de radicados',
+      );
     }
   }
 }

@@ -15,6 +15,7 @@ export class RadicadoCounter {
   updatedAt?: Date;
 }
 
-export const RadicadoCounterSchema = SchemaFactory.createForClass(RadicadoCounter);
+export const RadicadoCounterSchema =
+  SchemaFactory.createForClass(RadicadoCounter);
 
 // Índice único ya declarado en @Prop con unique: true

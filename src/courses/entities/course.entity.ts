@@ -13,6 +13,9 @@ export class Course {
 
   @Prop({ required: true })
   credits: number;
+
+  @Prop({ required: false })
+  semester?: number;
 }
 
 export const CourseSchema = SchemaFactory.createForClass(Course);

@@ -75,7 +75,7 @@ export class HttpCacheInterceptor extends CacheInterceptor {
    * trackBy(context) // Returns: "/student/STU001/report_user_68dc69c5..." (different ID)
    */
   trackBy(context: ExecutionContext): string | undefined {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<any>();
     const { httpAdapter } = this.httpAdapterHost;
 
     // Check if caching is enabled for this route
@@ -100,8 +100,8 @@ export class HttpCacheInterceptor extends CacheInterceptor {
 
     // Generate cache key: URL + user ID
     // This ensures each user has their own cache entry
-    const url = httpAdapter.getRequestUrl(request);
-    const cacheKey = `${url}_user_${user.sub}`;
+    const url = httpAdapter.getRequestUrl(request) as string;
+    const cacheKey = `${url}_user_${user.sub as string}`;
 
     return cacheKey;
   }

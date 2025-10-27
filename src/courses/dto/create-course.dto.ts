@@ -44,7 +44,8 @@ export class CreateCourseDto {
   @IsNotEmpty({ message: 'El código del curso es obligatorio' })
   @Length(5, 10, { message: 'El código debe tener entre 5 y 10 caracteres' })
   @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, {
-    message: 'El código debe seguir el formato: 2-4 letras + 3-4 números (ej: CS101, MATH1001)',
+    message:
+      'El código debe seguir el formato: 2-4 letras + 3-4 números (ej: CS101, MATH1001)',
   })
   code: string;
 
@@ -62,7 +63,10 @@ export class CreateCourseDto {
   @IsString({ message: 'El nombre del curso debe ser texto' })
   @IsNotEmpty({ message: 'El nombre del curso es obligatorio' })
   @Length(5, 100, { message: 'El nombre debe tener entre 5 y 100 caracteres' })
-  @IsValidName({ message: 'El nombre solo puede contener letras, números, espacios y acentos' })
+  @IsValidName({
+    message:
+      'El nombre solo puede contener letras, números, espacios y acentos',
+  })
   name: string;
 
   /**
@@ -71,14 +75,18 @@ export class CreateCourseDto {
    * * Descripción completa del contenido y objetivos del curso
    */
   @ApiProperty({
-    description: 'Descripción detallada del curso incluyendo objetivos y contenido',
-    example: 'Conceptos fundamentales de ciencias de la computación incluyendo principios de programación, estructuras de datos y técnicas de resolución de problemas.',
+    description:
+      'Descripción detallada del curso incluyendo objetivos y contenido',
+    example:
+      'Conceptos fundamentales de ciencias de la computación incluyendo principios de programación, estructuras de datos y técnicas de resolución de problemas.',
     minLength: 20,
     maxLength: 1000,
   })
   @IsString({ message: 'La descripción debe ser texto' })
   @IsNotEmpty({ message: 'La descripción del curso es obligatoria' })
-  @Length(20, 1000, { message: 'La descripción debe tener entre 20 y 1000 caracteres' })
+  @Length(20, 1000, {
+    message: 'La descripción debe tener entre 20 y 1000 caracteres',
+  })
   description: string;
 
   /**
@@ -105,7 +113,8 @@ export class CreateCourseDto {
    * * Opcional - algunos cursos no tienen prerrequisitos
    */
   @ApiProperty({
-    description: 'Lista de códigos de cursos prerrequisitos que deben completarse antes de tomar este curso',
+    description:
+      'Lista de códigos de cursos prerrequisitos que deben completarse antes de tomar este curso',
     example: ['MATH101', 'CS100'],
     type: [String],
     required: false,
@@ -114,7 +123,10 @@ export class CreateCourseDto {
   @IsArray({ message: 'Los prerrequisitos deben ser una lista' })
   @ArrayMaxSize(10, { message: 'No puede tener más de 10 prerrequisitos' })
   @IsString({ each: true, message: 'Cada prerrequisito debe ser texto' })
-  @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, { each: true, message: 'Cada prerrequisito debe tener formato válido (ej: CS101)' })
+  @Matches(/^[A-Z]{2,4}[0-9]{3,4}$/, {
+    each: true,
+    message: 'Cada prerrequisito debe tener formato válido (ej: CS101)',
+  })
   prerequisites?: string[];
 
   /**
@@ -157,7 +169,8 @@ export class CreateCourseDto {
    * ? Categoría o área académica del curso
    */
   @ApiProperty({
-    description: 'Categoría o área académica del curso (ej: "Núcleo", "Electiva", "Laboratorio")',
+    description:
+      'Categoría o área académica del curso (ej: "Núcleo", "Electiva", "Laboratorio")',
     example: 'Núcleo',
     maxLength: 50,
     required: false,
@@ -165,7 +178,9 @@ export class CreateCourseDto {
   @IsOptional()
   @IsString({ message: 'La categoría debe ser texto' })
   @Length(2, 50, { message: 'La categoría debe tener entre 2 y 50 caracteres' })
-  @IsValidName({ message: 'La categoría solo puede contener letras, espacios y acentos' })
+  @IsValidName({
+    message: 'La categoría solo puede contener letras, espacios y acentos',
+  })
   category?: string;
 
   /**
@@ -186,8 +201,13 @@ export class CreateCourseDto {
   @IsOptional()
   @IsArray({ message: 'Los objetivos de aprendizaje deben ser una lista' })
   @ArrayMinSize(1, { message: 'Debe tener al menos 1 objetivo de aprendizaje' })
-  @ArrayMaxSize(10, { message: 'No puede tener más de 10 objetivos de aprendizaje' })
+  @ArrayMaxSize(10, {
+    message: 'No puede tener más de 10 objetivos de aprendizaje',
+  })
   @IsString({ each: true, message: 'Cada objetivo debe ser texto' })
-  @Length(10, 200, { each: true, message: 'Cada objetivo debe tener entre 10 y 200 caracteres' })
+  @Length(10, 200, {
+    each: true,
+    message: 'Cada objetivo debe tener entre 10 y 200 caracteres',
+  })
   learningObjectives?: string[];
 }

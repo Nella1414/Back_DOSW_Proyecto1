@@ -27,7 +27,9 @@ describe('RadicadoService', () => {
     }).compile();
 
     service = module.get<RadicadoService>(RadicadoService);
-    model = module.get<Model<RadicadoCounter>>(getModelToken(RadicadoCounter.name));
+    model = module.get<Model<RadicadoCounter>>(
+      getModelToken(RadicadoCounter.name),
+    );
   });
 
   afterEach(() => {
@@ -52,7 +54,7 @@ describe('RadicadoService', () => {
           new: true,
           upsert: true,
           setDefaultsOnInsert: true,
-        }
+        },
       );
     });
 
@@ -81,20 +83,30 @@ describe('RadicadoService', () => {
       const radicado = await service.generateRadicado();
 
       expect(radicado).toBe('2025-000001');
-      expect(mockRadicadoCounterModel.findOneAndUpdate).toHaveBeenCalledTimes(3);
+      expect(mockRadicadoCounterModel.findOneAndUpdate).toHaveBeenCalledTimes(
+        3,
+      );
     });
 
     it('debe lanzar InternalServerErrorException después de 3 intentos fallidos', async () => {
-      mockRadicadoCounterModel.findOneAndUpdate.mockRejectedValue(new Error('Connection error'));
+      mockRadicadoCounterModel.findOneAndUpdate.mockRejectedValue(
+        new Error('Connection error'),
+      );
 
-      await expect(service.generateRadicado()).rejects.toThrow(InternalServerErrorException);
-      expect(mockRadicadoCounterModel.findOneAndUpdate).toHaveBeenCalledTimes(3);
+      await expect(service.generateRadicado()).rejects.toThrow(
+        InternalServerErrorException,
+      );
+      expect(mockRadicadoCounterModel.findOneAndUpdate).toHaveBeenCalledTimes(
+        3,
+      );
     });
 
     it('debe lanzar error si counter es null', async () => {
       mockRadicadoCounterModel.findOneAndUpdate.mockResolvedValue(null);
 
-      await expect(service.generateRadicado()).rejects.toThrow(InternalServerErrorException);
+      await expect(service.generateRadicado()).rejects.toThrow(
+        InternalServerErrorException,
+      );
     });
 
     it('debe formatear correctamente números grandes', async () => {
@@ -121,7 +133,9 @@ describe('RadicadoService', () => {
       const lastRadicado = await service.getLastRadicado();
 
       expect(lastRadicado).toBe(`${currentYear}-000042`);
-      expect(mockRadicadoCounterModel.findOne).toHaveBeenCalledWith({ year: currentYear });
+      expect(mockRadicadoCounterModel.findOne).toHaveBeenCalledWith({
+        year: currentYear,
+      });
     });
 
     it('debe retornar null si no hay radicados', async () => {
@@ -152,7 +166,9 @@ describe('RadicadoService', () => {
       const lastRadicado = await service.getLastRadicado(2023);
 
       expect(lastRadicado).toBe('2023-000100');
-      expect(mockRadicadoCounterModel.findOne).toHaveBeenCalledWith({ year: 2023 });
+      expect(mockRadicadoCounterModel.findOne).toHaveBeenCalledWith({
+        year: 2023,
+      });
     });
   });
 

@@ -240,7 +240,8 @@ export class AcademicStatisticsDto {
    * ? Estudiantes con estado azul (riesgo medio - requieren atención)
    */
   @ApiProperty({
-    description: 'Number of students with blue status (medium risk - attention needed)',
+    description:
+      'Number of students with blue status (medium risk - attention needed)',
     example: 250,
     minimum: 0,
   })
@@ -251,7 +252,8 @@ export class AcademicStatisticsDto {
    * ! Estudiantes con estado rojo (alto riesgo - requieren intervención)
    */
   @ApiProperty({
-    description: 'Number of students with red status (high risk - intervention required)',
+    description:
+      'Number of students with red status (high risk - intervention required)',
     example: 125,
     minimum: 0,
   })

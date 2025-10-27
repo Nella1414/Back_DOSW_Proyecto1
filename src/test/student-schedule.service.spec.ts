@@ -4,19 +4,27 @@ import { Model } from 'mongoose';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { StudentScheduleService } from '../schedules/services/student-schedule.service';
 import { Student, StudentDocument } from '../students/entities/student.entity';
-import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../enrollments/entities/enrollment.entity';
-import { CourseGroup, CourseGroupDocument } from '../course-groups/entities/course-group.entity';
-import { Course, CourseDocument } from '../courses/entities/course.entity';
-import { GroupSchedule, GroupScheduleDocument } from '../group-schedules/entities/group-schedule.entity';
-import { AcademicPeriod, AcademicPeriodDocument } from '../academic-periods/entities/academic-period.entity';
+import {
+  Enrollment,
+  EnrollmentDocument,
+  EnrollmentStatus,
+} from '../enrollments/entities/enrollment.entity';
+import { CourseGroup } from '../course-groups/entities/course-group.entity';
+import { Course } from '../courses/entities/course.entity';
+import {
+  GroupSchedule,
+  GroupScheduleDocument,
+} from '../group-schedules/entities/group-schedule.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodDocument,
+} from '../academic-periods/entities/academic-period.entity';
 import { AcademicTrafficLightService } from '../academic-traffic-light/services/academic-traffic-light.service';
 
 describe('StudentScheduleService', () => {
   let service: StudentScheduleService;
   let studentModel: Model<StudentDocument>;
   let enrollmentModel: Model<EnrollmentDocument>;
-  let courseGroupModel: Model<CourseGroupDocument>;
-  let courseModel: Model<CourseDocument>;
   let groupScheduleModel: Model<GroupScheduleDocument>;
   let academicPeriodModel: Model<AcademicPeriodDocument>;
   let academicTrafficLightService: jest.Mocked<AcademicTrafficLightService>;
@@ -157,12 +165,18 @@ describe('StudentScheduleService', () => {
     }).compile();
 
     service = module.get<StudentScheduleService>(StudentScheduleService);
-    studentModel = module.get<Model<StudentDocument>>(getModelToken(Student.name));
-    enrollmentModel = module.get<Model<EnrollmentDocument>>(getModelToken(Enrollment.name));
-    courseGroupModel = module.get<Model<CourseGroupDocument>>(getModelToken(CourseGroup.name));
-    courseModel = module.get<Model<CourseDocument>>(getModelToken(Course.name));
-    groupScheduleModel = module.get<Model<GroupScheduleDocument>>(getModelToken(GroupSchedule.name));
-    academicPeriodModel = module.get<Model<AcademicPeriodDocument>>(getModelToken(AcademicPeriod.name));
+    studentModel = module.get<Model<StudentDocument>>(
+      getModelToken(Student.name),
+    );
+    enrollmentModel = module.get<Model<EnrollmentDocument>>(
+      getModelToken(Enrollment.name),
+    );
+    groupScheduleModel = module.get<Model<GroupScheduleDocument>>(
+      getModelToken(GroupSchedule.name),
+    );
+    academicPeriodModel = module.get<Model<AcademicPeriodDocument>>(
+      getModelToken(AcademicPeriod.name),
+    );
     academicTrafficLightService = module.get(AcademicTrafficLightService);
   });
 
@@ -190,8 +204,12 @@ describe('StudentScheduleService', () => {
       const result = await service.getCurrentSchedule('student123');
 
       // Assert
-      expect(studentModel.findOne).toHaveBeenCalledWith({ externalId: 'student123' });
-      expect(academicPeriodModel.findOne).toHaveBeenCalledWith({ isActive: true });
+      expect(studentModel.findOne).toHaveBeenCalledWith({
+        externalId: 'student123',
+      });
+      expect(academicPeriodModel.findOne).toHaveBeenCalledWith({
+        isActive: true,
+      }) as unknown as void;
       expect(result).toBeDefined();
       expect(result.studentId).toBe('STU001');
       expect(result.studentName).toBe('Juan Pérez');
@@ -205,7 +223,9 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act & Assert
-      await expect(service.getCurrentSchedule('nonexistent')).rejects.toThrow('Student not found');
+      await expect(service.getCurrentSchedule('nonexistent')).rejects.toThrow(
+        'Student not found',
+      );
     });
 
     it('should throw error when no active period exists', async () => {
@@ -217,7 +237,9 @@ describe('StudentScheduleService', () => {
       (academicPeriodModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act & Assert
-      await expect(service.getCurrentSchedule('student123')).rejects.toThrow('No active academic period found');
+      await expect(service.getCurrentSchedule('student123')).rejects.toThrow(
+        'No active academic period found',
+      );
     });
 
     it('should return empty schedule when student has no enrollments', async () => {
@@ -278,7 +300,9 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act & Assert
-      await expect(service.getHistoricalSchedules('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getHistoricalSchedules('nonexistent'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should filter by date range when provided', async () => {
@@ -291,7 +315,11 @@ describe('StudentScheduleService', () => {
       (academicPeriodModel.find as jest.Mock).mockReturnValue(mockSortChain);
 
       // Act
-      const result = await service.getHistoricalSchedules('student123', '2024-01-01', '2024-12-31');
+      const result = await service.getHistoricalSchedules(
+        'student123',
+        '2024-01-01',
+        '2024-12-31',
+      );
 
       // Assert
       expect(academicPeriodModel.find).toHaveBeenCalled();
@@ -325,7 +353,9 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       mockExecChain.exec.mockResolvedValueOnce(closedPeriod);
-      (academicPeriodModel.findById as jest.Mock).mockReturnValue(mockExecChain);
+      (academicPeriodModel.findById as jest.Mock).mockReturnValue(
+        mockExecChain,
+      );
 
       const passedEnrollment = {
         ...mockEnrollment,
@@ -341,7 +371,10 @@ describe('StudentScheduleService', () => {
       (groupScheduleModel.find as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act
-      const result = await service.getHistoricalScheduleByPeriod('student123', mockPeriodId);
+      const result = await service.getHistoricalScheduleByPeriod(
+        'student123',
+        mockPeriodId,
+      );
 
       // Assert
       expect(result).toBeDefined();
@@ -356,7 +389,7 @@ describe('StudentScheduleService', () => {
 
       // Act & Assert
       await expect(
-        service.getHistoricalScheduleByPeriod('nonexistent', mockPeriodId)
+        service.getHistoricalScheduleByPeriod('nonexistent', mockPeriodId),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -366,11 +399,16 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       mockExecChain.exec.mockResolvedValueOnce(null);
-      (academicPeriodModel.findById as jest.Mock).mockReturnValue(mockExecChain);
+      (academicPeriodModel.findById as jest.Mock).mockReturnValue(
+        mockExecChain,
+      );
 
       // Act & Assert
       await expect(
-        service.getHistoricalScheduleByPeriod('student123', 'nonexistent-period')
+        service.getHistoricalScheduleByPeriod(
+          'student123',
+          'nonexistent-period',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -380,11 +418,13 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       mockExecChain.exec.mockResolvedValueOnce(mockPeriod); // Active period
-      (academicPeriodModel.findById as jest.Mock).mockReturnValue(mockExecChain);
+      (academicPeriodModel.findById as jest.Mock).mockReturnValue(
+        mockExecChain,
+      );
 
       // Act & Assert
       await expect(
-        service.getHistoricalScheduleByPeriod('student123', mockPeriodId)
+        service.getHistoricalScheduleByPeriod('student123', mockPeriodId),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -396,14 +436,19 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       mockExecChain.exec.mockResolvedValueOnce(closedPeriod);
-      (academicPeriodModel.findById as jest.Mock).mockReturnValue(mockExecChain);
+      (academicPeriodModel.findById as jest.Mock).mockReturnValue(
+        mockExecChain,
+      );
 
       mockPopulateChain.exec.mockResolvedValue([]);
       mockPopulateChain.populate.mockReturnValue(mockPopulateChain);
       (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
 
       // Act
-      const result = await service.getHistoricalScheduleByPeriod('student123', mockPeriodId);
+      const result = await service.getHistoricalScheduleByPeriod(
+        'student123',
+        mockPeriodId,
+      );
 
       // Assert
       expect(result.schedule).toEqual([]);
@@ -427,9 +472,15 @@ describe('StudentScheduleService', () => {
       mockPopulateChain.populate.mockReturnValue(mockPopulateChain);
       (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
 
-      academicTrafficLightService.getTrafficLightColor.mockReturnValueOnce('green');
-      academicTrafficLightService.getTrafficLightColor.mockReturnValueOnce('blue');
-      academicTrafficLightService.getTrafficLightColor.mockReturnValueOnce('red');
+      academicTrafficLightService.getTrafficLightColor.mockReturnValueOnce(
+        'green',
+      );
+      academicTrafficLightService.getTrafficLightColor.mockReturnValueOnce(
+        'blue',
+      );
+      academicTrafficLightService.getTrafficLightColor.mockReturnValueOnce(
+        'red',
+      );
 
       // Act
       const result = await service.getStudentAcademicHistory('student123');
@@ -448,7 +499,9 @@ describe('StudentScheduleService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act & Assert
-      await expect(service.getStudentAcademicHistory('nonexistent')).rejects.toThrow('Student not found');
+      await expect(
+        service.getStudentAcademicHistory('nonexistent'),
+      ).rejects.toThrow('Student not found');
     });
   });
 });

@@ -233,31 +233,56 @@ export async function seedTestData() {
     // 5. Create Test Users (Multiple Students)
     console.log('Creating Test Users...');
 
-    // Primary Test Student
-    const testUser1 = await userModel.create({
-      email: 'juan.perez@estudiante.edu',
-      displayName: 'Juan Perez',
-      firstName: 'Juan',
-      lastName: 'Perez',
-      externalId: 'STU001',
-      roles: ['STUDENT'],
-      active: true,
-      isGoogleUser: false,
-      password: '$2b$10$ekh5F33YuNEQ46udXcb/QOTgkGDUWIBcahaQALXhKu3p0RpobIZdq',
-    });
+    const studentUsers = [
+      {
+        email: 'juan.perez@estudiante.edu',
+        displayName: 'Juan Perez',
+        firstName: 'Juan',
+        lastName: 'Perez',
+        externalId: 'STU001',
+      },
+      {
+        email: 'maria.garcia@estudiante.edu',
+        displayName: 'Maria Garcia',
+        firstName: 'Maria',
+        lastName: 'Garcia',
+        externalId: 'STU002',
+      },
+      {
+        email: 'carlos.lopez@estudiante.edu',
+        displayName: 'Carlos Lopez',
+        firstName: 'Carlos',
+        lastName: 'Lopez',
+        externalId: 'STU003',
+      },
+      {
+        email: 'ana.martinez@estudiante.edu',
+        displayName: 'Ana Martinez',
+        firstName: 'Ana',
+        lastName: 'Martinez',
+        externalId: 'STU004',
+      },
+      {
+        email: 'luis.rodriguez@estudiante.edu',
+        displayName: 'Luis Rodriguez',
+        firstName: 'Luis',
+        lastName: 'Rodriguez',
+        externalId: 'STU005',
+      },
+    ];
 
-    // Second Test Student
-    const testUser2 = await userModel.create({
-      email: 'maria.garcia@estudiante.edu',
-      displayName: 'Maria Garcia',
-      firstName: 'Maria',
-      lastName: 'Garcia',
-      externalId: 'STU002',
-      roles: ['STUDENT'],
-      active: true,
-      isGoogleUser: false,
-      password: '$2b$10$ekh5F33YuNEQ46udXcb/QOTgkGDUWIBcahaQALXhKu3p0RpobIZdq',
-    });
+    const testUsers: UserDocument[] = [];
+    for (const userData of studentUsers) {
+      const user = await userModel.create({
+        ...userData,
+        roles: ['STUDENT'],
+        active: true,
+        isGoogleUser: false,
+        password:
+          '$2b$10$ekh5F33YuNEQ46udXcb/QOTgkGDUWIBcahaQALXhKu3p0RpobIZdq',
+      });
+      testUsers.push(user);
+    }
 
     // Faculty User
     const facultyUser = await userModel.create({
@@ -274,23 +299,26 @@ export async function seedTestData() {
 
     // 6. Create Students
     console.log('Creating Students...');
-    const student1 = await studentModel.create({
-      code: 'SIS2024001',
-      firstName: 'Juan',
-      lastName: 'Perez',
-      programId: program._id,
-      currentSemester: 5,
-      externalId: 'STU001',
-    });
+    const students: StudentDocument[] = [];
 
-    const student2 = await studentModel.create({
-      code: 'SIS2024002',
-      firstName: 'Maria',
-      lastName: 'Garcia',
-      programId: program._id,
-      currentSemester: 3,
-      externalId: 'STU002',
-    });
+    // Define semester per student to match their enrollment history
+    const semesterPerStudent = [4, 2, 3, 4, 5]; // Juan=4, Maria=2, Carlos=3, Ana=4, Luis=5
+
+    for (let i = 0; i < studentUsers.length; i++) {
+      const studentData = studentUsers[i];
+      const student = await studentModel.create({
+        code: `SIS202400${i + 1}`,
+        firstName: studentData.firstName,
+        lastName: studentData.lastName,
+        programId: program._id,
+        currentSemester: semesterPerStudent[i] || 1,
+        externalId: studentData.externalId,
+      });
+      students.push(student);
+    }
+
+    const student1 = students[0];
+    const student2 = students[1];
 
     // 7. Create Courses (Expanded for better testing)
     console.log('Creating Courses...');
@@ -435,36 +463,92 @@ export async function seedTestData() {
     console.log('Creating Group Schedules...');
     const schedules: any[] = [];
 
-    // Get current period groups for detailed scheduling
-    const currentPeriodGroups = courseGroups.filter(
-      (group) =>
-        group.periodId.toString() ===
-        (periods.currentPeriod._id as any).toString(),
-    );
+    // Helper to create schedules for ALL periods (not just current)
+    // This ensures historical data has proper schedules too
+    const getAllGroupsByPeriod = (periodId: any) => {
+      return courseGroups.filter(
+        (group) => group.periodId.toString() === periodId.toString(),
+      );
+    };
 
-    // Schedule for current semester courses (Student 1 - Semester 5)
-    const student1Courses = courses.filter((course) => course.semester <= 5);
-    const scheduleTimes = [
-      { day: 1, start: '08:00', end: '10:00' },
-      { day: 1, start: '10:00', end: '12:00' },
-      { day: 1, start: '14:00', end: '16:00' },
-      { day: 2, start: '08:00', end: '10:00' },
-      { day: 2, start: '10:00', end: '12:00' },
-      { day: 2, start: '14:00', end: '16:00' },
-      { day: 3, start: '08:00', end: '10:00' },
-      { day: 3, start: '10:00', end: '12:00' },
-      { day: 3, start: '14:00', end: '16:00' },
-      { day: 4, start: '08:00', end: '10:00' },
-      { day: 4, start: '10:00', end: '12:00' },
-      { day: 4, start: '14:00', end: '16:00' },
-      { day: 5, start: '08:00', end: '10:00' },
-      { day: 5, start: '10:00', end: '12:00' },
-    ];
-
-    // Create schedules for current period - prioritize student courses
+    // Create comprehensive schedules for all courses - ensuring NO conflicts
     const priorityCourseSchedules = [
+      // Semester 1 courses
       {
-        code: 'NET501',
+        code: 'MAT101',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '08:00', end: '10:00', room: 'ROOM-101' },
+          { day: 3, start: '08:00', end: '10:00', room: 'ROOM-101' },
+        ],
+      },
+      {
+        code: 'PRG101',
+        group: 'A',
+        schedules: [
+          { day: 2, start: '08:00', end: '10:00', room: 'LAB-101' },
+          { day: 4, start: '08:00', end: '10:00', room: 'LAB-101' },
+        ],
+      },
+      {
+        code: 'FIS101',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '10:00', end: '12:00', room: 'LAB-102' },
+          { day: 3, start: '10:00', end: '12:00', room: 'LAB-102' },
+        ],
+      },
+      {
+        code: 'QUI101',
+        group: 'A',
+        schedules: [
+          { day: 2, start: '10:00', end: '12:00', room: 'LAB-103' },
+          { day: 4, start: '10:00', end: '12:00', room: 'LAB-103' },
+        ],
+      },
+      {
+        code: 'ING101',
+        group: 'A',
+        schedules: [{ day: 5, start: '08:00', end: '10:00', room: 'AUD-101' }],
+      },
+
+      // Semester 2 courses
+      {
+        code: 'MAT201',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '14:00', end: '16:00', room: 'ROOM-201' },
+          { day: 3, start: '14:00', end: '16:00', room: 'ROOM-201' },
+        ],
+      },
+      {
+        code: 'PRG201',
+        group: 'A',
+        schedules: [
+          { day: 2, start: '14:00', end: '16:00', room: 'LAB-201' },
+          { day: 4, start: '14:00', end: '16:00', room: 'LAB-201' },
+        ],
+      },
+      {
+        code: 'FIS201',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '16:00', end: '18:00', room: 'LAB-202' },
+          { day: 3, start: '16:00', end: '18:00', room: 'LAB-202' },
+        ],
+      },
+      {
+        code: 'EST201',
+        group: 'A',
+        schedules: [
+          { day: 2, start: '16:00', end: '18:00', room: 'ROOM-202' },
+          { day: 4, start: '16:00', end: '18:00', room: 'ROOM-202' },
+        ],
+      },
+
+      // Semester 3 courses - Group A
+      {
+        code: 'DSA301',
         group: 'A',
         schedules: [
           { day: 1, start: '08:00', end: '10:00', room: 'LAB-301' },
@@ -472,51 +556,77 @@ export async function seedTestData() {
         ],
       },
       {
-        code: 'WEB501',
+        code: 'ALG301',
         group: 'A',
         schedules: [
-          { day: 2, start: '10:00', end: '12:00', room: 'LAB-302' },
-          { day: 4, start: '10:00', end: '12:00', room: 'LAB-302' },
+          { day: 2, start: '08:00', end: '10:00', room: 'ROOM-301' },
+          { day: 4, start: '08:00', end: '10:00', room: 'ROOM-301' },
         ],
       },
-      {
-        code: 'DB401',
-        group: 'A',
-        schedules: [
-          { day: 1, start: '14:00', end: '16:00', room: 'ROOM-201' },
-          { day: 3, start: '14:00', end: '16:00', room: 'ROOM-201' },
-          { day: 5, start: '14:00', end: '16:00', room: 'ROOM-201' },
-        ],
-      },
+
+      // Semester 3 courses - Group B (different times for variety)
       {
         code: 'DSA301',
         group: 'B',
         schedules: [
-          { day: 2, start: '08:00', end: '10:00', room: 'ROOM-301' },
-          { day: 4, start: '08:00', end: '10:00', room: 'ROOM-301' },
+          { day: 2, start: '10:00', end: '12:00', room: 'LAB-303' },
+          { day: 4, start: '10:00', end: '12:00', room: 'LAB-303' },
         ],
       },
       {
         code: 'ALG301',
         group: 'B',
         schedules: [
-          { day: 1, start: '10:00', end: '12:00', room: 'ROOM-302' },
-          { day: 3, start: '10:00', end: '12:00', room: 'ROOM-302' },
+          { day: 1, start: '14:00', end: '16:00', room: 'ROOM-303' },
+          { day: 3, start: '14:00', end: '16:00', room: 'ROOM-303' },
+        ],
+      },
+
+      // Semester 4 courses
+      {
+        code: 'DB401',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '10:00', end: '12:00', room: 'LAB-401' },
+          { day: 3, start: '10:00', end: '12:00', room: 'LAB-401' },
         ],
       },
       {
-        code: 'FIS201',
-        group: 'B',
+        code: 'SWE401',
+        group: 'A',
         schedules: [
-          { day: 5, start: '08:00', end: '10:00', room: 'LAB-201' },
-          { day: 5, start: '10:00', end: '12:00', room: 'LAB-201' },
+          { day: 2, start: '10:00', end: '12:00', room: 'ROOM-401' },
+          { day: 4, start: '10:00', end: '12:00', room: 'ROOM-401' },
+        ],
+      },
+
+      // Semester 5 courses
+      {
+        code: 'NET501',
+        group: 'A',
+        schedules: [
+          { day: 1, start: '14:00', end: '16:00', room: 'LAB-501' },
+          { day: 3, start: '14:00', end: '16:00', room: 'LAB-501' },
+        ],
+      },
+      {
+        code: 'WEB501',
+        group: 'A',
+        schedules: [
+          { day: 2, start: '14:00', end: '16:00', room: 'LAB-502' },
+          { day: 4, start: '14:00', end: '16:00', room: 'LAB-502' },
         ],
       },
     ];
 
-    // Helper to find group by course code and group number
-    const findGroupByCourse = (courseCode: string, groupNumber: string) => {
-      return currentPeriodGroups.find((g) => {
+    // Helper to find group by course code, group number AND period
+    const findGroupByCourseAndPeriod = (
+      courseCode: string,
+      groupNumber: string,
+      periodId: any,
+    ) => {
+      const groupsInPeriod = getAllGroupsByPeriod(periodId);
+      return groupsInPeriod.find((g) => {
         const course = courses.find(
           (c) => (c._id as any).toString() === (g.courseId as any).toString(),
         );
@@ -524,82 +634,27 @@ export async function seedTestData() {
       });
     };
 
-    // Add priority schedules first
-    for (const courseSchedule of priorityCourseSchedules) {
-      const group = findGroupByCourse(
-        courseSchedule.code,
-        courseSchedule.group,
-      );
-      if (group) {
-        for (const schedule of courseSchedule.schedules) {
-          schedules.push({
-            groupId: group._id,
-            dayOfWeek: schedule.day,
-            startTime: schedule.start,
-            endTime: schedule.end,
-            room: schedule.room,
-          });
+    // Create schedules for ALL periods with the same structure
+    // This ensures consistency across historical and current data
+    for (const period of allPeriods) {
+      for (const courseSchedule of priorityCourseSchedules) {
+        const group = findGroupByCourseAndPeriod(
+          courseSchedule.code,
+          courseSchedule.group,
+          period._id,
+        );
+        if (group) {
+          for (const schedule of courseSchedule.schedules) {
+            schedules.push({
+              groupId: group._id,
+              dayOfWeek: schedule.day,
+              startTime: schedule.start,
+              endTime: schedule.end,
+              room: schedule.room,
+            });
+          }
         }
       }
-    }
-
-    // Create schedules for remaining current period groups
-    let timeIndex = 0;
-    for (
-      let i = 0;
-      i < currentPeriodGroups.length && timeIndex < scheduleTimes.length;
-      i += 2
-    ) {
-      const groupA = currentPeriodGroups[i];
-      const groupB = currentPeriodGroups[i + 1];
-
-      // Skip if already has schedule
-      const groupAHasSchedule = schedules.some(
-        (s) => (s.groupId as any).toString() === (groupA._id as any).toString(),
-      );
-      const groupBHasSchedule = groupB
-        ? schedules.some((s) => (s.groupId as any).toString() === (groupB._id as any).toString())
-        : true;
-
-      if (groupAHasSchedule && groupBHasSchedule) {
-        continue;
-      }
-
-      const time = scheduleTimes[timeIndex];
-
-      if (groupA && !groupAHasSchedule) {
-        schedules.push({
-          groupId: groupA._id,
-          dayOfWeek: time.day,
-          startTime: time.start,
-          endTime: time.end,
-          room: groupA.classroom,
-        });
-      }
-
-      if (groupB && !groupBHasSchedule) {
-        const nextTime = scheduleTimes[timeIndex + 1] || scheduleTimes[0];
-        schedules.push({
-          groupId: groupB._id,
-          dayOfWeek: nextTime.day,
-          startTime: nextTime.start,
-          endTime: nextTime.end,
-          room: groupB.classroom,
-        });
-      }
-
-      timeIndex += 2;
-    }
-
-    // Create some schedule conflicts for testing
-    if (currentPeriodGroups.length > 20) {
-      schedules.push({
-        groupId: currentPeriodGroups[20]._id,
-        dayOfWeek: 1,
-        startTime: '08:30',
-        endTime: '10:30',
-        room: 'CONFLICT-ROOM',
-      });
     }
 
     await groupScheduleModel.insertMany(schedules);
@@ -625,23 +680,22 @@ export async function seedTestData() {
 
     const allEnrollments: any[] = [];
 
-    // === STUDENT 1 (Juan Perez) - Semester 5 ===
-
-    // Current Period (2024-2) - Active enrollments
-    const currentPeriodEnrollments = [
-      { courseCode: 'NET501', status: EnrollmentStatus.ENROLLED, grade: null },
-      { courseCode: 'WEB501', status: EnrollmentStatus.ENROLLED, grade: null },
-      { courseCode: 'DB401', status: EnrollmentStatus.ENROLLED, grade: null }, // Retaking
+    // === STUDENT 1 (Juan Perez - STU001) - Semester 4 (Advanced Student) ===
+    // Currently enrolled in semester 4 courses
+    const student1CurrentEnrollments = [
+      { courseCode: 'DB401', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'SWE401', status: EnrollmentStatus.ENROLLED, grade: null },
     ];
 
-    for (const enrollment of currentPeriodEnrollments) {
+    for (const enrollment of student1CurrentEnrollments) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
         (periods.currentPeriod._id as any).toString(),
+        'A',
       );
       if (group) {
         allEnrollments.push({
-          studentId: student1._id,
+          studentId: students[0]._id,
           groupId: group._id,
           enrolledAt: new Date('2024-07-15'),
           status: enrollment.status,
@@ -650,14 +704,13 @@ export async function seedTestData() {
       }
     }
 
-    // Previous Period (2024-1) - Recently completed
-    const period2024_1_enrollments = [
-      { courseCode: 'SWE401', status: EnrollmentStatus.PASSED, grade: 4.5 },
-      { courseCode: 'ALG301', status: EnrollmentStatus.PASSED, grade: 4.2 },
-      { courseCode: 'DB401', status: EnrollmentStatus.FAILED, grade: 2.8 }, // Failed, retaking now
+    // Period 2024-1 - Semester 3 courses (passed)
+    const student1_2024_1 = [
+      { courseCode: 'DSA301', status: EnrollmentStatus.PASSED, grade: 4.2 },
+      { courseCode: 'ALG301', status: EnrollmentStatus.PASSED, grade: 4.5 },
     ];
 
-    for (const enrollment of period2024_1_enrollments) {
+    for (const enrollment of student1_2024_1) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
         (periods.period2024_1._id as any).toString(),
@@ -673,14 +726,15 @@ export async function seedTestData() {
       }
     }
 
-    // 2023-2 Historical enrollments
-    const period2023_2_enrollments = [
-      { courseCode: 'DSA301', status: EnrollmentStatus.PASSED, grade: 4.0 },
+    // Period 2023-2 - Semester 2 courses (passed)
+    const student1_2023_2 = [
+      { courseCode: 'MAT201', status: EnrollmentStatus.PASSED, grade: 4.1 },
+      { courseCode: 'PRG201', status: EnrollmentStatus.PASSED, grade: 4.7 },
       { courseCode: 'FIS201', status: EnrollmentStatus.PASSED, grade: 3.8 },
       { courseCode: 'EST201', status: EnrollmentStatus.PASSED, grade: 4.3 },
     ];
 
-    for (const enrollment of period2023_2_enrollments) {
+    for (const enrollment of student1_2023_2) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
         (periods.period2023_2._id as any).toString(),
@@ -696,10 +750,8 @@ export async function seedTestData() {
       }
     }
 
-    // 2023-1 Historical enrollments
-    const period2023_1_enrollments = [
-      { courseCode: 'MAT201', status: EnrollmentStatus.PASSED, grade: 4.1 },
-      { courseCode: 'PRG201', status: EnrollmentStatus.PASSED, grade: 4.7 },
+    // Period 2023-1 - Semester 1 courses (all passed)
+    const student1_2023_1 = [
       { courseCode: 'MAT101', status: EnrollmentStatus.PASSED, grade: 3.9 },
       { courseCode: 'PRG101', status: EnrollmentStatus.PASSED, grade: 4.8 },
       { courseCode: 'FIS101', status: EnrollmentStatus.PASSED, grade: 3.7 },
@@ -707,7 +759,7 @@ export async function seedTestData() {
       { courseCode: 'ING101', status: EnrollmentStatus.PASSED, grade: 4.5 },
     ];
 
-    for (const enrollment of period2023_1_enrollments) {
+    for (const enrollment of student1_2023_1) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
         (periods.period2023_1._id as any).toString(),
@@ -723,24 +775,52 @@ export async function seedTestData() {
       }
     }
 
-    // === STUDENT 2 (Maria Garcia) - Semester 3 ===
+    // Add some FAILED courses to illustrate failed courses in UI
+    // Using courses from semester 5 that student hasn't taken yet
+    const student1_failed_courses = [
+      {
+        courseCode: 'NET501',
+        status: EnrollmentStatus.FAILED,
+        grade: 2.3,
+        period: periods.period2024_1._id,
+      },
+    ];
 
-    // Current Period (2024-2) - Student 2 enrollments
+    for (const enrollment of student1_failed_courses) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (enrollment.period as any).toString(),
+        'B',
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: student1._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-01-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // === STUDENT 2 (Maria Garcia - STU002) - Semester 2 ===
+    // Current semester 2 courses (enrolled)
     const student2CurrentEnrollments = [
-      { courseCode: 'DSA301', status: EnrollmentStatus.ENROLLED, grade: null },
-      { courseCode: 'ALG301', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'MAT201', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'PRG201', status: EnrollmentStatus.ENROLLED, grade: null },
       { courseCode: 'FIS201', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'EST201', status: EnrollmentStatus.ENROLLED, grade: null },
     ];
 
     for (const enrollment of student2CurrentEnrollments) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
         (periods.currentPeriod._id as any).toString(),
-        'B',
+        'A',
       );
       if (group) {
         allEnrollments.push({
-          studentId: student2._id,
+          studentId: students[1]._id,
           groupId: group._id,
           enrolledAt: new Date('2024-07-15'),
           status: enrollment.status,
@@ -749,59 +829,125 @@ export async function seedTestData() {
       }
     }
 
-    // Student 2 Historical data
-    const student2HistoricalEnrollments = [
-      // 2024-1
+    // Period 2024-1 - Semester 1 courses (mostly passed, one failed)
+    const student2_2024_1 = [
+      { courseCode: 'MAT101', status: EnrollmentStatus.PASSED, grade: 4.0 },
+      { courseCode: 'PRG101', status: EnrollmentStatus.PASSED, grade: 2.1 },
+      { courseCode: 'FIS101', status: EnrollmentStatus.PASSED, grade: 3.8 },
+      { courseCode: 'QUI101', status: EnrollmentStatus.PASSED, grade: 3.9 },
+      { courseCode: 'ING101', status: EnrollmentStatus.PASSED, grade: 4.2 },
+    ];
+
+    for (const enrollment of student2_2024_1) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (periods.period2024_1._id as any).toString(),
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: students[1]._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-01-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // Add failed courses for illustration
+    // Using courses from semester 3 that student hasn't taken yet
+    const student2_failed_courses = [
       {
-        courseCode: 'MAT201',
-        status: EnrollmentStatus.PASSED,
-        grade: 3.5,
-        period: periods.period2024_1,
-      },
-      {
-        courseCode: 'PRG201',
-        status: EnrollmentStatus.PASSED,
-        grade: 4.0,
-        period: periods.period2024_1,
-      },
-      {
-        courseCode: 'EST201',
-        status: EnrollmentStatus.PASSED,
-        grade: 3.2,
-        period: periods.period2024_1,
-      },
-      // 2023-2
-      {
-        courseCode: 'MAT101',
-        status: EnrollmentStatus.PASSED,
-        grade: 3.8,
-        period: periods.period2023_2,
-      },
-      {
-        courseCode: 'PRG101',
-        status: EnrollmentStatus.PASSED,
-        grade: 4.2,
-        period: periods.period2023_2,
-      },
-      {
-        courseCode: 'FIS101',
-        status: EnrollmentStatus.PASSED,
-        grade: 3.6,
-        period: periods.period2023_2,
+        courseCode: 'DSA301',
+        status: EnrollmentStatus.FAILED,
+        grade: 2.6,
+        period: periods.period2023_2._id,
       },
     ];
 
-    for (const enrollment of student2HistoricalEnrollments) {
+    for (const enrollment of student2_failed_courses) {
       const group = getGroupByCourseCodeAndPeriod(
         enrollment.courseCode,
-        (enrollment.period._id as any).toString(),
+        (enrollment.period as any).toString(),
         'B',
       );
       if (group) {
         allEnrollments.push({
-          studentId: student2._id,
+          studentId: students[1]._id,
           groupId: group._id,
-          enrolledAt: new Date(enrollment.period.startDate),
+          enrolledAt: new Date('2023-07-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // === STUDENT 3 (Carlos Lopez - STU003) - Semester 3 ===
+    // Enrolled in semester 3 courses - Group A
+    const student3Enrollments = [
+      { courseCode: 'DSA301', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'ALG301', status: EnrollmentStatus.ENROLLED, grade: null },
+    ];
+
+    for (const enrollment of student3Enrollments) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (periods.currentPeriod._id as any).toString(),
+        'A',
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: students[2]._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-07-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // === STUDENT 4 (Ana Martinez - STU004) - Semester 4 ===
+    // Enrolled in semester 4 courses (different times)
+    const student4Enrollments = [
+      { courseCode: 'DB401', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'SWE401', status: EnrollmentStatus.ENROLLED, grade: null },
+    ];
+
+    for (const enrollment of student4Enrollments) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (periods.currentPeriod._id as any).toString(),
+        'A',
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: students[3]._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-07-15'),
+          status: enrollment.status,
+          grade: enrollment.grade,
+        });
+      }
+    }
+
+    // === STUDENT 5 (Luis Rodriguez - STU005) - Semester 5 ===
+    // Enrolled in semester 5 courses
+    const student5Enrollments = [
+      { courseCode: 'NET501', status: EnrollmentStatus.ENROLLED, grade: null },
+      { courseCode: 'WEB501', status: EnrollmentStatus.ENROLLED, grade: null },
+    ];
+
+    for (const enrollment of student5Enrollments) {
+      const group = getGroupByCourseCodeAndPeriod(
+        enrollment.courseCode,
+        (periods.currentPeriod._id as any).toString(),
+        'A',
+      );
+      if (group) {
+        allEnrollments.push({
+          studentId: students[4]._id,
+          groupId: group._id,
+          enrolledAt: new Date('2024-07-15'),
           status: enrollment.status,
           grade: enrollment.grade,
         });
@@ -824,43 +970,30 @@ export async function seedTestData() {
     }
 
     console.log('Test data seeded successfully!');
-    console.log('\n COMPREHENSIVE TEST DATA SUMMARY FOR SPRINT 2:');
-    console.log('================================================\n');
+    console.log('\n=== COMPREHENSIVE TEST DATA SUMMARY ===\n');
 
-    console.log(' USERS CREATED:');
+    console.log('👥 USERS CREATED:');
     console.log('Admin 1: daniel.useche-p@mail.com (password: 123456789)');
     console.log('Admin 2: laura.venegas-p@mail.com (password: 123456789)');
     console.log(
       'Faculty: prof.rodriguez@universidad.edu (password: 123456789)',
     );
-    console.log('Student 1: juan.perez@estudiante.edu (External ID: STU001)');
+    console.log('\n📚 STUDENTS (all password: 123456789):');
     console.log(
-      'Student 2: maria.garcia@estudiante.edu (External ID: STU002)\n',
+      'Student 1: juan.perez@estudiante.edu (SIS2024001) - Semester 4 - 11 passed + 2 current',
     );
-
-    console.log(' ACADEMIC STRUCTURE:');
-    console.log('Faculty: Faculty of Engineering');
-    console.log('Program: Systems Engineering (10 semesters, 160 credits)');
     console.log(
-      'Academic Periods: 5 periods (2023-1, 2023-2, 2024-1, 2024-2 active, 2025-1 planning)',
+      'Student 2: maria.garcia@estudiante.edu (SIS2024002) - Semester 2 - 5 passed + 4 current',
     );
-    console.log('Courses: 15 courses across 5 semesters');
-    console.log('Course Groups: 2 groups per course per period\n');
-
-    console.log(' STUDENT 1 DATA (Juan Perez - STU001):');
-    console.log('Current Semester: 5');
-    console.log('Current Enrollments: NET501, WEB501, DB401 (retaking)');
-    console.log('Total Historical Courses: 13 courses across 3 semesters');
     console.log(
-      'Academic Performance: Mix of passed/failed (includes retaking scenario)',
+      'Student 3: carlos.lopez@estudiante.edu (SIS2024003) - Semester 3 - 2 courses',
     );
-    console.log('GPA: ~4.1 (calculated from historical grades)\n');
-
-    console.log(' STUDENT 2 DATA (Maria Garcia - STU002):');
-    console.log('Current Semester: 3');
-    console.log('Current Enrollments: DSA301, ALG301, FIS201');
-    console.log('Total Historical Courses: 6 courses across 2 semesters');
-    console.log('Academic Performance: Consistent passing grades\n');
+    console.log(
+      'Student 4: ana.martinez@estudiante.edu (SIS2024004) - Semester 4 - 2 courses',
+    );
+    console.log(
+      'Student 5: luis.rodriguez@estudiante.edu (SIS2024005) - Semester 5 - 2 courses\n',
+    );
 
     return {
       faculty,
@@ -868,10 +1001,9 @@ export async function seedTestData() {
       periods,
       courses,
       courseGroups,
-      students: { student1, student2 },
+      students,
       users: {
-        testUser1,
-        testUser2,
+        testUsers,
         facultyUser,
         adminUser1,
         adminUser2,

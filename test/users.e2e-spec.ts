@@ -36,19 +36,25 @@ describe('UsersController (e2e)', () => {
           password: 'password123',
         });
 
-      if (loginResponse.status === 200 && loginResponse.body.accessToken) {
-        authToken = loginResponse.body.accessToken;
+      if (
+        loginResponse.status === 200 &&
+        (loginResponse.body as { accessToken?: string }).accessToken
+      ) {
+        authToken = (loginResponse.body as { accessToken: string }).accessToken;
 
         // Get user info
         const meResponse = await request(app.getHttpServer())
           .get('/auth/me')
           .set('Authorization', `Bearer ${authToken}`);
 
-        if (meResponse.status === 200 && meResponse.body.user) {
-          testUserId = meResponse.body.user.sub;
+        if (
+          meResponse.status === 200 &&
+          (meResponse.body as { user?: { sub?: string } }).user
+        ) {
+          testUserId = (meResponse.body as { user: { sub: string } }).user.sub;
         }
       }
-    } catch (error) {
+    } catch {
       console.log('Warning: Could not authenticate in e2e tests');
     }
   });
@@ -65,7 +71,9 @@ describe('UsersController (e2e)', () => {
         expect(authToken).toBeDefined();
         expect(authToken).toBeTruthy();
       } else {
-        console.log('Note: Authentication not available - database may need seeding');
+        console.log(
+          'Note: Authentication not available - database may need seeding',
+        );
       }
     });
 
@@ -75,7 +83,9 @@ describe('UsersController (e2e)', () => {
         expect(testUserId).toBeDefined();
         expect(testUserId).toBeTruthy();
       } else {
-        console.log('Note: User ID not available - skipping user-specific tests');
+        console.log(
+          'Note: User ID not available - skipping user-specific tests',
+        );
       }
     });
   });
@@ -105,8 +115,9 @@ describe('UsersController (e2e)', () => {
         return;
       }
 
-      const response = await request(app.getHttpServer())
-        .get(`/users/${testUserId}`);
+      const response = await request(app.getHttpServer()).get(
+        `/users/${testUserId}`,
+      );
 
       expect(response.status).toBe(401);
     });
@@ -224,8 +235,9 @@ describe('UsersController (e2e)', () => {
     it('should require authentication', async () => {
       const fakeId = '507f1f77bcf86cd799439011';
 
-      const response = await request(app.getHttpServer())
-        .delete(`/users/${fakeId}`);
+      const response = await request(app.getHttpServer()).delete(
+        `/users/${fakeId}`,
+      );
 
       expect(response.status).toBe(401);
     });
@@ -249,8 +261,7 @@ describe('UsersController (e2e)', () => {
 
   describe('API Health & Info', () => {
     it('should return API info from root endpoint', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/');
+      const response = await request(app.getHttpServer()).get('/');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('name');
@@ -258,8 +269,7 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should return health status', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/health');
+      const response = await request(app.getHttpServer()).get('/health');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('status');
@@ -267,8 +277,7 @@ describe('UsersController (e2e)', () => {
     });
 
     it('should return version information', async () => {
-      const response = await request(app.getHttpServer())
-        .get('/version');
+      const response = await request(app.getHttpServer()).get('/version');
 
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('version');

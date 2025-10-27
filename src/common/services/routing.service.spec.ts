@@ -34,7 +34,9 @@ describe('RoutingService', () => {
     }).compile();
 
     service = module.get<RoutingService>(RoutingService);
-    programCourseModel = module.get<Model<ProgramCourse>>(getModelToken(ProgramCourse.name));
+    programCourseModel = module.get<Model<ProgramCourse>>(
+      getModelToken(ProgramCourse.name),
+    );
     studentModel = module.get<Model<Student>>(getModelToken(Student.name));
   });
 
@@ -191,7 +193,7 @@ describe('RoutingService', () => {
           userId: 'user123',
           sourceSubjectId: 'course1',
           targetSubjectId: 'course2',
-        })
+        }),
       ).rejects.toThrow('no tiene programa asignado');
     });
 
@@ -205,7 +207,7 @@ describe('RoutingService', () => {
           userId: 'user123',
           sourceSubjectId: 'course1',
           targetSubjectId: 'course2',
-        })
+        }),
       ).rejects.toThrow('No se pudo determinar el programa');
     });
   });

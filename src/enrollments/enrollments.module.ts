@@ -8,6 +8,10 @@ import {
   CourseGroup,
   CourseGroupSchema,
 } from '../course-groups/entities/course-group.entity';
+import {
+  GroupSchedule,
+  GroupScheduleSchema,
+} from '../group-schedules/entities/group-schedule.entity';
 
 @Module({
   imports: [
@@ -15,6 +19,7 @@ import {
       { name: Enrollment.name, schema: EnrollmentSchema },
       { name: Student.name, schema: StudentSchema },
       { name: CourseGroup.name, schema: CourseGroupSchema },
+      { name: GroupSchedule.name, schema: GroupScheduleSchema },
     ]),
   ],
   controllers: [EnrollmentsController],

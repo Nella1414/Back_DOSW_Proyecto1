@@ -20,17 +20,14 @@ import {
   AcademicPeriodDocument,
 } from '../../academic-periods/entities/academic-period.entity';
 import {
-  StudentAcademicStatusDto,
   AcademicStatisticsDto,
   StudentTrafficLightReportDto,
-  CourseStatusDto,
 } from '../dto/academic-traffic-light.dto';
 import {
   TrafficLightColor,
   StudentAcademicStatus,
   CourseStatus,
   PopulatedEnrollment,
-  PopulatedGroup,
 } from '../interfaces/academic-status.interface';
 
 /**
@@ -254,9 +251,8 @@ export class AcademicTrafficLightService {
       })
       .exec();
 
-    const passedCourses: CourseStatus[] = [];
-    const currentCourses: CourseStatus[] = [];
-    const failedCourses: CourseStatus[] = [];
+    // Use Map to track unique courses and keep only the most recent status
+    const courseMap = new Map<string, CourseStatus>();
 
     for (const enrollment of allEnrollments) {
       const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
@@ -268,17 +264,50 @@ export class AcademicTrafficLightService {
       const course = group.courseId;
       const period = group.periodId;
 
+      const courseCode = course.code;
       const courseStatus: CourseStatus = {
         periodCode: period.code,
-        courseCode: course.code,
+        courseCode: courseCode,
         courseName: course.name,
         credits: course.credits,
         grade: enrollment.grade,
         status: enrollment.status,
         color: this.getTrafficLightColor(enrollment.status, enrollment.grade),
+        semester: course.semester,
       };
 
-      switch (enrollment.status) {
+      // Check if we already have this course
+      const existing = courseMap.get(courseCode);
+      if (!existing) {
+        courseMap.set(courseCode, courseStatus);
+      } else {
+        // Priority: PASSED > ENROLLED > FAILED
+        // If course is currently ENROLLED, it takes priority (student is retaking it)
+        // If existing is PASSED, keep it unless new is also PASSED with higher grade
+        if (enrollment.status === EnrollmentStatus.ENROLLED) {
+          courseMap.set(courseCode, courseStatus);
+        } else if (
+          enrollment.status === EnrollmentStatus.PASSED &&
+          existing.status !== EnrollmentStatus.ENROLLED
+        ) {
+          // Keep the PASSED with best grade
+          if (
+            !existing.grade ||
+            (enrollment.grade && enrollment.grade > existing.grade)
+          ) {
+            courseMap.set(courseCode, courseStatus);
+          }
+        }
+      }
+    }
+
+    // Separate by status
+    const passedCourses: CourseStatus[] = [];
+    const currentCourses: CourseStatus[] = [];
+    const failedCourses: CourseStatus[] = [];
+
+    courseMap.forEach((courseStatus) => {
+      switch (courseStatus.status) {
         case EnrollmentStatus.PASSED:
           passedCourses.push(courseStatus);
           break;
@@ -286,10 +315,11 @@ export class AcademicTrafficLightService {
           currentCourses.push(courseStatus);
           break;
         case EnrollmentStatus.FAILED:
+          // Only include failed if not currently enrolled or passed
           failedCourses.push(courseStatus);
           break;
       }
-    }
+    });
 
     return {
       passedCourses: passedCourses.sort((a, b) =>
@@ -341,8 +371,6 @@ export class AcademicTrafficLightService {
       };
     };
   }> {
-    const student = await this.findStudentByIdOrCode(studentId);
-
     const academicStatus = await this.getStudentAcademicStatus(studentId);
 
     const currentPeriod = await this.academicPeriodModel
@@ -425,7 +453,8 @@ export class AcademicTrafficLightService {
         .exec();
 
       for (const enrollment of allEnrollments) {
-        const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+        const populatedEnrollment =
+          enrollment as unknown as PopulatedEnrollment;
         const group = populatedEnrollment.groupId;
 
         if (!group) {
@@ -447,16 +476,24 @@ export class AcademicTrafficLightService {
         }
 
         if (!course.credits || course.credits <= 0) {
-          inconsistencies.push(`Course ${course.code} has invalid credit value`);
+          inconsistencies.push(
+            `Course ${course.code} has invalid credit value`,
+          );
         }
 
         // Check for passed courses without grades
-        if (enrollment.status === EnrollmentStatus.PASSED && !enrollment.grade) {
+        if (
+          enrollment.status === EnrollmentStatus.PASSED &&
+          !enrollment.grade
+        ) {
           inconsistencies.push(`Passed course ${course.code} missing grade`);
         }
 
         // Check for failed courses without grades
-        if (enrollment.status === EnrollmentStatus.FAILED && !enrollment.grade) {
+        if (
+          enrollment.status === EnrollmentStatus.FAILED &&
+          !enrollment.grade
+        ) {
           inconsistencies.push(
             `Failed course ${course.code} missing grade (should have grade < 3.0)`,
           );
@@ -520,7 +557,9 @@ export class AcademicTrafficLightService {
         `Error detecting inconsistencies for student ${studentId}:`,
         error,
       );
-      return ['Error detecting inconsistencies: ' + error.message];
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      return ['Error detecting inconsistencies: ' + errorMessage];
     }
   }
 
@@ -535,7 +574,8 @@ export class AcademicTrafficLightService {
 
     for (const enrollment of enrollments) {
       if (enrollment.status === EnrollmentStatus.PASSED) {
-        const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
+        const populatedEnrollment =
+          enrollment as unknown as PopulatedEnrollment;
         const group = populatedEnrollment.groupId;
 
         if (group && group.courseId) {
@@ -556,9 +596,7 @@ export class AcademicTrafficLightService {
   /**
    * Calculate average grade per semester
    */
-  async calculateAverageGradePerSemester(
-    studentId: string,
-  ): Promise<
+  async calculateAverageGradePerSemester(studentId: string): Promise<
     Array<{
       period: string;
       averageGrade: number;
@@ -656,8 +694,10 @@ export class AcademicTrafficLightService {
       } catch (error) {
         // Log error and continue processing other students
         errorCount++;
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         this.logger.warn(
-          `Failed to calculate status for student ${student.code}: ${error.message}`,
+          `Failed to calculate status for student ${student.code}: ${errorMessage}`,
         );
         continue;
       }
@@ -687,7 +727,9 @@ export class AcademicTrafficLightService {
           ? Math.round((blueCount / students.length) * 100)
           : 0,
       redPercentage:
-        students.length > 0 ? Math.round((redCount / students.length) * 100) : 0,
+        students.length > 0
+          ? Math.round((redCount / students.length) * 100)
+          : 0,
     };
   }
 
@@ -707,5 +749,4 @@ export class AcademicTrafficLightService {
       courseStatuses,
     };
   }
-
 }

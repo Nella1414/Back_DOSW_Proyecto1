@@ -13,7 +13,8 @@ import { IsString, IsInt, IsOptional, Min, Max } from 'class-validator';
  */
 export class StudentResponseDto {
   @ApiProperty({
-    description: 'MongoDB ObjectId - Internal database identifier for the student',
+    description:
+      'MongoDB ObjectId - Internal database identifier for the student',
     example: '60d5ecb8b0a7c4b4b8b9b1a4',
     required: false,
   })

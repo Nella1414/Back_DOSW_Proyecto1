@@ -13,7 +13,7 @@ import {
 export class IsStudentCodeConstraint implements ValidatorConstraintInterface {
   validate(code: string, args: ValidationArguments) {
     if (!code) return false;
-    
+
     // Formato: 3-4 letras seguidas de 3-6 números (ej: EST001, PROG2024)
     const studentCodeRegex = /^[A-Z]{3,4}\d{3,6}$/;
     return studentCodeRegex.test(code);
@@ -25,7 +25,7 @@ export class IsStudentCodeConstraint implements ValidatorConstraintInterface {
 }
 
 export function IsStudentCode(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
@@ -43,7 +43,7 @@ export function IsStudentCode(validationOptions?: ValidationOptions) {
 export class IsValidNameConstraint implements ValidatorConstraintInterface {
   validate(name: string, args: ValidationArguments) {
     if (!name) return false;
-    
+
     // Permite letras, espacios, acentos y caracteres especiales del español
     const nameRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑüÜ\s]+$/;
     return nameRegex.test(name.trim());
@@ -55,7 +55,7 @@ export class IsValidNameConstraint implements ValidatorConstraintInterface {
 }
 
 export function IsValidName(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
@@ -70,12 +70,15 @@ export function IsValidName(validationOptions?: ValidationOptions) {
  * Validador para contraseñas seguras
  */
 @ValidatorConstraint({ name: 'isStrongPassword', async: false })
-export class IsStrongPasswordConstraint implements ValidatorConstraintInterface {
+export class IsStrongPasswordConstraint
+  implements ValidatorConstraintInterface
+{
   validate(password: string, args: ValidationArguments) {
     if (!password) return false;
-    
+
     // Al menos 8 caracteres, una mayúscula, una minúscula, un número
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
     return strongPasswordRegex.test(password);
   }
 
@@ -85,7 +88,7 @@ export class IsStrongPasswordConstraint implements ValidatorConstraintInterface 
 }
 
 export function IsStrongPassword(validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,
