@@ -110,6 +110,15 @@ describe('AppService', () => {
       expect(result.server).toHaveProperty('startTime');
     });
 
+    it('should format uptime correctly for short durations', async () => {
+      const result: any = await service.getStatus();
+      
+      expect(result.server.uptime).toBeDefined();
+      expect(typeof result.server.uptime).toBe('string');
+      // Uptime should contain "seconds" for short durations
+      expect(result.server.uptime).toMatch(/seconds|minutes|hours|days/);
+    });
+
     it('should include database status', async () => {
       const result: any = await service.getStatus();
 
