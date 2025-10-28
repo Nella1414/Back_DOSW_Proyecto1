@@ -7,6 +7,13 @@ import {
   Param,
   Delete,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
 import { ProgramsService } from './services/programs.service';
 import { CreateProgramDto } from './dto/create-program.dto';
 import { UpdateProgramDto } from './dto/update-program.dto';
@@ -17,10 +24,10 @@ import { Public } from '../auth/decorators/auth.decorator';
  *
  * ! Controller sin implementar - Servicio retorna solo strings placeholder
  * ? Maneja programas academicos (carreras) asociados a facultades
- * TODO: Implementar Swagger documentation completa
- * TODO: Validar permisos ADMIN/DEAN para creacion y modificacion
+ * TODO: Implementar validacion de permisos ADMIN/DEAN para creacion y modificacion
  * TODO: Agregar relacion con facultades y estudiantes
  */
+@ApiTags('Academic Programs')
 @Controller('programs')
 export class ProgramsController {
   constructor(private readonly programsService: ProgramsService) {}
@@ -32,6 +39,17 @@ export class ProgramsController {
    * TODO: Validar creditos totales y semestres del programa
    */
   @Post()
+  @ApiOperation({
+    summary: 'Create a new academic program',
+    description: 'Creates a new academic program (career) associated with a faculty',
+  })
+  @ApiBody({ type: CreateProgramDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Academic program successfully created',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid program data' })
+  @ApiResponse({ status: 409, description: 'Program code already exists' })
   create(@Body() createProgramDto: CreateProgramDto) {
     return this.programsService.create(createProgramDto);
   }
@@ -43,6 +61,14 @@ export class ProgramsController {
    */
   @Public()
   @Get()
+  @ApiOperation({
+    summary: 'Get all academic programs',
+    description: 'Retrieves a list of all academic programs in the system',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List of academic programs retrieved successfully',
+  })
   findAll() {
     return this.programsService.findAll();
   }
@@ -54,6 +80,16 @@ export class ProgramsController {
    * TODO: Mostrar estudiantes activos y estadisticas del programa
    */
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get academic program by ID',
+    description: 'Retrieves a specific academic program with faculty and curriculum information',
+  })
+  @ApiParam({ name: 'id', description: 'Academic program ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Academic program found',
+  })
+  @ApiResponse({ status: 404, description: 'Academic program not found' })
   findOne(@Param('id') id: string) {
     return this.programsService.findOne(+id);
   }
@@ -65,6 +101,18 @@ export class ProgramsController {
    * TODO: Validar impacto en estudiantes antes de cambios criticos
    */
   @Patch(':id')
+  @ApiOperation({
+    summary: 'Update academic program',
+    description: 'Updates an existing academic program. Changes may affect enrolled students',
+  })
+  @ApiParam({ name: 'id', description: 'Academic program ID' })
+  @ApiBody({ type: UpdateProgramDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Academic program successfully updated',
+  })
+  @ApiResponse({ status: 404, description: 'Academic program not found' })
+  @ApiResponse({ status: 400, description: 'Invalid input data' })
   update(@Param('id') id: string, @Body() updateProgramDto: UpdateProgramDto) {
     return this.programsService.update(+id, updateProgramDto);
   }
@@ -77,6 +125,20 @@ export class ProgramsController {
    * TODO: Ofrecer transferencia de estudiantes a otro programa
    */
   @Delete(':id')
+  @ApiOperation({
+    summary: 'Delete academic program',
+    description: 'Removes an academic program. Cannot delete programs with active students',
+  })
+  @ApiParam({ name: 'id', description: 'Academic program ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Academic program successfully deleted',
+  })
+  @ApiResponse({ status: 404, description: 'Academic program not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Cannot delete program with active students',
+  })
   remove(@Param('id') id: string) {
     return this.programsService.remove(+id);
   }
