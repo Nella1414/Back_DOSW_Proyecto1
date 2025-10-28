@@ -2,8 +2,6 @@ import {
   Controller,
   Get,
   Param,
-  HttpCode,
-  HttpStatus,
   UseGuards,
   Request,
   ForbiddenException,
@@ -51,7 +49,7 @@ export class AcademicTrafficLightController {
    * Admins and Deans can access any student's data
    */
   private canAccessStudentData(
-    requestingUser: any,
+    requestingUser: { roles?: string[]; externalId?: string; userId?: string },
     targetStudentId: string,
   ): boolean {
     const userRoles = requestingUser.roles || [];
@@ -128,7 +126,8 @@ export class AcademicTrafficLightController {
   })
   getStudentAcademicStatus(
     @Param() params: StudentIdParamDto,
-    @Request() req: any,
+    @Request()
+    req: { user: { roles?: string[]; externalId?: string; userId?: string } },
   ) {
     const { studentId } = params;
 
@@ -198,7 +197,8 @@ export class AcademicTrafficLightController {
   })
   getStudentTrafficLightReport(
     @Param() params: StudentIdParamDto,
-    @Request() req: any,
+    @Request()
+    req: { user: { roles?: string[]; externalId?: string; userId?: string } },
   ) {
     const { studentId } = params;
 
@@ -265,7 +265,11 @@ export class AcademicTrafficLightController {
     status: 404,
     description: 'Student not found',
   })
-  findOne(@Param() params: StudentIdParamDto, @Request() req: any) {
+  findOne(
+    @Param() params: StudentIdParamDto,
+    @Request()
+    req: { user: { roles?: string[]; externalId?: string; userId?: string } },
+  ) {
     const { studentId } = params;
 
     // Check authorization

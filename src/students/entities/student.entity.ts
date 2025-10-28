@@ -23,15 +23,15 @@ export class Student {
   @Prop({ required: true, unique: true })
   externalId: string;
 
-  @Prop({ 
-    type: String, 
+  @Prop({
+    type: String,
     default: null,
     maxlength: 2000,
     set: (value: string | null | undefined) => {
       // Convertir string vacío a null
       if (!value || value.trim() === '') return null;
       return value;
-    }
+    },
   })
   observations: string | null;
 

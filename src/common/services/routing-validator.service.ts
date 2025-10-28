@@ -1,7 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { Program, ProgramDocument } from '../../programs/entities/program.entity';
+import {
+  Program,
+  ProgramDocument,
+} from '../../programs/entities/program.entity';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -26,39 +29,46 @@ export class RoutingValidatorService {
   async validateAndEnsureProgram(
     proposedProgramId: string,
     requestId: string,
-    context: Record<string, any>
+    context: Record<string, any>,
   ): Promise<ValidationResult> {
     try {
-      this.logger.debug(`Validando programa ${proposedProgramId} para solicitud ${requestId}`);
+      this.logger.debug(
+        `Validando programa ${proposedProgramId} para solicitud ${requestId}`,
+      );
 
       // Validar que el programa existe y está activo
-      const isValidProgram = await this.validateProgramExists(proposedProgramId);
-      const isActiveProgram = await this.validateProgramActive(proposedProgramId);
+      const isValidProgram =
+        await this.validateProgramExists(proposedProgramId);
+      const isActiveProgram =
+        await this.validateProgramActive(proposedProgramId);
 
       if (isValidProgram && isActiveProgram) {
-        this.logger.log(`Programa ${proposedProgramId} validado exitosamente para solicitud ${requestId}`);
+        this.logger.log(
+          `Programa ${proposedProgramId} validado exitosamente para solicitud ${requestId}`,
+        );
         return {
           isValid: true,
           assignedProgramId: proposedProgramId,
-          fallbackUsed: false
+          fallbackUsed: false,
         };
       }
 
       // Aplicar fallback si el programa no es válido
-      this.logger.warn(`Programa ${proposedProgramId} no es válido para solicitud ${requestId}, aplicando fallback`);
+      this.logger.warn(
+        `Programa ${proposedProgramId} no es válido para solicitud ${requestId}, aplicando fallback`,
+      );
       const fallbackResult = await this.applyFallback(
         proposedProgramId,
         requestId,
         context,
-        !isValidProgram ? 'PROGRAM_NOT_EXISTS' : 'PROGRAM_INACTIVE'
+        !isValidProgram ? 'PROGRAM_NOT_EXISTS' : 'PROGRAM_INACTIVE',
       );
 
       return fallbackResult;
-
     } catch (error) {
       this.logger.error(
         `Error crítico validando programa ${proposedProgramId} para solicitud ${requestId}: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // En caso de error crítico, retornar programa de emergencia
@@ -66,7 +76,7 @@ export class RoutingValidatorService {
         isValid: false,
         assignedProgramId: 'PROG-EMERGENCY',
         fallbackUsed: true,
-        reason: `Error en validación: ${error.message}`
+        reason: `Error en validación: ${error.message}`,
       };
     }
   }
@@ -78,10 +88,7 @@ export class RoutingValidatorService {
     try {
       const program = await this.programModel
         .findOne({
-          $or: [
-            { _id: programId },
-            { code: programId }
-          ]
+          $or: [{ _id: programId }, { code: programId }],
         })
         .exec();
 
@@ -92,9 +99,11 @@ export class RoutingValidatorService {
       }
 
       return exists;
-
     } catch (error) {
-      this.logger.error(`Error verificando existencia de programa ${programId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error verificando existencia de programa ${programId}: ${error.message}`,
+        error.stack,
+      );
       // En caso de error, asumir que no existe por seguridad
       return false;
     }
@@ -107,11 +116,8 @@ export class RoutingValidatorService {
     try {
       const program = await this.programModel
         .findOne({
-          $or: [
-            { _id: programId },
-            { code: programId }
-          ],
-          isActive: true
+          $or: [{ _id: programId }, { code: programId }],
+          isActive: true,
         })
         .exec();
 
@@ -122,9 +128,11 @@ export class RoutingValidatorService {
       }
 
       return isActive;
-
     } catch (error) {
-      this.logger.error(`Error verificando estado de programa ${programId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error verificando estado de programa ${programId}: ${error.message}`,
+        error.stack,
+      );
       // En caso de error, asumir que no está activo por seguridad
       return false;
     }
@@ -137,7 +145,7 @@ export class RoutingValidatorService {
     originalProgramId: string,
     requestId: string,
     context: Record<string, any>,
-    reason: string
+    reason: string,
   ): Promise<ValidationResult> {
     try {
       // Loggear el caso que requiere fallback
@@ -145,44 +153,52 @@ export class RoutingValidatorService {
         originalProgramId,
         reason,
         context,
-        fallbackProgram: this.DEFAULT_PROGRAM
+        fallbackProgram: this.DEFAULT_PROGRAM,
       });
 
       // Verificar que el programa por defecto es válido
-      const isDefaultValid = await this.validateProgramExists(this.DEFAULT_PROGRAM);
-      const isDefaultActive = await this.validateProgramActive(this.DEFAULT_PROGRAM);
+      const isDefaultValid = await this.validateProgramExists(
+        this.DEFAULT_PROGRAM,
+      );
+      const isDefaultActive = await this.validateProgramActive(
+        this.DEFAULT_PROGRAM,
+      );
 
       if (!isDefaultValid || !isDefaultActive) {
         // Caso crítico - programa por defecto no válido
-        this.logger.error(`Programa por defecto ${this.DEFAULT_PROGRAM} no es válido`, {
-          requestId,
-          originalProgramId,
-          defaultExists: isDefaultValid,
-          defaultActive: isDefaultActive
-        });
+        this.logger.error(
+          `Programa por defecto ${this.DEFAULT_PROGRAM} no es válido`,
+          {
+            requestId,
+            originalProgramId,
+            defaultExists: isDefaultValid,
+            defaultActive: isDefaultActive,
+          },
+        );
 
         // Usar programa de emergencia
         return {
           isValid: false,
           assignedProgramId: 'PROG-EMERGENCY',
           fallbackUsed: true,
-          reason: `Programa original ${originalProgramId} inválido, programa por defecto también inválido`
+          reason: `Programa original ${originalProgramId} inválido, programa por defecto también inválido`,
         };
       }
 
-      this.logger.log(`Fallback exitoso: asignado programa por defecto ${this.DEFAULT_PROGRAM} para solicitud ${requestId}`);
+      this.logger.log(
+        `Fallback exitoso: asignado programa por defecto ${this.DEFAULT_PROGRAM} para solicitud ${requestId}`,
+      );
 
       return {
         isValid: true,
         assignedProgramId: this.DEFAULT_PROGRAM,
         fallbackUsed: true,
-        reason: `Programa original ${originalProgramId} inválido (${reason}), usando programa por defecto`
+        reason: `Programa original ${originalProgramId} inválido (${reason}), usando programa por defecto`,
       };
-
     } catch (error) {
       this.logger.error(
         `Error crítico en applyFallback para solicitud ${requestId}: ${error.message}`,
-        error.stack
+        error.stack,
       );
 
       // Retornar programa de emergencia en caso de error
@@ -190,7 +206,7 @@ export class RoutingValidatorService {
         isValid: false,
         assignedProgramId: 'PROG-EMERGENCY',
         fallbackUsed: true,
-        reason: `Error en fallback: ${error.message}`
+        reason: `Error en fallback: ${error.message}`,
       };
     }
   }
@@ -220,13 +236,13 @@ export class RoutingValidatorService {
         'Programa debe existir en el sistema',
         'Programa debe estar activo',
         'Si falla, usar programa por defecto',
-        'Si programa por defecto falla, usar programa de emergencia'
+        'Si programa por defecto falla, usar programa de emergencia',
       ],
       fallbackReasons: [
         'PROGRAM_NOT_EXISTS: Programa no existe',
         'PROGRAM_INACTIVE: Programa inactivo',
-        'DEFAULT_INVALID: Programa por defecto inválido'
-      ]
+        'DEFAULT_INVALID: Programa por defecto inválido',
+      ],
     };
   }
 }

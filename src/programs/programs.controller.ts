@@ -17,6 +17,7 @@ import {
 import { ProgramsService } from './services/programs.service';
 import { CreateProgramDto } from './dto/create-program.dto';
 import { UpdateProgramDto } from './dto/update-program.dto';
+import { Public } from '../auth/decorators/auth.decorator';
 
 /**
  * * Academic Programs Controller
@@ -54,11 +55,11 @@ export class ProgramsController {
   }
 
   /**
-   * * Get all academic programs
-   * ! Funcion sin implementar - Service retorna string placeholder
-   * ? Deberia incluir paginacion y filtros por facultad
-   * TODO: Incluir estadisticas de estudiantes inscritos
+   * * Get all academic programs - PUBLIC endpoint for registration
+   * Returns all active academic programs
+   * Used by registration form to populate program selection
    */
+  @Public()
   @Get()
   @ApiOperation({
     summary: 'Get all academic programs',

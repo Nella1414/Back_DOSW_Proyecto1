@@ -70,7 +70,7 @@ export class RolesGuard implements CanActivate {
     }
 
     // Step 2: Extract user from request (added by JWT Guard)
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<any>();
     const user = request.user;
 
     // Deny access if user is not authenticated
@@ -96,7 +96,7 @@ export class RolesGuard implements CanActivate {
     }
 
     // Get user's roles from JWT payload
-    const userRoles = user.roles || [];
+    const userRoles = (user.roles || []) as string[];
 
     // Step 6: Validate user has required roles (if specified)
     if (requiredRoles && requiredRoles.length > 0) {

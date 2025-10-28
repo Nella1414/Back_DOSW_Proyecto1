@@ -63,10 +63,10 @@ export class AppService {
    *
    * @returns Health status of API and database
    */
-  async getHealth(): Promise<object> {
+  getHealth(): Promise<object> {
     const dbStatus = this.getDatabaseStatus();
 
-    return {
+    return Promise.resolve({
       status: dbStatus === 'connected' ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
       checks: {
@@ -83,7 +83,7 @@ export class AppService {
           connectionState: dbStatus,
         },
       },
-    };
+    });
   }
 
   /**
@@ -102,12 +102,12 @@ export class AppService {
    *
    * @returns Comprehensive application status information
    */
-  async getStatus(): Promise<object> {
+  getStatus(): Promise<object> {
     const uptime = this.getUptime();
     const dbStatus = this.getDatabaseStatus();
     const dbInfo = this.getDatabaseInfo();
 
-    return {
+    return Promise.resolve({
       application: {
         name: 'SIRHA API',
         version: this.version,
@@ -117,7 +117,9 @@ export class AppService {
       server: {
         startTime: this.startTime.toISOString(),
         uptime: uptime,
-        uptimeSeconds: Math.floor((Date.now() - this.startTime.getTime()) / 1000),
+        uptimeSeconds: Math.floor(
+          (Date.now() - this.startTime.getTime()) / 1000,
+        ),
         currentTime: new Date().toISOString(),
       },
       database: {
@@ -128,7 +130,7 @@ export class AppService {
         collections: dbInfo.collections,
       },
       health: dbStatus === 'connected' ? 'healthy' : 'degraded',
-    };
+    });
   }
 
   /**
@@ -202,7 +204,7 @@ export class AppService {
         name: this.mongoConnection.name || 'unknown',
         collections: Object.keys(this.mongoConnection.collections).length,
       };
-    } catch (error) {
+    } catch {
       return {
         host: 'error',
         name: 'error',

@@ -396,6 +396,108 @@ export class AcademicHistoryDto {
     currentCourses: CourseHistoryDto[];
     failedCourses: CourseHistoryDto[];
   };
+
+  /**
+   * Academic progress percentage
+   *
+   * * Porcentaje de progreso académico
+   */
+  @ApiProperty({
+    description: 'Academic progress percentage (0-100)',
+    example: 68,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(100)
+  progressPercentage?: number;
+
+  /**
+   * Number of completed courses
+   *
+   * * Número de cursos completados
+   */
+  @ApiProperty({
+    description: 'Number of courses completed',
+    example: 24,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  completedCourses?: number;
+
+  /**
+   * Total number of courses in program
+   *
+   * * Número total de cursos en el programa
+   */
+  @ApiProperty({
+    description: 'Total number of courses in the program',
+    example: 43,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  totalCourses?: number;
+
+  /**
+   * Number of earned credits
+   *
+   * * Número de créditos obtenidos
+   */
+  @ApiProperty({
+    description: 'Number of credits earned',
+    example: 95,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  earnedCredits?: number;
+
+  /**
+   * Total credits required for program
+   *
+   * * Créditos totales requeridos para el programa
+   */
+  @ApiProperty({
+    description: 'Total credits required for the program',
+    example: 139,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  totalCredits?: number;
+
+  /**
+   * Cumulative GPA
+   *
+   * * Promedio acumulado
+   */
+  @ApiProperty({
+    description: 'Cumulative grade point average',
+    example: 3.9,
+    required: false,
+  })
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  @Max(5)
+  gpa?: number;
+
+  /**
+   * Program name
+   *
+   * * Nombre del programa académico
+   */
+  @ApiProperty({
+    description: 'Academic program name',
+    example: 'Ingeniería de Sistemas',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  programName?: string;
 }
 
 /**

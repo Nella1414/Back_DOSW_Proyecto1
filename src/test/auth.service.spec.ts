@@ -22,7 +22,6 @@ jest.mock('uuid', () => ({
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userModel: Model<User>;
   let jwtService: JwtService;
 
   // Mock user data
@@ -72,7 +71,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    userModel = module.get<Model<User>>(getModelToken(User.name));
     jwtService = module.get<JwtService>(JwtService);
   });
 
@@ -152,7 +150,10 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword123');
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new HttpException('REGISTRATION_FAILED', HttpStatus.INTERNAL_SERVER_ERROR),
+        new HttpException(
+          'REGISTRATION_FAILED',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       );
     });
   });
@@ -213,7 +214,10 @@ describe('AuthService', () => {
       mockUserModel.findOne.mockResolvedValue(oauthUser);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        new HttpException('INVALID_USER_DATA', HttpStatus.INTERNAL_SERVER_ERROR),
+        new HttpException(
+          'INVALID_USER_DATA',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       );
     });
 
@@ -429,7 +433,10 @@ describe('AuthService', () => {
       mockUserModel.findOne.mockRejectedValue(new Error('Database error'));
 
       await expect(service.googleLogin(googleUser)).rejects.toThrow(
-        new HttpException('GOOGLE_LOGIN_FAILED', HttpStatus.INTERNAL_SERVER_ERROR),
+        new HttpException(
+          'GOOGLE_LOGIN_FAILED',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       );
     });
 

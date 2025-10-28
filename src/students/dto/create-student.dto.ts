@@ -14,7 +14,10 @@ import {
 // Import Swagger documentation decorator
 import { ApiProperty } from '@nestjs/swagger';
 // Import custom validators
-import { IsStudentCode, IsValidName } from '../../common/validators/custom-validators';
+import {
+  IsStudentCode,
+  IsValidName,
+} from '../../common/validators/custom-validators';
 import { IsValidObservations } from '../../common/validators/observations.validator';
 import { SanitizeObservations } from '../../common/decorators/sanitize-observations.decorator';
 
@@ -44,13 +47,16 @@ export class CreateStudentDto {
    * Used for student identification and enrollment processes.
    */
   @ApiProperty({
-    description: 'Código único del estudiante (formato: 3-4 letras + 3-6 números)',
+    description:
+      'Código único del estudiante (formato: 3-4 letras + 3-6 números)',
     example: 'EST001',
     pattern: '^[A-Z]{3,4}\\d{3,6}$',
   })
   @IsString({ message: 'El código del estudiante debe ser texto' })
   @IsNotEmpty({ message: 'El código del estudiante es obligatorio' })
-  @IsStudentCode({ message: 'El código debe tener formato válido (ej: EST001, PROG2024)' })
+  @IsStudentCode({
+    message: 'El código debe tener formato válido (ej: EST001, PROG2024)',
+  })
   code: string;
 
   /**
@@ -66,8 +72,12 @@ export class CreateStudentDto {
   })
   @IsString({ message: 'El primer nombre debe ser texto' })
   @IsNotEmpty({ message: 'El primer nombre es obligatorio' })
-  @Length(2, 50, { message: 'El primer nombre debe tener entre 2 y 50 caracteres' })
-  @IsValidName({ message: 'El primer nombre solo puede contener letras, espacios y acentos' })
+  @Length(2, 50, {
+    message: 'El primer nombre debe tener entre 2 y 50 caracteres',
+  })
+  @IsValidName({
+    message: 'El primer nombre solo puede contener letras, espacios y acentos',
+  })
   firstName: string;
 
   /**
@@ -84,7 +94,9 @@ export class CreateStudentDto {
   @IsString({ message: 'El apellido debe ser texto' })
   @IsNotEmpty({ message: 'El apellido es obligatorio' })
   @Length(2, 50, { message: 'El apellido debe tener entre 2 y 50 caracteres' })
-  @IsValidName({ message: 'El apellido solo puede contener letras, espacios y acentos' })
+  @IsValidName({
+    message: 'El apellido solo puede contener letras, espacios y acentos',
+  })
   lastName: string;
 
   /**
@@ -100,7 +112,9 @@ export class CreateStudentDto {
   })
   @IsString({ message: 'El ID del programa debe ser texto' })
   @IsNotEmpty({ message: 'El ID del programa es obligatorio' })
-  @IsMongoId({ message: 'El ID del programa debe ser un ObjectId válido de MongoDB' })
+  @IsMongoId({
+    message: 'El ID del programa debe ser un ObjectId válido de MongoDB',
+  })
   programId: string;
 
   /**
@@ -131,7 +145,9 @@ export class CreateStudentDto {
   })
   @IsOptional()
   @IsString({ message: 'El teléfono debe ser texto' })
-  @Matches(/^\+?[1-9]\d{1,14}$/, { message: 'El teléfono debe tener formato válido (ej: +57 300 123 4567)' })
+  @Matches(/^\+?[1-9]\d{1,14}$/, {
+    message: 'El teléfono debe tener formato válido (ej: +57 300 123 4567)',
+  })
   phone?: string;
 
   /**
@@ -167,7 +183,9 @@ export class CreateStudentDto {
   })
   @IsOptional()
   @IsString({ message: 'Las observaciones deben ser texto' })
-  @IsValidObservations(2000, { message: 'Las observaciones no pueden exceder 2000 caracteres' })
+  @IsValidObservations(2000, {
+    message: 'Las observaciones no pueden exceder 2000 caracteres',
+  })
   @SanitizeObservations()
   observations?: string | null;
 }

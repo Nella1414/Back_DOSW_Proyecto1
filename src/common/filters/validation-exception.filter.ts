@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { Response } from 'express';
 
-
 @Catch(BadRequestException)
 export class ValidationExceptionFilter implements ExceptionFilter {
   // Mensajes centralizados para facilitar i18n futuro
@@ -28,7 +27,9 @@ export class ValidationExceptionFilter implements ExceptionFilter {
       typeof exceptionResponse === 'object' &&
       Array.isArray(exceptionResponse.message)
     ) {
-      const validationErrors = this.formatValidationErrors(exceptionResponse.message);
+      const validationErrors = this.formatValidationErrors(
+        exceptionResponse.message,
+      );
 
       return response.status(422).json({
         statusCode: 422,
@@ -53,7 +54,9 @@ export class ValidationExceptionFilter implements ExceptionFilter {
     for (const error of validationErrors) {
       if (error.constraints) {
         // Error directo en campo
-        for (const [constraintKey, message] of Object.entries(error.constraints)) {
+        for (const [constraintKey, message] of Object.entries(
+          error.constraints,
+        )) {
           errors.push({
             field: error.property,
             message: message as string,
@@ -65,7 +68,10 @@ export class ValidationExceptionFilter implements ExceptionFilter {
 
       // Errores anidados (objetos dentro de objetos)
       if (error.children && error.children.length > 0) {
-        const nestedErrors = this.formatNestedErrors(error.children, error.property);
+        const nestedErrors = this.formatNestedErrors(
+          error.children,
+          error.property,
+        );
         errors.push(...nestedErrors);
       }
     }
@@ -83,7 +89,9 @@ export class ValidationExceptionFilter implements ExceptionFilter {
       const fieldPath = `${parentProperty}.${child.property}`;
 
       if (child.constraints) {
-        for (const [constraintKey, message] of Object.entries(child.constraints)) {
+        for (const [constraintKey, message] of Object.entries(
+          child.constraints,
+        )) {
           errors.push({
             field: fieldPath,
             message: message as string,

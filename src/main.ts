@@ -205,7 +205,8 @@ For API support and documentation issues, please refer to the comprehensive endp
    * with secure defaults and credential support.
    */
   const configService = app.get(ConfigService);
-  const corsOrigin = configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
+  const corsOrigin =
+    configService.get<string>('FRONTEND_URL') || 'http://localhost:5173';
 
   app.enableCors({
     origin: corsOrigin,

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsEmail, IsBoolean, IsArray, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsEmail,
+  IsBoolean,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
 
 /**
  * UserResponseDto - Data Transfer Object for user responses
@@ -22,7 +28,8 @@ export class UserResponseDto {
   _id?: string;
 
   @ApiProperty({
-    description: 'External ID - Business identifier linked to student records (e.g., STU001)',
+    description:
+      'External ID - Business identifier linked to student records (e.g., STU001)',
     example: 'STU001',
   })
   @IsString()

@@ -1,8 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { ProgramCourse, ProgramCourseDocument } from '../../programs/entities/program.entity';
-import { Student, StudentDocument } from '../../students/entities/student.entity';
+import {
+  ProgramCourse,
+  ProgramCourseDocument,
+} from '../../programs/entities/program.entity';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
 
 export interface RoutingContext {
   userId: string;
@@ -34,27 +40,43 @@ export class RoutingService {
   async determineProgram(context: RoutingContext): Promise<RoutingDecision> {
     try {
       // Obtener programas de las materias
-      const sourceProgramId = await this.getSubjectProgram(context.sourceSubjectId);
-      const targetProgramId = await this.getSubjectProgram(context.targetSubjectId);
-      const studentProgramId = context.studentProgramId || await this.getStudentProgram(context.userId);
+      const sourceProgramId = await this.getSubjectProgram(
+        context.sourceSubjectId,
+      );
+      const targetProgramId = await this.getSubjectProgram(
+        context.targetSubjectId,
+      );
+      const studentProgramId =
+        context.studentProgramId ||
+        (await this.getStudentProgram(context.userId));
 
-      this.logger.log(`Ruteo para usuario ${context.userId}: origen=${sourceProgramId}, destino=${targetProgramId}, estudiante=${studentProgramId}`);
+      this.logger.log(
+        `Ruteo para usuario ${context.userId}: origen=${sourceProgramId}, destino=${targetProgramId}, estudiante=${studentProgramId}`,
+      );
 
       // Regla 1: Si ambas materias del mismo programa → ese programa
-      if (sourceProgramId && targetProgramId && sourceProgramId === targetProgramId) {
+      if (
+        sourceProgramId &&
+        targetProgramId &&
+        sourceProgramId === targetProgramId
+      ) {
         return {
           assignedProgramId: sourceProgramId,
           reason: `Ambas materias pertenecen al programa ${sourceProgramId}`,
-          rule: 'SAME_PROGRAM'
+          rule: 'SAME_PROGRAM',
         };
       }
 
       // Regla 2: Si materias de programas diferentes → programa de destino
-      if (sourceProgramId && targetProgramId && sourceProgramId !== targetProgramId) {
+      if (
+        sourceProgramId &&
+        targetProgramId &&
+        sourceProgramId !== targetProgramId
+      ) {
         return {
           assignedProgramId: targetProgramId,
           reason: `Materias de diferentes programas, se asigna al programa destino ${targetProgramId}`,
-          rule: 'TARGET_PROGRAM'
+          rule: 'TARGET_PROGRAM',
         };
       }
 
@@ -63,7 +85,7 @@ export class RoutingService {
         return {
           assignedProgramId: sourceProgramId,
           reason: `Solo materia origen tiene programa definido ${sourceProgramId}`,
-          rule: 'SOURCE_PROGRAM'
+          rule: 'SOURCE_PROGRAM',
         };
       }
 
@@ -72,7 +94,7 @@ export class RoutingService {
         return {
           assignedProgramId: targetProgramId,
           reason: `Solo materia destino tiene programa definido ${targetProgramId}`,
-          rule: 'TARGET_PROGRAM'
+          rule: 'TARGET_PROGRAM',
         };
       }
 
@@ -80,11 +102,16 @@ export class RoutingService {
       return {
         assignedProgramId: studentProgramId,
         reason: `Fallback al programa del estudiante ${studentProgramId}`,
-        rule: 'STUDENT_PROGRAM'
+        rule: 'STUDENT_PROGRAM',
       };
     } catch (error) {
-      this.logger.error(`Error en determinación de programa: ${error.message}`, error.stack);
-      throw new Error(`No se pudo determinar el programa para la solicitud: ${error.message}`);
+      this.logger.error(
+        `Error en determinación de programa: ${error.message}`,
+        error.stack,
+      );
+      throw new Error(
+        `No se pudo determinar el programa para la solicitud: ${error.message}`,
+      );
     }
   }
 
@@ -106,7 +133,9 @@ export class RoutingService {
 
       return programCourse.programId;
     } catch (error) {
-      this.logger.error(`Error al obtener programa del curso ${courseId}: ${error.message}`);
+      this.logger.error(
+        `Error al obtener programa del curso ${courseId}: ${error.message}`,
+      );
       return null;
     }
   }
@@ -122,13 +151,17 @@ export class RoutingService {
         .exec();
 
       if (!student || !student.programId) {
-        this.logger.error(`No se encontró programa para el estudiante ${userId}`);
+        this.logger.error(
+          `No se encontró programa para el estudiante ${userId}`,
+        );
         throw new Error(`Estudiante ${userId} no tiene programa asignado`);
       }
 
       return student.programId;
     } catch (error) {
-      this.logger.error(`Error al obtener programa del estudiante ${userId}: ${error.message}`);
+      this.logger.error(
+        `Error al obtener programa del estudiante ${userId}: ${error.message}`,
+      );
       throw error;
     }
   }
@@ -144,7 +177,9 @@ export class RoutingService {
 
       return !!program;
     } catch (error) {
-      this.logger.error(`Error al validar programa ${programId}: ${error.message}`);
+      this.logger.error(
+        `Error al validar programa ${programId}: ${error.message}`,
+      );
       return false;
     }
   }
@@ -154,10 +189,10 @@ export class RoutingService {
    */
   getRoutingStats(): Record<string, string> {
     return {
-      'SAME_PROGRAM': 'Ambas materias del mismo programa',
-      'TARGET_PROGRAM': 'Programa de materia destino',
-      'SOURCE_PROGRAM': 'Programa de materia origen',
-      'STUDENT_PROGRAM': 'Programa del estudiante (fallback)'
+      SAME_PROGRAM: 'Ambas materias del mismo programa',
+      TARGET_PROGRAM: 'Programa de materia destino',
+      SOURCE_PROGRAM: 'Programa de materia origen',
+      STUDENT_PROGRAM: 'Programa del estudiante (fallback)',
     };
   }
 }

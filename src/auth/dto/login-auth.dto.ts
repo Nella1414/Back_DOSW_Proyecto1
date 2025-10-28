@@ -1,5 +1,11 @@
 // Import validation decorators for email and string length validation
-import { IsEmail, MaxLength, MinLength, IsNotEmpty, IsString } from 'class-validator';
+import {
+  IsEmail,
+  MaxLength,
+  MinLength,
+  IsNotEmpty,
+  IsString,
+} from 'class-validator';
 // Import Swagger decorator for API documentation
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -32,7 +38,13 @@ export class LoginAuthDto {
   })
   @IsNotEmpty({ message: 'El correo electrónico es obligatorio' })
   @IsString({ message: 'El correo electrónico debe ser texto' })
-  @IsEmail({}, { message: 'Debe ser un correo electrónico válido (ej: usuario@dominio.com)' })
+  @IsEmail(
+    {},
+    {
+      message:
+        'Debe ser un correo electrónico válido (ej: usuario@dominio.com)',
+    },
+  )
   email: string;
 
   /**
@@ -52,6 +64,8 @@ export class LoginAuthDto {
   @IsNotEmpty({ message: 'La contraseña es obligatoria' })
   @IsString({ message: 'La contraseña debe ser texto' })
   @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
-  @MaxLength(100, { message: 'La contraseña no puede tener más de 100 caracteres' })
+  @MaxLength(100, {
+    message: 'La contraseña no puede tener más de 100 caracteres',
+  })
   password: string;
 }

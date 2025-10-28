@@ -1,8 +1,19 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AuditRequest, AuditRequestSchema } from './entities/audit-request.entity';
-import { RadicadoCounter, RadicadoCounterSchema } from './entities/radicado-counter.entity';
-import { ProgramCourse, ProgramCourseSchema, Program, ProgramSchema } from '../programs/entities/program.entity';
+import {
+  AuditRequest,
+  AuditRequestSchema,
+} from './entities/audit-request.entity';
+import {
+  RadicadoCounter,
+  RadicadoCounterSchema,
+} from './entities/radicado-counter.entity';
+import {
+  ProgramCourse,
+  ProgramCourseSchema,
+  Program,
+  ProgramSchema,
+} from '../programs/entities/program.entity';
 import { Student, StudentSchema } from '../students/entities/student.entity';
 import { AuditService } from './services/audit.service';
 import { RadicadoService } from './services/radicado.service';
