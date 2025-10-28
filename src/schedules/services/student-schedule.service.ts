@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import {
@@ -60,9 +64,17 @@ export class StudentScheduleService {
   ) {}
 
   async getCurrentSchedule(studentId: string): Promise<StudentScheduleDto> {
-    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
+    // Try to find student by code first, then by externalId
+    let student = await this.studentModel.findOne({ code: studentId }).exec();
     if (!student) {
-      throw new Error('Student not found');
+      student = await this.studentModel
+        .findOne({ externalId: studentId })
+        .exec();
+    }
+    if (!student) {
+      throw new NotFoundException(
+        `Student with code or externalId ${studentId} not found`,
+      );
     }
 
     const activePeriod = await this.academicPeriodModel
@@ -79,7 +91,11 @@ export class StudentScheduleService {
       })
       .populate({
         path: 'groupId',
-        populate: [{ path: 'courseId' }, { path: 'periodId' }],
+        populate: [
+          { path: 'courseId' },
+          { path: 'periodId' },
+          { path: 'professorId', select: 'displayName firstName lastName' },
+        ],
       })
       .exec();
 
@@ -125,6 +141,14 @@ export class StudentScheduleService {
           scheduleMap.set(schedule.dayOfWeek, []);
         }
 
+        // Get professor name from populated data
+        const professor = (group as any).professorId;
+        const professorName = professor
+          ? professor.displayName ||
+            `${professor.firstName || ''} ${professor.lastName || ''}`.trim() ||
+            'Por asignar'
+          : 'Por asignar';
+
         scheduleMap.get(schedule.dayOfWeek)?.push({
           courseId: String(course._id),
           courseCode: course.code,
@@ -134,19 +158,19 @@ export class StudentScheduleService {
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           room: schedule.room || 'Por asignar',
-          professorName: undefined,
+          professorName,
         });
       }
     }
 
     const daysOfWeek = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
+      'Sunday', // 0
+      'Monday', // 1
+      'Tuesday', // 2
+      'Wednesday', // 3
+      'Thursday', // 4
+      'Friday', // 5
+      'Saturday', // 6
     ];
     const schedule: DailyScheduleDto[] = [];
 
@@ -159,7 +183,7 @@ export class StudentScheduleService {
 
         schedule.push({
           dayOfWeek: day,
-          dayName: daysOfWeek[day],
+          dayName: daysOfWeek[day % 7], // Fix: day 7 (Sunday) maps to index 0, day 1 (Monday) to index 1, etc.
           classes: groupedClasses,
         });
       }
@@ -205,9 +229,17 @@ export class StudentScheduleService {
   async getStudentAcademicHistory(
     studentId: string,
   ): Promise<AcademicHistoryDto> {
-    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
+    // Try to find student by code first, then by externalId
+    let student = await this.studentModel.findOne({ code: studentId }).exec();
     if (!student) {
-      throw new Error('Student not found');
+      student = await this.studentModel
+        .findOne({ externalId: studentId })
+        .exec();
+    }
+    if (!student) {
+      throw new NotFoundException(
+        `Student with code or externalId ${studentId} not found`,
+      );
     }
 
     const allEnrollments = await this.enrollmentModel
@@ -221,6 +253,9 @@ export class StudentScheduleService {
     const passedCourses: CourseHistoryDto[] = [];
     const currentCourses: CourseHistoryDto[] = [];
     const failedCourses: CourseHistoryDto[] = [];
+    let totalEarnedCredits = 0;
+    let totalGradePoints = 0;
+    let totalGradedCredits = 0;
 
     for (const enrollment of allEnrollments) {
       const populatedEnrollment = enrollment as unknown as PopulatedEnrollment;
@@ -249,15 +284,41 @@ export class StudentScheduleService {
       switch (enrollment.status) {
         case EnrollmentStatus.PASSED:
           passedCourses.push(courseHistory);
+          totalEarnedCredits += course.credits;
+          if (enrollment.grade) {
+            totalGradePoints += enrollment.grade * course.credits;
+            totalGradedCredits += course.credits;
+          }
           break;
         case EnrollmentStatus.ENROLLED:
           currentCourses.push(courseHistory);
           break;
         case EnrollmentStatus.FAILED:
           failedCourses.push(courseHistory);
+          // Still count credits for GPA calculation on failed courses
+          if (enrollment.grade) {
+            totalGradePoints += enrollment.grade * course.credits;
+            totalGradedCredits += course.credits;
+          }
           break;
       }
     }
+
+    // Calculate GPA
+    const gpa =
+      totalGradedCredits > 0
+        ? Math.round((totalGradePoints / totalGradedCredits) * 100) / 100
+        : 0;
+
+    // Get program info for total courses/credits
+    // For now, we'll use placeholder values - you should fetch this from the Program model
+    const totalCourses = 43; // TODO: Get from program
+    const totalCredits = 139; // TODO: Get from program
+    const completedCourses = passedCourses.length;
+    const progressPercentage =
+      totalCourses > 0
+        ? Math.round((completedCourses / totalCourses) * 100)
+        : 0;
 
     return {
       studentId: student.code,
@@ -273,6 +334,13 @@ export class StudentScheduleService {
           a.periodCode.localeCompare(b.periodCode),
         ),
       },
+      progressPercentage,
+      completedCourses,
+      totalCourses,
+      earnedCredits: totalEarnedCredits,
+      totalCredits,
+      gpa,
+      programName: 'Ingeniería de Sistemas', // TODO: Get from program
     };
   }
 
@@ -281,9 +349,17 @@ export class StudentScheduleService {
     fromDate?: string,
     toDate?: string,
   ): Promise<HistoricalSchedulesResponseDto> {
-    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
+    // Try to find student by code first, then by externalId
+    let student = await this.studentModel.findOne({ code: studentId }).exec();
     if (!student) {
-      throw new NotFoundException(`Student with ID ${studentId} not found`);
+      student = await this.studentModel
+        .findOne({ externalId: studentId })
+        .exec();
+    }
+    if (!student) {
+      throw new NotFoundException(
+        `Student with code or externalId ${studentId} not found`,
+      );
     }
 
     const periodQuery: PeriodQuery = { status: 'CLOSED' };
@@ -333,8 +409,7 @@ export class StudentScheduleService {
               populatedEnrollment.groupId?.courseId?.credits
             ) {
               totalGradePoints +=
-                enrollment.grade *
-                populatedEnrollment.groupId.courseId.credits;
+                enrollment.grade * populatedEnrollment.groupId.courseId.credits;
               totalCredits += populatedEnrollment.groupId.courseId.credits;
             }
           } else if (enrollment.status === EnrollmentStatus.FAILED) {
@@ -383,9 +458,17 @@ export class StudentScheduleService {
     studentId: string,
     periodId: string,
   ): Promise<HistoricalScheduleByPeriodResponseDto> {
-    const student = await this.studentModel.findOne({ externalId: studentId }).exec();
+    // Try to find student by code first, then by externalId
+    let student = await this.studentModel.findOne({ code: studentId }).exec();
     if (!student) {
-      throw new NotFoundException(`Student with ID ${studentId} not found`);
+      student = await this.studentModel
+        .findOne({ externalId: studentId })
+        .exec();
+    }
+    if (!student) {
+      throw new NotFoundException(
+        `Student with code or externalId ${studentId} not found`,
+      );
     }
 
     const period = await this.academicPeriodModel.findById(periodId).exec();

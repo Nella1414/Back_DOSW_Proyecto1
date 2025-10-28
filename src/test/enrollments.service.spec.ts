@@ -13,12 +13,17 @@ import {
   CourseGroup,
   CourseGroupDocument,
 } from '../course-groups/entities/course-group.entity';
+import {
+  GroupSchedule,
+  GroupScheduleDocument,
+} from '../group-schedules/entities/group-schedule.entity';
 
 describe('EnrollmentsService', () => {
   let service: EnrollmentsService;
   let enrollmentModel: Model<EnrollmentDocument>;
   let studentModel: Model<StudentDocument>;
   let courseGroupModel: Model<CourseGroupDocument>;
+  let groupScheduleModel: Model<GroupScheduleDocument>;
 
   const mockStudentId = '60d5ecb8b0a7c4b4b8b9b1a1';
   const mockGroupId = '60d5ecb8b0a7c4b4b8b9b1a2';
@@ -84,6 +89,13 @@ describe('EnrollmentsService', () => {
     findById: jest.fn(),
   };
 
+  const mockGroupScheduleModel = {
+    findOne: jest.fn(),
+    find: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue([]),
+    }),
+  };
+
   const mockPopulateChain = {
     exec: jest.fn(),
     populate: jest.fn(),
@@ -105,6 +117,10 @@ describe('EnrollmentsService', () => {
           provide: getModelToken(CourseGroup.name),
           useValue: mockCourseGroupModel,
         },
+        {
+          provide: getModelToken(GroupSchedule.name),
+          useValue: mockGroupScheduleModel,
+        },
       ],
     }).compile();
 
@@ -117,6 +133,9 @@ describe('EnrollmentsService', () => {
     );
     courseGroupModel = module.get<Model<CourseGroupDocument>>(
       getModelToken(CourseGroup.name),
+    );
+    groupScheduleModel = module.get<Model<GroupScheduleDocument>>(
+      getModelToken(GroupSchedule.name),
     );
 
     // Configure populate chain

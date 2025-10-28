@@ -16,6 +16,7 @@ describe('AuthController', () => {
     login: jest.fn(),
     updateUserRoles: jest.fn(),
     googleLogin: jest.fn(),
+    getCurrentUserWithStudent: jest.fn(),
   };
 
   const mockConfigService = {
@@ -216,8 +217,14 @@ describe('AuthController', () => {
         user: mockUser,
       };
 
+      mockAuthService.getCurrentUserWithStudent.mockResolvedValue({
+        user: mockUser,
+        tokenType: 'Bearer',
+      });
+
       const result = await controller.getMe(mockReq);
 
+      expect(service.getCurrentUserWithStudent).toHaveBeenCalledWith(mockUser);
       expect(result).toEqual({
         user: mockUser,
         tokenType: 'Bearer',
@@ -229,10 +236,15 @@ describe('AuthController', () => {
         user: mockUser,
       };
 
+      mockAuthService.getCurrentUserWithStudent.mockResolvedValue({
+        user: mockUser,
+        tokenType: 'Bearer',
+      });
+
       const result = await controller.getMe(mockReq);
 
+      expect(result).toHaveProperty('tokenType');
       expect(result.tokenType).toBe('Bearer');
-      expect(result.user).toBeDefined();
     });
   });
 });

@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAdminDto } from '../dto/create-admin.dto';
-import { UpdateAdminDto } from '../dto/update-admin.dto';
 
 /**
  * * Administrative Operations Service
@@ -23,7 +21,7 @@ export class AdminService {
    * TODO: Agregar verificacion de permisos administrativos
    * TODO: Implementar logica de negocio especifica
    */
-  create(createAdminDto: CreateAdminDto) {
+  create(_createAdminDto?: unknown) {
     return 'This action adds a new admin';
   }
 
@@ -59,7 +57,7 @@ export class AdminService {
    * TODO: Agregar auditoria de modificaciones
    * TODO: Validar permisos del usuario para la operacion
    */
-  update(id: number, updateAdminDto: UpdateAdminDto) {
+  update(id: number, _updateAdminDto?: unknown) {
     return `This action updates a #${id} admin`;
   }
 

@@ -4,17 +4,25 @@ import { Model } from 'mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { AcademicTrafficLightService } from '../academic-traffic-light/services/academic-traffic-light.service';
 import { Student, StudentDocument } from '../students/entities/student.entity';
-import { Enrollment, EnrollmentDocument, EnrollmentStatus } from '../enrollments/entities/enrollment.entity';
-import { CourseGroup, CourseGroupDocument } from '../course-groups/entities/course-group.entity';
+import {
+  Enrollment,
+  EnrollmentDocument,
+  EnrollmentStatus,
+} from '../enrollments/entities/enrollment.entity';
+import {
+  CourseGroup,
+  CourseGroupDocument,
+} from '../course-groups/entities/course-group.entity';
 import { Course, CourseDocument } from '../courses/entities/course.entity';
-import { AcademicPeriod, AcademicPeriodDocument } from '../academic-periods/entities/academic-period.entity';
+import {
+  AcademicPeriod,
+  AcademicPeriodDocument,
+} from '../academic-periods/entities/academic-period.entity';
 
 describe('AcademicTrafficLightService', () => {
   let service: AcademicTrafficLightService;
   let studentModel: Model<StudentDocument>;
   let enrollmentModel: Model<EnrollmentDocument>;
-  let courseGroupModel: Model<CourseGroupDocument>;
-  let courseModel: Model<CourseDocument>;
   let academicPeriodModel: Model<AcademicPeriodDocument>;
 
   const mockStudentId = '60d5ecb8b0a7c4b4b8b9b1a1';
@@ -36,6 +44,7 @@ describe('AcademicTrafficLightService', () => {
     code: 'MAT101',
     name: 'Matemáticas I',
     credits: 3,
+    semester: 1,
   };
 
   const mockPeriod = {
@@ -110,12 +119,18 @@ describe('AcademicTrafficLightService', () => {
       ],
     }).compile();
 
-    service = module.get<AcademicTrafficLightService>(AcademicTrafficLightService);
-    studentModel = module.get<Model<StudentDocument>>(getModelToken(Student.name));
-    enrollmentModel = module.get<Model<EnrollmentDocument>>(getModelToken(Enrollment.name));
-    courseGroupModel = module.get<Model<CourseGroupDocument>>(getModelToken(CourseGroup.name));
-    courseModel = module.get<Model<CourseDocument>>(getModelToken(Course.name));
-    academicPeriodModel = module.get<Model<AcademicPeriodDocument>>(getModelToken(AcademicPeriod.name));
+    service = module.get<AcademicTrafficLightService>(
+      AcademicTrafficLightService,
+    );
+    studentModel = module.get<Model<StudentDocument>>(
+      getModelToken(Student.name),
+    );
+    enrollmentModel = module.get<Model<EnrollmentDocument>>(
+      getModelToken(Enrollment.name),
+    );
+    academicPeriodModel = module.get<Model<AcademicPeriodDocument>>(
+      getModelToken(AcademicPeriod.name),
+    );
   });
 
   afterEach(() => {
@@ -153,7 +168,6 @@ describe('AcademicTrafficLightService', () => {
       expect(result).toBe('blue');
     });
   });
-
 
   describe('getStudentAcademicStatus', () => {
     it('should return academic status with green color for excellent student', async () => {
@@ -228,7 +242,9 @@ describe('AcademicTrafficLightService', () => {
       expect(result).toBeDefined();
       expect(result.overallColor).toBe('red');
       expect(result.riskLevel).toBe('high');
-      expect(result.recommendations).toContain('Schedule academic tutoring sessions');
+      expect(result.recommendations).toContain(
+        'Schedule academic tutoring sessions',
+      );
     });
 
     it('should return academic status with blue color for medium-risk student', async () => {
@@ -273,7 +289,9 @@ describe('AcademicTrafficLightService', () => {
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
       // Act & Assert
-      await expect(service.getStudentAcademicStatus('nonexistent')).rejects.toThrow(NotFoundException);
+      await expect(
+        service.getStudentAcademicStatus('nonexistent'),
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should find student by code when externalId not found', async () => {
@@ -301,19 +319,52 @@ describe('AcademicTrafficLightService', () => {
       mockExecChain.exec.mockResolvedValueOnce(mockStudent);
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
+      const passedCourse = {
+        _id: 'course1',
+        code: 'MAT101',
+        name: 'Matemáticas I',
+        credits: 3,
+        semester: 1,
+      };
+
+      const enrolledCourse = {
+        _id: 'course2',
+        code: 'FIS101',
+        name: 'Física I',
+        credits: 3,
+        semester: 1,
+      };
+
+      const failedCourse = {
+        _id: 'course3',
+        code: 'QUI101',
+        name: 'Química I',
+        credits: 3,
+        semester: 1,
+      };
+
       const enrollments = [
         {
-          groupId: mockGroup,
+          groupId: {
+            ...mockGroup,
+            courseId: passedCourse,
+          },
           status: EnrollmentStatus.PASSED,
           grade: 4.5,
         },
         {
-          groupId: mockGroup,
+          groupId: {
+            ...mockGroup,
+            courseId: enrolledCourse,
+          },
           status: EnrollmentStatus.ENROLLED,
           grade: null,
         },
         {
-          groupId: mockGroup,
+          groupId: {
+            ...mockGroup,
+            courseId: failedCourse,
+          },
           status: EnrollmentStatus.FAILED,
           grade: 2.0,
         },
@@ -418,7 +469,6 @@ describe('AcademicTrafficLightService', () => {
       ];
 
       // Mock all findOne calls separately for each method
-      let findOneCallCount = 0;
       (studentModel.findOne as jest.Mock).mockImplementation(() => ({
         exec: jest.fn().mockResolvedValue(mockStudent),
       }));
@@ -446,7 +496,8 @@ describe('AcademicTrafficLightService', () => {
     it('should return null currentPeriod when no active period', async () => {
       // Arrange
       (studentModel.findOne as jest.Mock).mockReturnValue({
-        exec: jest.fn()
+        exec: jest
+          .fn()
           .mockResolvedValueOnce(mockStudent) // getStudentAcademicStatus
           .mockResolvedValueOnce(mockStudent), // detectInconsistencies
       });
@@ -513,7 +564,7 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('invalid grade'))).toBe(true);
+      expect(result.some((msg) => msg.includes('invalid grade'))).toBe(true);
     });
 
     it('should detect passed course with failing grade', async () => {
@@ -537,7 +588,9 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('below passing threshold'))).toBe(true);
+      expect(
+        result.some((msg) => msg.includes('below passing threshold')),
+      ).toBe(true);
     });
 
     it('should detect duplicate passed courses', async () => {
@@ -566,7 +619,9 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('Duplicate passed courses'))).toBe(true);
+      expect(
+        result.some((msg) => msg.includes('Duplicate passed courses')),
+      ).toBe(true);
     });
 
     it('should detect missing group or course information', async () => {
@@ -638,7 +693,9 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('should not have grade yet'))).toBe(true);
+      expect(
+        result.some((msg) => msg.includes('should not have grade yet')),
+      ).toBe(true);
     });
 
     it('should detect failed course without grade', async () => {
@@ -662,7 +719,7 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('missing grade'))).toBe(true);
+      expect(result.some((msg) => msg.includes('missing grade'))).toBe(true);
     });
 
     it('should detect failed course with passing grade', async () => {
@@ -686,7 +743,9 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('marked as FAILED but grade'))).toBe(true);
+      expect(
+        result.some((msg) => msg.includes('marked as FAILED but grade')),
+      ).toBe(true);
     });
 
     it('should handle error and return error message', async () => {
@@ -698,7 +757,9 @@ describe('AcademicTrafficLightService', () => {
       const result = await service.detectInconsistencies('student123');
 
       // Assert
-      expect(result.some(msg => msg.includes('Error detecting inconsistencies'))).toBe(true);
+      expect(
+        result.some((msg) => msg.includes('Error detecting inconsistencies')),
+      ).toBe(true);
     });
   });
 
@@ -726,7 +787,8 @@ describe('AcademicTrafficLightService', () => {
       (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
 
       // Act
-      const result = await service.calculateAverageGradePerSemester('student123');
+      const result =
+        await service.calculateAverageGradePerSemester('student123');
 
       // Assert
       expect(result).toBeDefined();
@@ -747,7 +809,8 @@ describe('AcademicTrafficLightService', () => {
       (enrollmentModel.find as jest.Mock).mockReturnValue(mockPopulateChain);
 
       // Act
-      const result = await service.calculateAverageGradePerSemester('student123');
+      const result =
+        await service.calculateAverageGradePerSemester('student123');
 
       // Assert
       expect(result).toEqual([]);

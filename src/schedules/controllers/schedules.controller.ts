@@ -9,6 +9,8 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { StudentScheduleService } from '../services/student-schedule.service';
 import { ScheduleValidationService } from '../services/schedule-validation.service';
@@ -20,6 +22,10 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Auth } from '../../auth/decorators/auth.decorator';
+import {
+  Student,
+  StudentDocument,
+} from '../../students/entities/student.entity';
 
 @ApiTags('Student Schedules')
 @ApiBearerAuth()
@@ -32,7 +38,40 @@ export class SchedulesController {
     private readonly studentScheduleService: StudentScheduleService,
     private readonly scheduleValidationService: ScheduleValidationService,
     private readonly academicTrafficLightService: AcademicTrafficLightService,
+    @InjectModel(Student.name)
+    private readonly studentModel: Model<StudentDocument>,
   ) {}
+
+  /**
+   * Helper method to validate if the requested userId belongs to the authenticated user
+   * Handles both student code (e.g., "S1S202400018") and externalId
+   */
+  private async validateUserAccess(
+    queryUserId: string,
+    authenticatedUserId: string,
+    userRoles: string[],
+  ): Promise<boolean> {
+    // Admin and Dean can access any user's data
+    if (userRoles.includes('ADMIN') || userRoles.includes('DEAN')) {
+      return true;
+    }
+
+    // Direct externalId match
+    if (queryUserId === authenticatedUserId) {
+      return true;
+    }
+
+    // Check if queryUserId is a student code that belongs to this user
+    const student = await this.studentModel
+      .findOne({ code: queryUserId })
+      .exec();
+
+    if (student && student.externalId === authenticatedUserId) {
+      return true;
+    }
+
+    return false;
+  }
 
   @Get('current')
   @Auth('STUDENT', 'ADMIN', 'DEAN')
@@ -205,7 +244,7 @@ export class SchedulesController {
     }
   }
 
-  @Get('historical/:periodId')
+  @Get('historical/period')
   @Auth('STUDENT', 'ADMIN', 'DEAN')
   @ApiOperation({
     summary: 'Get specific historical schedule for a closed period',
@@ -223,14 +262,17 @@ export class SchedulesController {
     const authenticatedUserId = req.user?.externalId;
     const userRoles = req.user?.roles || [];
 
+    // Default to authenticated user's externalId
     let targetUserId = authenticatedUserId;
 
     if (queryUserId) {
-      if (
-        !userRoles.includes('ADMIN') &&
-        !userRoles.includes('DEAN') &&
-        queryUserId !== authenticatedUserId
-      ) {
+      const hasAccess = await this.validateUserAccess(
+        queryUserId,
+        authenticatedUserId,
+        userRoles,
+      );
+
+      if (!hasAccess) {
         this.logger.warn(
           `Unauthorized access attempt: User ${authenticatedUserId} tried to access ${queryUserId}'s historical schedule`,
         );
@@ -238,6 +280,8 @@ export class SchedulesController {
           'You can only access your own historical schedules',
         );
       }
+
+      // Use queryUserId as-is (service handles both student code and externalId)
       targetUserId = queryUserId;
     }
 

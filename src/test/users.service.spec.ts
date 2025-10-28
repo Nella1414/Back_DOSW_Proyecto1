@@ -1,15 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getModelToken } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
 import { NotFoundException } from '@nestjs/common';
 import { UsersService } from '../users/services/users.service';
-import { User, UserDocument } from '../users/entities/user.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateUserDto } from '../users/dto/create-user.dto';
 import { UpdateUserDto } from '../users/dto/update-user.dto';
 
 describe('UsersService', () => {
   let service: UsersService;
-  let userModel: Model<UserDocument>;
 
   const mockUserId = '60d5ecb8b0a7c4b4b8b9b1a1';
   const mockUser = {
@@ -54,7 +52,6 @@ describe('UsersService', () => {
     }).compile();
 
     service = module.get<UsersService>(UsersService);
-    userModel = module.get<Model<UserDocument>>(getModelToken(User.name));
   });
 
   afterEach(() => {

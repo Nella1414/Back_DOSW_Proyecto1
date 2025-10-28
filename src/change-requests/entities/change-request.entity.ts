@@ -6,7 +6,7 @@ export type ChangeRequestDocument = ChangeRequest & Document;
 export enum RequestState {
   PENDING = 'PENDING',
   APPROVED = 'APPROVED',
-  REJECTED = 'REJECTED'
+  REJECTED = 'REJECTED',
 }
 
 @Schema({ timestamps: true })

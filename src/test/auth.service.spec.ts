@@ -4,6 +4,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthService } from '../auth/services/auth.service';
 import { User } from '../users/entities/user.entity';
+import { Student } from '../students/entities/student.entity';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterAuthDto } from '../auth/dto/register-auth.dto';
@@ -22,7 +23,6 @@ jest.mock('uuid', () => ({
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userModel: Model<User>;
   let jwtService: JwtService;
 
   // Mock user data
@@ -52,6 +52,18 @@ describe('AuthService', () => {
     findById: jest.fn(),
   };
 
+  const mockStudentModel = {
+    findOne: jest.fn(),
+    create: jest.fn().mockResolvedValue({
+      code: 'SIS20240001',
+      firstName: 'New',
+      lastName: 'User',
+      externalId: 'test-external-id',
+    }),
+    findById: jest.fn(),
+    countDocuments: jest.fn().mockResolvedValue(0),
+  };
+
   const mockJwtService = {
     sign: jest.fn().mockReturnValue('mock-jwt-token'),
   };
@@ -65,6 +77,10 @@ describe('AuthService', () => {
           useValue: mockUserModel,
         },
         {
+          provide: getModelToken(Student.name),
+          useValue: mockStudentModel,
+        },
+        {
           provide: JwtService,
           useValue: mockJwtService,
         },
@@ -72,7 +88,6 @@ describe('AuthService', () => {
     }).compile();
 
     service = module.get<AuthService>(AuthService);
-    userModel = module.get<Model<User>>(getModelToken(User.name));
     jwtService = module.get<JwtService>(JwtService);
   });
 
@@ -86,6 +101,7 @@ describe('AuthService', () => {
       password: 'password123',
       name: 'New User',
       displayName: 'New User',
+      programId: '60d5ecb8b0a7c4b4b8b9b1a4',
     };
 
     it('should create a new user successfully', async () => {
@@ -152,7 +168,10 @@ describe('AuthService', () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedPassword123');
 
       await expect(service.register(registerDto)).rejects.toThrow(
-        new HttpException('REGISTRATION_FAILED', HttpStatus.INTERNAL_SERVER_ERROR),
+        new HttpException(
+          'REGISTRATION_FAILED',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       );
     });
   });
@@ -213,7 +232,10 @@ describe('AuthService', () => {
       mockUserModel.findOne.mockResolvedValue(oauthUser);
 
       await expect(service.login(loginDto)).rejects.toThrow(
-        new HttpException('INVALID_USER_DATA', HttpStatus.INTERNAL_SERVER_ERROR),
+        new HttpException(
+          'INVALID_USER_DATA',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       );
     });
 
@@ -429,7 +451,10 @@ describe('AuthService', () => {
       mockUserModel.findOne.mockRejectedValue(new Error('Database error'));
 
       await expect(service.googleLogin(googleUser)).rejects.toThrow(
-        new HttpException('GOOGLE_LOGIN_FAILED', HttpStatus.INTERNAL_SERVER_ERROR),
+        new HttpException(
+          'GOOGLE_LOGIN_FAILED',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        ),
       );
     });
 

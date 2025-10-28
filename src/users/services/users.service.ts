@@ -60,10 +60,7 @@ export class UsersService {
    * @throws NotFoundException if user is not found
    */
   async findOne(id: string): Promise<UserResponseDto> {
-    const user = await this.usersModule
-      .findById(id)
-      .select('-password')
-      .exec();
+    const user = await this.usersModule.findById(id).select('-password').exec();
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);

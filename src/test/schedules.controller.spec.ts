@@ -1,9 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ForbiddenException, HttpException } from '@nestjs/common';
+import { getModelToken } from '@nestjs/mongoose';
 import { SchedulesController } from '../schedules/controllers/schedules.controller';
 import { StudentScheduleService } from '../schedules/services/student-schedule.service';
 import { ScheduleValidationService } from '../schedules/services/schedule-validation.service';
 import { AcademicTrafficLightService } from '../academic-traffic-light/services/academic-traffic-light.service';
+import { Student } from '../students/entities/student.entity';
 
 describe('SchedulesController', () => {
   let controller: SchedulesController;
@@ -21,6 +23,12 @@ describe('SchedulesController', () => {
 
   const mockAcademicTrafficLightService = {
     getAcademicTrafficLight: jest.fn(),
+  };
+
+  const mockStudentModel = {
+    findOne: jest.fn().mockReturnValue({
+      exec: jest.fn().mockResolvedValue(null),
+    }),
   };
 
   const mockSchedule = {
@@ -56,6 +64,10 @@ describe('SchedulesController', () => {
         {
           provide: AcademicTrafficLightService,
           useValue: mockAcademicTrafficLightService,
+        },
+        {
+          provide: getModelToken(Student.name),
+          useValue: mockStudentModel,
         },
       ],
     }).compile();
@@ -149,9 +161,9 @@ describe('SchedulesController', () => {
 
       await controller.getCurrentSchedule(mockReq, 'student456');
 
-      expect(mockStudentScheduleService.getCurrentSchedule).toHaveBeenCalledWith(
-        'student456',
-      );
+      expect(
+        mockStudentScheduleService.getCurrentSchedule,
+      ).toHaveBeenCalledWith('student456');
     });
 
     it('should throw ForbiddenException when student tries to access another schedule', async () => {

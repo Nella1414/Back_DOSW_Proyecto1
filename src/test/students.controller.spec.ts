@@ -273,6 +273,12 @@ describe('StudentsController', () => {
   describe('getSchedule', () => {
     it('should return student schedule', async () => {
       const studentCode = 'EST001';
+      const mockReq = {
+        user: {
+          externalId: 'EST001',
+          roles: ['STUDENT'],
+        },
+      };
       const mockSchedule = {
         studentId: 'EST001',
         schedule: [
@@ -286,7 +292,7 @@ describe('StudentsController', () => {
       };
       mockStudentsService.getStudentSchedule.mockResolvedValueOnce(mockSchedule);
 
-      const result = await controller.getSchedule(studentCode);
+      const result = await controller.getSchedule(studentCode, mockReq);
 
       expect(service.getStudentSchedule).toHaveBeenCalledWith(studentCode);
       expect(result).toEqual(mockSchedule);
@@ -294,13 +300,19 @@ describe('StudentsController', () => {
 
     it('should return empty schedule for student with no enrollments', async () => {
       const studentCode = 'EST999';
+      const mockReq = {
+        user: {
+          externalId: 'EST999',
+          roles: ['STUDENT'],
+        },
+      };
       const emptySchedule = {
         studentId: 'EST999',
         schedule: [],
       };
       mockStudentsService.getStudentSchedule.mockResolvedValueOnce(emptySchedule);
 
-      const result = await controller.getSchedule(studentCode);
+      const result = await controller.getSchedule(studentCode, mockReq);
 
       expect(service.getStudentSchedule).toHaveBeenCalledWith(studentCode);
       expect(result.schedule).toEqual([]);
@@ -381,13 +393,19 @@ describe('StudentsController', () => {
   describe('Integration: Student academic tracking', () => {
     it('should track student through enrollment and schedule', async () => {
       const studentCode = 'EST001';
+      const mockReq = {
+        user: {
+          externalId: 'EST001',
+          roles: ['STUDENT'],
+        },
+      };
 
       // Get student by code
       const student = await controller.findByCode(studentCode);
       expect(student.code).toBe(studentCode);
 
       // Get schedule
-      const schedule = await controller.getSchedule(studentCode);
+      const schedule = await controller.getSchedule(studentCode, mockReq);
       expect(schedule).toBeDefined();
 
       // Get academic history

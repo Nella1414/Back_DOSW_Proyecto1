@@ -15,7 +15,9 @@ export class SanitizerUtil {
   /**
    * Sanitiza observaciones manteniendo formato básico
    */
-  static sanitizeObservations(observations: string | null | undefined): string | null {
+  static sanitizeObservations(
+    observations: string | null | undefined,
+  ): string | null {
     // Si es null, undefined o string vacío, retornar null
     if (!observations || observations.trim() === '') {
       return null;
@@ -23,7 +25,9 @@ export class SanitizerUtil {
 
     // Validar contra null bytes
     if (this.containsNullBytes(observations)) {
-      throw new Error('La observación contiene caracteres null bytes no permitidos');
+      throw new Error(
+        'La observación contiene caracteres null bytes no permitidos',
+      );
     }
 
     // Validar y remover caracteres de control peligrosos
@@ -100,7 +104,10 @@ export class SanitizerUtil {
   /**
    * Valida longitud de observaciones
    */
-  static validateLength(observations: string | null, maxLength: number = 2000): boolean {
+  static validateLength(
+    observations: string | null,
+    maxLength: number = 2000,
+  ): boolean {
     if (!observations) return true;
     return observations.length <= maxLength;
   }

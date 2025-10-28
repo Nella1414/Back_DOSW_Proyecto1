@@ -4,7 +4,7 @@ export enum Priority {
   LOW = 'LOW',
   NORMAL = 'NORMAL',
   HIGH = 'HIGH',
-  URGENT = 'URGENT'
+  URGENT = 'URGENT',
 }
 
 export interface PriorityContext {
@@ -34,7 +34,7 @@ export class PriorityCalculatorService {
     { startDay: 15, endDay: 29 },
     { startDay: 195, endDay: 209 },
   ];
-  
+
   /**
    * Calcula prioridad basada en criterios objetivos
    */
@@ -47,7 +47,9 @@ export class PriorityCalculatorService {
       // Criterio 1: Estudiantes próximos a graduar (último semestre)
       if (context.studentSemester && context.studentSemester >= 10) {
         priority = Priority.HIGH;
-        this.logger.debug(`Prioridad aumentada a HIGH: estudiante en semestre ${context.studentSemester}`);
+        this.logger.debug(
+          `Prioridad aumentada a HIGH: estudiante en semestre ${context.studentSemester}`,
+        );
       }
 
       // Criterio 2: Materias obligatorias tienen mayor prioridad
@@ -63,16 +65,26 @@ export class PriorityCalculatorService {
       }
 
       // Criterio 4: Casos urgentes (combinación de factores)
-      if (context.studentSemester && context.studentSemester >= 10 && context.isTargetMandatory) {
+      if (
+        context.studentSemester &&
+        context.studentSemester >= 10 &&
+        context.isTargetMandatory
+      ) {
         priority = Priority.URGENT;
-        this.logger.warn(`Prioridad URGENTE: estudiante en semestre ${context.studentSemester} con materia obligatoria`);
+        this.logger.warn(
+          `Prioridad URGENTE: estudiante en semestre ${context.studentSemester} con materia obligatoria`,
+        );
       }
 
-      this.logger.log(`Prioridad calculada: ${priority} para usuario ${context.userId}`);
+      this.logger.log(
+        `Prioridad calculada: ${priority} para usuario ${context.userId}`,
+      );
       return priority;
-
     } catch (error) {
-      this.logger.error(`Error calculando prioridad para usuario ${context.userId}: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error calculando prioridad para usuario ${context.userId}: ${error.message}`,
+        error.stack,
+      );
       // En caso de error, retornar prioridad normal por seguridad
       this.logger.warn('Retornando prioridad NORMAL por error en cálculo');
       return Priority.NORMAL;
@@ -86,8 +98,10 @@ export class PriorityCalculatorService {
     const descriptions = {
       [Priority.LOW]: 'Prioridad baja - Periodo add/drop o electivas',
       [Priority.NORMAL]: 'Prioridad normal - Solicitud estándar',
-      [Priority.HIGH]: 'Prioridad alta - Materia obligatoria o estudiante avanzado',
-      [Priority.URGENT]: 'Prioridad urgente - Estudiante próximo a graduar con materia obligatoria'
+      [Priority.HIGH]:
+        'Prioridad alta - Materia obligatoria o estudiante avanzado',
+      [Priority.URGENT]:
+        'Prioridad urgente - Estudiante próximo a graduar con materia obligatoria',
     };
 
     return descriptions[priority];
@@ -101,7 +115,7 @@ export class PriorityCalculatorService {
       [Priority.LOW]: 1,
       [Priority.NORMAL]: 2,
       [Priority.HIGH]: 3,
-      [Priority.URGENT]: 4
+      [Priority.URGENT]: 4,
     };
 
     return weights[priority];
@@ -114,21 +128,27 @@ export class PriorityCalculatorService {
     try {
       const dayOfYear = this.calculateDayOfYear(date);
 
-      this.logger.debug(`Verificando si día ${dayOfYear} del año ${date.getFullYear()} está en periodo add/drop`);
+      this.logger.debug(
+        `Verificando si día ${dayOfYear} del año ${date.getFullYear()} está en periodo add/drop`,
+      );
 
       // Verificar contra todos los periodos configurados
-      const isInPeriod = this.addDropPeriods.some(period =>
-        dayOfYear >= period.startDay && dayOfYear <= period.endDay
+      const isInPeriod = this.addDropPeriods.some(
+        (period) => dayOfYear >= period.startDay && dayOfYear <= period.endDay,
       );
 
       if (isInPeriod) {
-        this.logger.debug(`Fecha ${date.toISOString()} está en periodo add/drop`);
+        this.logger.debug(
+          `Fecha ${date.toISOString()} está en periodo add/drop`,
+        );
       }
 
       return isInPeriod;
-
     } catch (error) {
-      this.logger.error(`Error verificando periodo add/drop: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error verificando periodo add/drop: ${error.message}`,
+        error.stack,
+      );
       // En caso de error, asumir que NO es periodo add/drop
       return false;
     }
@@ -151,19 +171,29 @@ export class PriorityCalculatorService {
     try {
       // Validar que los periodos sean válidos
       for (const period of periods) {
-        if (period.startDay < 1 || period.startDay > 366 ||
-            period.endDay < 1 || period.endDay > 366 ||
-            period.startDay > period.endDay) {
-          throw new Error(`Periodo inválido: startDay=${period.startDay}, endDay=${period.endDay}`);
+        if (
+          period.startDay < 1 ||
+          period.startDay > 366 ||
+          period.endDay < 1 ||
+          period.endDay > 366 ||
+          period.startDay > period.endDay
+        ) {
+          throw new Error(
+            `Periodo inválido: startDay=${period.startDay}, endDay=${period.endDay}`,
+          );
         }
       }
 
       this.addDropPeriods.length = 0;
       this.addDropPeriods.push(...periods);
-      this.logger.log(`Periodos add/drop actualizados: ${JSON.stringify(periods)}`);
-
+      this.logger.log(
+        `Periodos add/drop actualizados: ${JSON.stringify(periods)}`,
+      );
     } catch (error) {
-      this.logger.error(`Error configurando periodos add/drop: ${error.message}`, error.stack);
+      this.logger.error(
+        `Error configurando periodos add/drop: ${error.message}`,
+        error.stack,
+      );
       throw error;
     }
   }

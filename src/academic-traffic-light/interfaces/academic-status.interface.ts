@@ -42,6 +42,7 @@ export interface CourseStatus {
   status: EnrollmentStatus; // * Estado de la matrícula
   color: TrafficLightColor; // ! Color del semáforo para este curso
   periodCode: string; // * Código del periodo académico
+  semester?: number; // ? Semestre al que pertenece el curso
 }
 
 /**
@@ -56,6 +57,7 @@ export interface PopulatedGroup {
     code: string;
     name: string;
     credits: number;
+    semester?: number;
   };
   periodId: {
     _id: any;

@@ -11,7 +11,7 @@ import {
   Matches,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { IsValidName, IsStrongPassword } from '../../common/validators/custom-validators';
+import { IsValidName } from '../../common/validators/custom-validators';
 
 /**
  * RegisterAuthDto - Data Transfer Object for user registration
@@ -50,7 +50,9 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
   @IsString({ message: 'El nombre debe ser texto' })
   @MinLength(3, { message: 'El nombre debe tener al menos 3 caracteres' })
   @MaxLength(100, { message: 'El nombre no puede tener más de 100 caracteres' })
-  @IsValidName({ message: 'El nombre solo puede contener letras, espacios y acentos' })
+  @IsValidName({
+    message: 'El nombre solo puede contener letras, espacios y acentos',
+  })
   name: string;
 
   /**
@@ -67,8 +69,13 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
   })
   @IsNotEmpty({ message: 'El nombre para mostrar es obligatorio' })
   @IsString({ message: 'El nombre para mostrar debe ser texto' })
-  @MaxLength(50, { message: 'El nombre para mostrar no puede tener más de 50 caracteres' })
-  @IsValidName({ message: 'El nombre para mostrar solo puede contener letras, espacios y acentos' })
+  @MaxLength(50, {
+    message: 'El nombre para mostrar no puede tener más de 50 caracteres',
+  })
+  @IsValidName({
+    message:
+      'El nombre para mostrar solo puede contener letras, espacios y acentos',
+  })
   displayName: string;
 
   /**
@@ -85,7 +92,10 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
   })
   @IsOptional()
   @IsString({ message: 'El ID externo debe ser texto' })
-  @Matches(/^[a-zA-Z0-9_-]+$/, { message: 'El ID externo solo puede contener letras, números, guiones y guiones bajos' })
+  @Matches(/^[a-zA-Z0-9_-]+$/, {
+    message:
+      'El ID externo solo puede contener letras, números, guiones y guiones bajos',
+  })
   externalId?: string;
 
   /**
@@ -96,7 +106,8 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
    * for administrative approval workflows.
    */
   @ApiProperty({
-    description: 'Estado de activación de la cuenta - controla el acceso inmediato',
+    description:
+      'Estado de activación de la cuenta - controla el acceso inmediato',
     example: true,
     default: true,
     required: false,
@@ -134,8 +145,12 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
   })
   @IsOptional()
   @IsString({ message: 'El primer nombre debe ser texto' })
-  @MaxLength(50, { message: 'El primer nombre no puede tener más de 50 caracteres' })
-  @IsValidName({ message: 'El primer nombre solo puede contener letras, espacios y acentos' })
+  @MaxLength(50, {
+    message: 'El primer nombre no puede tener más de 50 caracteres',
+  })
+  @IsValidName({
+    message: 'El primer nombre solo puede contener letras, espacios y acentos',
+  })
   firstName?: string;
 
   /**
@@ -153,7 +168,9 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
   @IsOptional()
   @IsString({ message: 'El apellido debe ser texto' })
   @MaxLength(50, { message: 'El apellido no puede tener más de 50 caracteres' })
-  @IsValidName({ message: 'El apellido solo puede contener letras, espacios y acentos' })
+  @IsValidName({
+    message: 'El apellido solo puede contener letras, espacios y acentos',
+  })
   lastName?: string;
 
   /**
@@ -170,6 +187,24 @@ export class RegisterAuthDto extends IntersectionType(LoginAuthDto) {
   })
   @IsOptional()
   @IsString({ message: 'La URL de la foto debe ser texto' })
-  @IsUrl({}, { message: 'Debe ser una URL válida (ej: https://ejemplo.com/foto.jpg)' })
+  @IsUrl(
+    {},
+    { message: 'Debe ser una URL válida (ej: https://ejemplo.com/foto.jpg)' },
+  )
   picture?: string;
+
+  /**
+   * Academic program identifier (required for students)
+   *
+   * Reference to the student's academic program (carrera).
+   * Required when registering as a student.
+   */
+  @ApiProperty({
+    description: 'ID del programa académico al que pertenece el estudiante',
+    example: '507f1f77bcf86cd799439011',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'El ID del programa debe ser texto' })
+  programId?: string;
 }

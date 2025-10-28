@@ -1,11 +1,19 @@
-import { registerDecorator, ValidationOptions, ValidatorConstraint, ValidatorConstraintInterface, ValidationArguments } from 'class-validator';
+import {
+  registerDecorator,
+  ValidationOptions,
+  ValidatorConstraint,
+  ValidatorConstraintInterface,
+  ValidationArguments,
+} from 'class-validator';
 import { SanitizerUtil } from '../utils/sanitizer.util';
 
 /**
  * Validador para observaciones con límite de longitud
  */
 @ValidatorConstraint({ name: 'isValidObservations', async: false })
-export class IsValidObservationsConstraint implements ValidatorConstraintInterface {
+export class IsValidObservationsConstraint
+  implements ValidatorConstraintInterface
+{
   validate(observations: string | null, args: ValidationArguments) {
     const [maxLength] = args.constraints;
     return SanitizerUtil.validateLength(observations, maxLength || 2000);
@@ -17,8 +25,11 @@ export class IsValidObservationsConstraint implements ValidatorConstraintInterfa
   }
 }
 
-export function IsValidObservations(maxLength: number = 2000, validationOptions?: ValidationOptions) {
-  return function (object: Object, propertyName: string) {
+export function IsValidObservations(
+  maxLength: number = 2000,
+  validationOptions?: ValidationOptions,
+) {
+  return function (object: object, propertyName: string) {
     registerDecorator({
       target: object.constructor,
       propertyName: propertyName,

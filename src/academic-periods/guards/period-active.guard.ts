@@ -19,7 +19,7 @@ export class PeriodActiveGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<any>();
 
     // Check if there's an active period that allows change requests
     const activePeriod = await this.academicPeriodModel

@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AcademicTrafficLightController } from '../academic-traffic-light/academic-traffic-light.controller';
 import { AcademicTrafficLightService } from '../academic-traffic-light/services/academic-traffic-light.service';
-import { RolesService } from '../roles/services/roles.service';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 describe('AcademicTrafficLightController', () => {
@@ -12,12 +11,6 @@ describe('AcademicTrafficLightController', () => {
     getAcademicStatistics: jest.fn(),
     getStudentAcademicStatus: jest.fn(),
     getStudentTrafficLightReport: jest.fn(),
-  };
-
-  const mockRolesService = {
-    findAll: jest.fn(),
-    findOne: jest.fn(),
-    findByName: jest.fn(),
   };
 
   const mockCacheManager = {
@@ -76,15 +69,16 @@ describe('AcademicTrafficLightController', () => {
           useValue: mockAcademicTrafficLightService,
         },
         {
-          provide: RolesService,
-          useValue: mockRolesService,
-        },
-        {
           provide: CACHE_MANAGER,
           useValue: mockCacheManager,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(require('../auth/guards/jwt-auth.guard').JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(require('../auth/guards/roles.guard').RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AcademicTrafficLightController>(
       AcademicTrafficLightController,

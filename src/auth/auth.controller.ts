@@ -17,7 +17,6 @@ import {
   ApiBody,
   ApiParam,
   ApiExcludeEndpoint,
-  ApiSecurity,
   ApiConsumes,
   ApiProduces,
 } from '@nestjs/swagger';
@@ -581,7 +580,7 @@ export class AuthController {
   @Public()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req, @Res() res) {
+  async googleAuthRedirect(@Req() req: any, @Res() res: any) {
     const result = await this.authService.googleLogin(req.user);
 
     const frontendUrl = this.configService.get<string>('FRONTEND_URL');
@@ -598,16 +597,14 @@ export class AuthController {
    */
   @ApiOperation({
     summary: 'Get current authenticated user',
-    description: 'Returns the profile extracted from the JWT token.',
-    operationId: 'getCurrentUser'
+    description:
+      'Returns the profile extracted from the JWT token with student info if available.',
+    operationId: 'getCurrentUser',
   })
   @ApiBearerAuth()
   @Get('me')
-  async getMe(@Req() req) {
+  async getMe(@Req() req: any) {
     // JwtAuthGuard is applied globally, so req.user is populated by JwtStrategy
-    return {
-      user: req.user,
-      tokenType: 'Bearer',
-    };
+    return this.authService.getCurrentUserWithStudent(req.user);
   }
 }

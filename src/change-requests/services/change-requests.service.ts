@@ -1,13 +1,26 @@
-import { Injectable, BadRequestException, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { createHash } from 'crypto';
-import { ChangeRequest, ChangeRequestDocument } from '../entities/change-request.entity';
+import {
+  ChangeRequest,
+  ChangeRequestDocument,
+} from '../entities/change-request.entity';
 import { CreateChangeRequestDto } from '../dto/create-change-request.dto';
 import { AuditService } from '../../common/services/audit.service';
 import { RadicadoService } from '../../common/services/radicado.service';
-import { PriorityCalculatorService, PriorityContext } from '../../common/services/priority-calculator.service';
-import { RoutingService, RoutingContext } from '../../common/services/routing.service';
+import {
+  PriorityCalculatorService,
+  PriorityContext,
+} from '../../common/services/priority-calculator.service';
+import {
+  RoutingService,
+  RoutingContext,
+} from '../../common/services/routing.service';
 import { RoutingValidatorService } from '../../common/services/routing-validator.service';
 
 @Injectable()
@@ -33,14 +46,18 @@ export class ChangeRequestsService {
   ): Promise<ChangeRequestDocument> {
     // Validar que origen ≠ destino
     if (createDto.sourceSubjectId === createDto.targetSubjectId) {
-      throw new BadRequestException('La materia origen no puede ser igual a la materia destino');
+      throw new BadRequestException(
+        'La materia origen no puede ser igual a la materia destino',
+      );
     }
 
     // Generar hash anti-duplicados
     const requestHash = this.generateRequestHash(userId, createDto);
 
     // Verificar si ya existe solicitud duplicada
-    const existingRequest = await this.changeRequestModel.findOne({ requestHash });
+    const existingRequest = await this.changeRequestModel.findOne({
+      requestHash,
+    });
     if (existingRequest) {
       return existingRequest; // Retornar existente sin error
     }
@@ -54,12 +71,15 @@ export class ChangeRequestsService {
       sourceSubjectId: createDto.sourceSubjectId,
       targetSubjectId: createDto.targetSubjectId,
       studentSemester: await this.getStudentSemester(userId),
-      isTargetMandatory: await this.isSubjectMandatory(createDto.targetSubjectId),
+      isTargetMandatory: await this.isSubjectMandatory(
+        createDto.targetSubjectId,
+      ),
       isAddDropPeriod: this.priorityCalculatorService.isAddDropPeriod(),
       requestDate: new Date(),
     };
 
-    const priority = this.priorityCalculatorService.calculatePriority(priorityContext);
+    const priority =
+      this.priorityCalculatorService.calculatePriority(priorityContext);
 
     // Determinar programa automáticamente
     const routingContext: RoutingContext = {
@@ -69,19 +89,21 @@ export class ChangeRequestsService {
       studentProgramId: await this.getStudentProgramId(userId),
     };
 
-    const routingDecision = await this.routingService.determineProgram(routingContext);
+    const routingDecision =
+      await this.routingService.determineProgram(routingContext);
 
     // Validar y garantizar programa válido
-    const validationResult = await this.routingValidatorService.validateAndEnsureProgram(
-      routingDecision.assignedProgramId,
-      radicado, // Usar radicado como ID temporal
-      {
-        userId,
-        sourceSubjectId: createDto.sourceSubjectId,
-        targetSubjectId: createDto.targetSubjectId,
-        originalRule: routingDecision.rule,
-      }
-    );
+    const validationResult =
+      await this.routingValidatorService.validateAndEnsureProgram(
+        routingDecision.assignedProgramId,
+        radicado, // Usar radicado como ID temporal
+        {
+          userId,
+          sourceSubjectId: createDto.sourceSubjectId,
+          targetSubjectId: createDto.targetSubjectId,
+          originalRule: routingDecision.rule,
+        },
+      );
 
     // Crear nueva solicitud
     const changeRequest = new this.changeRequestModel({
@@ -120,8 +142,10 @@ export class ChangeRequestsService {
         isTargetMandatory: priorityContext.isTargetMandatory,
         isAddDropPeriod: priorityContext.isAddDropPeriod,
         calculationDate: priorityContext.requestDate,
-        priorityDescription: this.priorityCalculatorService.getPriorityDescription(priority),
-        priorityWeight: this.priorityCalculatorService.getPriorityWeight(priority),
+        priorityDescription:
+          this.priorityCalculatorService.getPriorityDescription(priority),
+        priorityWeight:
+          this.priorityCalculatorService.getPriorityWeight(priority),
       },
     );
 
@@ -168,8 +192,12 @@ export class ChangeRequestsService {
         userId,
         sourceSubjectId: createDto.sourceSubjectId,
         targetSubjectId: createDto.targetSubjectId,
-        sourceSubjectProgram: await this.getSubjectProgram(createDto.sourceSubjectId),
-        targetSubjectProgram: await this.getSubjectProgram(createDto.targetSubjectId),
+        sourceSubjectProgram: await this.getSubjectProgram(
+          createDto.sourceSubjectId,
+        ),
+        targetSubjectProgram: await this.getSubjectProgram(
+          createDto.targetSubjectId,
+        ),
         studentProgramId: routingContext.studentProgramId,
         routingTimestamp: new Date(),
         radicado: savedRequest.radicado,
@@ -183,7 +211,10 @@ export class ChangeRequestsService {
   /**
    * Genera hash estable para detectar duplicados
    */
-  private generateRequestHash(userId: string, dto: CreateChangeRequestDto): string {
+  private generateRequestHash(
+    userId: string,
+    dto: CreateChangeRequestDto,
+  ): string {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const hashInput = `${userId}:${dto.sourceSubjectId}:${dto.targetSubjectId}:${today}`;
     return createHash('sha256').update(hashInput).digest('hex');
@@ -236,10 +267,18 @@ export class ChangeRequestsService {
   private async getStudentProgramId(userId: string): Promise<string> {
     // Simulación - en implementación real consultar base de datos
     // Usar hash simple del userId para asignar programa
-    const hash = userId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const hash = userId
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const programIndex = hash % 5;
-    
-    const programs = ['PROG-CS', 'PROG-ING', 'PROG-MAT', 'PROG-FIS', 'PROG-ADMIN'];
+
+    const programs = [
+      'PROG-CS',
+      'PROG-ING',
+      'PROG-MAT',
+      'PROG-FIS',
+      'PROG-ADMIN',
+    ];
     return programs[programIndex];
   }
 
@@ -250,15 +289,20 @@ export class ChangeRequestsService {
     // Simulación - en implementación real consultar base de datos
     const lastChar = subjectId.slice(-1);
     const lastDigit = parseInt(lastChar);
-    
+
     if (isNaN(lastDigit)) return null;
-    
+
     const programMap = {
-      0: 'PROG-CS', 1: 'PROG-CS',
-      2: 'PROG-ING', 3: 'PROG-ING',
-      4: 'PROG-MAT', 5: 'PROG-MAT',
-      6: 'PROG-FIS', 7: 'PROG-FIS',
-      8: 'PROG-ADMIN', 9: 'PROG-ADMIN'
+      0: 'PROG-CS',
+      1: 'PROG-CS',
+      2: 'PROG-ING',
+      3: 'PROG-ING',
+      4: 'PROG-MAT',
+      5: 'PROG-MAT',
+      6: 'PROG-FIS',
+      7: 'PROG-FIS',
+      8: 'PROG-ADMIN',
+      9: 'PROG-ADMIN',
     };
 
     return programMap[lastDigit] || null;
@@ -267,16 +311,19 @@ export class ChangeRequestsService {
   /**
    * Obtiene solicitudes por facultad
    */
-  async getRequestsByFaculty(facultyId: string, filters: any): Promise<ChangeRequestDocument[]> {
+  async getRequestsByFaculty(
+    facultyId: string,
+    filters: any,
+  ): Promise<ChangeRequestDocument[]> {
     const query: any = { assignedProgramId: facultyId };
-    
+
     if (filters.status) {
       query.status = filters.status;
     }
     if (filters.studentId) {
       query.userId = filters.studentId;
     }
-    
+
     return this.changeRequestModel.find(query).sort({ createdAt: -1 }).exec();
   }
 
@@ -290,11 +337,16 @@ export class ChangeRequestsService {
   /**
    * Aprueba una solicitud de cambio
    */
-  async approveChangeRequest(id: string, approveDto: any): Promise<ChangeRequestDocument> {
+  async approveChangeRequest(
+    id: string,
+    approveDto: any,
+  ): Promise<ChangeRequestDocument> {
     const request = await this.findOne(id);
-    
+
     if (request.status !== 'PENDING') {
-      throw new BadRequestException('Solo se pueden aprobar solicitudes pendientes');
+      throw new BadRequestException(
+        'Solo se pueden aprobar solicitudes pendientes',
+      );
     }
 
     request.status = 'APPROVED';
@@ -308,11 +360,16 @@ export class ChangeRequestsService {
   /**
    * Rechaza una solicitud de cambio
    */
-  async rejectChangeRequest(id: string, rejectDto: any): Promise<ChangeRequestDocument> {
+  async rejectChangeRequest(
+    id: string,
+    rejectDto: any,
+  ): Promise<ChangeRequestDocument> {
     const request = await this.findOne(id);
-    
+
     if (request.status !== 'PENDING') {
-      throw new BadRequestException('Solo se pueden rechazar solicitudes pendientes');
+      throw new BadRequestException(
+        'Solo se pueden rechazar solicitudes pendientes',
+      );
     }
 
     request.status = 'REJECTED';

@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,8 @@ import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
 @ApiTags('Enrollments')
 @Controller('enrollments')
 export class EnrollmentsController {
+  private readonly logger = new Logger(EnrollmentsController.name);
+
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
   @Post()
@@ -52,11 +55,22 @@ export class EnrollmentsController {
   })
   @ApiResponse({ status: 404, description: 'Student or group not found' })
   @ApiResponse({ status: 409, description: 'Student already enrolled' })
-  enrollStudent(
+  async enrollStudent(
     @Param('studentCode') studentCode: string,
     @Param('groupId') groupId: string,
   ) {
-    return this.enrollmentsService.enrollStudentInCourse(studentCode, groupId);
+    this.logger.log(
+      `[ENROLLMENT REQUEST] Student: ${studentCode}, Group: ${groupId}`,
+    );
+    const result = await this.enrollmentsService.enrollStudentInCourse(
+      studentCode,
+      groupId,
+    );
+
+    this.logger.log(
+      `[ENROLLMENT SUCCESS] Created enrollment ${(result as any)._id || 'unknown'} for student ${studentCode} in group ${groupId}`,
+    );
+    return result;
   }
 
   @Get()
@@ -85,6 +99,14 @@ export class EnrollmentsController {
   @ApiResponse({ status: 404, description: 'Student not found' })
   findByStudent(@Param('studentCode') studentCode: string) {
     return this.enrollmentsService.findByStudent(studentCode);
+  }
+
+  @Get('student/:studentCode/active')
+  findActiveEnrollmentsByStudent(@Param('studentCode') studentCode: string) {
+    this.logger.log(
+      `[GET ACTIVE ENROLLMENTS] Fetching active enrollments for student: ${studentCode}`,
+    );
+    return this.enrollmentsService.findActiveEnrollmentsByStudent(studentCode);
   }
 
   @Get(':id')
@@ -135,5 +157,23 @@ export class EnrollmentsController {
   @ApiResponse({ status: 404, description: 'Enrollment not found' })
   remove(@Param('id') id: string) {
     return this.enrollmentsService.remove(id);
+  }
+
+  @Delete(':studentCode/unenroll/:groupId')
+  async unenrollStudent(
+    @Param('studentCode') studentCode: string,
+    @Param('groupId') groupId: string,
+  ) {
+    this.logger.log(
+      `[UNENROLL REQUEST] Student: ${studentCode}, Group: ${groupId}`,
+    );
+    const result = await this.enrollmentsService.unenrollStudentFromCourse(
+      studentCode,
+      groupId,
+    );
+    this.logger.log(
+      `[UNENROLL SUCCESS] Removed enrollment for student ${studentCode} from group ${groupId}`,
+    );
+    return result;
   }
 }

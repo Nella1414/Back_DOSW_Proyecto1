@@ -56,7 +56,9 @@ export class CreateChangeRequestDto {
   })
   @IsOptional()
   @IsString({ message: 'Las observaciones deben ser texto' })
-  @IsValidObservations(500, { message: 'Las observaciones no pueden exceder 500 caracteres' })
+  @IsValidObservations(500, {
+    message: 'Las observaciones no pueden exceder 500 caracteres',
+  })
   @SanitizeObservations()
   observations?: string | null;
 }
