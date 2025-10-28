@@ -73,7 +73,12 @@ describe('AcademicTrafficLightController', () => {
           useValue: mockCacheManager,
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(require('../auth/guards/jwt-auth.guard').JwtAuthGuard)
+      .useValue({ canActivate: () => true })
+      .overrideGuard(require('../auth/guards/roles.guard').RolesGuard)
+      .useValue({ canActivate: () => true })
+      .compile();
 
     controller = module.get<AcademicTrafficLightController>(
       AcademicTrafficLightController,

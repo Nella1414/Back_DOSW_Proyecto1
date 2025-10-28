@@ -44,6 +44,7 @@ describe('AcademicTrafficLightService', () => {
     code: 'MAT101',
     name: 'Matemáticas I',
     credits: 3,
+    semester: 1,
   };
 
   const mockPeriod = {
@@ -318,19 +319,52 @@ describe('AcademicTrafficLightService', () => {
       mockExecChain.exec.mockResolvedValueOnce(mockStudent);
       (studentModel.findOne as jest.Mock).mockReturnValue(mockExecChain);
 
+      const passedCourse = {
+        _id: 'course1',
+        code: 'MAT101',
+        name: 'Matemáticas I',
+        credits: 3,
+        semester: 1,
+      };
+
+      const enrolledCourse = {
+        _id: 'course2',
+        code: 'FIS101',
+        name: 'Física I',
+        credits: 3,
+        semester: 1,
+      };
+
+      const failedCourse = {
+        _id: 'course3',
+        code: 'QUI101',
+        name: 'Química I',
+        credits: 3,
+        semester: 1,
+      };
+
       const enrollments = [
         {
-          groupId: mockGroup,
+          groupId: {
+            ...mockGroup,
+            courseId: passedCourse,
+          },
           status: EnrollmentStatus.PASSED,
           grade: 4.5,
         },
         {
-          groupId: mockGroup,
+          groupId: {
+            ...mockGroup,
+            courseId: enrolledCourse,
+          },
           status: EnrollmentStatus.ENROLLED,
           grade: null,
         },
         {
-          groupId: mockGroup,
+          groupId: {
+            ...mockGroup,
+            courseId: failedCourse,
+          },
           status: EnrollmentStatus.FAILED,
           grade: 2.0,
         },

@@ -205,7 +205,7 @@ describe('StudentScheduleService', () => {
 
       // Assert
       expect(studentModel.findOne).toHaveBeenCalledWith({
-        externalId: 'student123',
+        code: 'student123',
       });
       expect(academicPeriodModel.findOne).toHaveBeenCalledWith({
         isActive: true,
@@ -224,7 +224,7 @@ describe('StudentScheduleService', () => {
 
       // Act & Assert
       await expect(service.getCurrentSchedule('nonexistent')).rejects.toThrow(
-        'Student not found',
+        'Student with code or externalId nonexistent not found',
       );
     });
 
@@ -501,7 +501,7 @@ describe('StudentScheduleService', () => {
       // Act & Assert
       await expect(
         service.getStudentAcademicHistory('nonexistent'),
-      ).rejects.toThrow('Student not found');
+      ).rejects.toThrow('Student with code or externalId nonexistent not found');
     });
   });
 });

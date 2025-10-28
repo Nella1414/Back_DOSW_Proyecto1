@@ -4,6 +4,7 @@ import { getModelToken } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { AuthService } from '../auth/services/auth.service';
 import { User } from '../users/entities/user.entity';
+import { Student } from '../students/entities/student.entity';
 import { HttpException, HttpStatus } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { RegisterAuthDto } from '../auth/dto/register-auth.dto';
@@ -51,6 +52,18 @@ describe('AuthService', () => {
     findById: jest.fn(),
   };
 
+  const mockStudentModel = {
+    findOne: jest.fn(),
+    create: jest.fn().mockResolvedValue({
+      code: 'SIS20240001',
+      firstName: 'New',
+      lastName: 'User',
+      externalId: 'test-external-id',
+    }),
+    findById: jest.fn(),
+    countDocuments: jest.fn().mockResolvedValue(0),
+  };
+
   const mockJwtService = {
     sign: jest.fn().mockReturnValue('mock-jwt-token'),
   };
@@ -62,6 +75,10 @@ describe('AuthService', () => {
         {
           provide: getModelToken(User.name),
           useValue: mockUserModel,
+        },
+        {
+          provide: getModelToken(Student.name),
+          useValue: mockStudentModel,
         },
         {
           provide: JwtService,
@@ -84,6 +101,7 @@ describe('AuthService', () => {
       password: 'password123',
       name: 'New User',
       displayName: 'New User',
+      programId: '60d5ecb8b0a7c4b4b8b9b1a4',
     };
 
     it('should create a new user successfully', async () => {
