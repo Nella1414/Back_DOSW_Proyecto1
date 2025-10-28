@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Logger,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,8 @@ import { UpdateEnrollmentDto } from './dto/update-enrollment.dto';
 @ApiTags('Enrollments')
 @Controller('enrollments')
 export class EnrollmentsController {
+  private readonly logger = new Logger(EnrollmentsController.name);
+
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
   @Post()
@@ -52,11 +55,18 @@ export class EnrollmentsController {
   })
   @ApiResponse({ status: 404, description: 'Student or group not found' })
   @ApiResponse({ status: 409, description: 'Student already enrolled' })
-  enrollStudent(
+  async enrollStudent(
     @Param('studentCode') studentCode: string,
     @Param('groupId') groupId: string,
   ) {
-    return this.enrollmentsService.enrollStudentInCourse(studentCode, groupId);
+    this.logger.log(
+      `[ENROLLMENT REQUEST] Student: ${studentCode}, Group: ${groupId}`,
+    );
+    const result = await this.enrollmentsService.enrollStudentInCourse(
+      studentCode,
+      groupId,
+    );
+    return result;
   }
 
   @Get()
