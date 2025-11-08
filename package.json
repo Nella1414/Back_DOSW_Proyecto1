@@ -38,7 +38,7 @@
     "class-validator": "^0.14.2",
     "dompurify": "^3.3.0",
     "jsdom": "^27.0.1",
-    "mongoose": "^8.18.1",
+    "mongoose": "^8.19.1",
     "nestjs-i18n": "^10.5.1",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
